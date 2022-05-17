@@ -1,10 +1,10 @@
 package file
 
 // FileType is an enum indicating the type of the File
-type FileType int64
+type Type int64
 
 const (
-	PDF FileType = iota
+	PDF Type = iota
 	MEF
 	EDF
 	TDMS
@@ -126,7 +126,7 @@ const (
 //	return "UNKNOWN"
 //}
 
-var FileExtensionDict = map[string]FileType{
+var FileExtensionDict = map[string]Type{
 	"bfannot": BFANNOT,
 	"bfts":    BFTS,
 	// Image file
