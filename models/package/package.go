@@ -2,7 +2,7 @@ package packageinfo
 
 import (
 	"fmt"
-	"github.com/pennsieve/api/pkg/config"
+	"github.com/pennsieve/pennsieve-go-api/pkg/config"
 	"log"
 	"strconv"
 	"strings"
