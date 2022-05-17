@@ -1,4 +1,4 @@
-module github.com/pennsieve/api
+module github.com/pennsieve/pennsieve-go-api
 
 go 1.18
 
