@@ -1,8 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
-	pennsievePackage "github.com/pennsieve/pennsieve-go-api/models/packageType"
+	pennsievePackage "github.com/pennsieve/pennsieve-go-api/models/pennsievePackage"
 	"github.com/pennsieve/pennsieve-go-api/pkg/config"
 	"log"
 	"strconv"
@@ -22,6 +23,7 @@ type Package struct {
 	OwnerId      int                    `json:"owner_id"`
 	Size         int64                  `json:"size"`
 	ImportId     string                 `json:"import_id"`
+	Attributes   []FileAttribute        `json:"attributes"`
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
 }
@@ -36,24 +38,43 @@ type PackageParams struct {
 	OwnerId      int                    `json:"owner_id"`
 	Size         int64                  `json:"size"`
 	ImportId     string                 `json:"import_id"`
+	Attributes   []FileAttribute        `json:"attributes"`
 }
 
 // Add adds multiple packages to the Pennsieve Postgres DB
 func (*Package) Add(organizationId int, records []PackageParams) error {
 
 	currentTime := time.Now()
-	const rowSQL = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	var vals []interface{}
 	var inserts []string
 
 	schemaTable := "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".packages"
 
-	sqlInsert := fmt.Sprintf("INSERT INTO %s (name, type, state, node_id, parent_id, dataset_id, owner_id, "+
-		"size, import_id, created_at, updated_at) VALUES ", schemaTable)
-	for _, row := range records {
-		inserts = append(inserts, rowSQL)
-		vals = append(vals, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId,
-			row.ParentId, row.OwnerId, row.Size, row.ImportId, currentTime, currentTime)
+	sqlInsert := fmt.Sprintf("INSERT INTO %s(name, type, state, node_id, dataset_id, owner_id, "+
+		"size, import_id, attributes, created_at, updated_at) VALUES ", schemaTable)
+
+	for index, row := range records {
+		inserts = append(inserts, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+			index*11+1,
+			index*11+2,
+			index*11+3,
+			index*11+4,
+			index*11+5,
+			index*11+6,
+			index*11+7,
+			index*11+8,
+			index*11+9,
+			index*11+10,
+			index*11+11,
+		))
+
+		attributeJson, err := json.Marshal(row.Attributes)
+		if err != nil {
+			log.Println(err)
+		}
+
+		vals = append(vals, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, row.DatasetId,
+			row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)
 	}
 	sqlInsert = sqlInsert + strings.Join(inserts, ",")
 

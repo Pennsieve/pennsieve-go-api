@@ -1,4 +1,4 @@
-package file
+package pennsieveFile
 
 // FileType is an enum indicating the type of the File
 type Type int64
@@ -102,30 +102,213 @@ const (
 	VariantData
 	YAML
 	ZIP
+	Unknown
 )
 
-//func (s FileType) String() string {
-//	switch s {
-//	case models.Unavailable:
-//		return "UNAVAILABLE"
-//	case models.Uploaded:
-//		return "UPLOADED"
-//	case models.Deleting:
-//		return "DELETING"
-//	case models.Infected:
-//		return "INFECTED"
-//	case models.UploadFailed:
-//		return "UPLOAD_FAILED"
-//	case models.Processing:
-//		return "PROCESSING"
-//	case models.Ready:
-//		return "READY"
-//	case models.ProcessingFailed:
-//		return "PROCESSING_FAILED"
-//	}
-//	return "UNKNOWN"
-//}
+//String returns the string representation of the File.Type
+func (s Type) String() string {
+	switch s {
+	case PDF:
+		return "PDF"
+	case MEF:
+		return "MEF"
+	case EDF:
+		return "EDF"
+	case TDMS:
+		return "TDMS"
+	case OpenEphys:
+		return "OpenEphys"
+	case Persyst:
+		return "Persyst"
+	case DICOM:
+		return "DICOM"
+	case NIFTI:
+		return "NIFTI"
+	case PNG:
+		return "PNG"
+	case CZI:
+		return "CZI"
+	case Aperio:
+		return "Aperio"
+	case Json:
+		return "Json"
+	case CSV:
+		return "CSV"
+	case TSV:
+		return "TSV"
+	case Text:
+		return "Text"
+	case XML:
+		return "XML"
+	case HTML:
+		return "HTML"
+	case MSExcel:
+		return "MSExcel"
+	case MSWord:
+		return "MSWord"
+	case MP4:
+		return "MP4"
+	case WEBM:
+		return "WEBM"
+	case OGG:
+		return "OGG"
+	case MOV:
+		return "MOV"
+	case JPEG:
+		return "JPEG"
+	case JPEG2000:
+		return "JPEG2000"
+	case LSM:
+		return "LSM"
+	case NDPI:
+		return "NDPI"
+	case OIB:
+		return "OIB"
+	case OIF:
+		return "OIF"
+	case ROI:
+		return "ROI"
+	case SWC:
+		return "SWC"
+	case CRAM:
+		return "CRAM"
+	case MGH:
+		return "MGH"
+	case AVI:
+		return "AVI"
+	case MATLAB:
+		return "MATLAB"
+	case HDF5:
+		return "HDF5"
+	case TIFF:
+		return "TIFF"
+	case OMETIFF:
+		return "OMETIFF"
+	case BRUKERTIFF:
+		return "BRUKERTIFF"
+	case GIF:
+		return "GIF"
+	case ANALYZE:
+		return "ANALYZE"
+	case NeuroExplorer:
+		return "NeuroExplorer"
+	case MINC:
+		return "MINC"
+	case MobergSeries:
+		return "MobergSeries"
+	case GenericData:
+		return "GenericData"
+	case BFANNOT:
+		return "BFANNOT"
+	case BFTS:
+		return "BFTS"
+	case Nicolet:
+		return "Nicolet"
+	case MEF3:
+		return "MEF3"
+	case Feather:
+		return "Feather"
+	case NEV:
+		return "NEV"
+	case Spike2:
+		return "Spike2"
+	case AdobeIllustrator:
+		return "AdobeIllustrator"
+	case AFNI:
+		return "AFNI"
+	case AFNIBRIK:
+		return "AFNIBRIK"
+	case Ansys:
+		return "Ansys"
+	case BAM:
+		return "BAM"
+	case BIODAC:
+		return "BIODAC"
+	case BioPAC:
+		return "BioPAC"
+	case COMSOL:
+		return "COMSOL"
+	case CPlusPlus:
+		return "CPlusPlus"
+	case CSharp:
+		return "CSharp"
+	case Data:
+		return "Data"
+	case Docker:
+		return "Docker"
+	case EPS:
+		return "EPS"
+	case FCS:
+		return "FCS"
+	case FASTA:
+		return "FASTA"
+	case FASTQ:
+		return "FASTQ"
+	case FreesurferSurface:
+		return "FreesurferSurface"
+	case HDF:
+		return "HDF"
+	case Imaris:
+		return "Imaris"
+	case Intan:
+		return "Intan"
+	case IVCurveData:
+		return "IVCurveData"
+	case JAVA:
+		return "JAVA"
+	case Javascript:
+		return "Javascript"
+	case Jupyter:
+		return "Jupyter"
+	case LabChart:
+		return "LabChart"
+	case Leica:
+		return "Leica"
+	case MatlabFigure:
+		return "MatlabFigure"
+	case Markdown:
+		return "Markdown"
+	case Minitab:
+		return "Minitab"
+	case Neuralynx:
+		return "Neuralynx"
+	case NeuroDataWithoutBorders:
+		return "NeuroDataWithoutBorders"
+	case Neuron:
+		return "Neuron"
+	case NihonKoden:
+		return "NihonKoden"
+	case Nikon:
+		return "Nikon"
+	case PatchMaster:
+		return "PatchMaster"
+	case PClamp:
+		return "PClamp"
+	case Plexon:
+		return "Plexon"
+	case PowerPoint:
+		return "PowerPoint"
+	case Python:
+		return "Python"
+	case R:
+		return "R"
+	case RData:
+		return "RData"
+	case Shell:
+		return "Shell"
+	case SolidWorks:
+		return "SolidWorks"
+	case VariantData:
+		return "VariantData"
+	case YAML:
+		return "YAML"
+	case ZIP:
+		return "ZIP"
+	}
+	return "Unknown"
+}
 
+// FileExtensionDict maps file extensions to File.Types
 var FileExtensionDict = map[string]Type{
 	"bfannot": BFANNOT,
 	"bfts":    BFTS,
@@ -171,7 +354,6 @@ var FileExtensionDict = map[string]Type{
 	"ppt":  PowerPoint,
 	"pptx": PowerPoint,
 	// Matlab
-
 	"mat": MATLAB,
 	"mex": MATLAB,
 	"m":   MATLAB,

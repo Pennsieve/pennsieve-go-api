@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
+
+	_ "github.com/lib/pq"
 )
 
 var DB *sql.DB
@@ -16,7 +18,7 @@ func ConnectRDS() (*sql.DB, error) {
 
 	var dbName string = "pennsieve_postgres"
 	var dbUser string = "dev_rds_proxy_user"
-	var dbHost string = "dev-models-postgres-use1-proxy.proxy-ctkakwd4msv8.us-east-1.rds.amazonaws.com"
+	var dbHost string = "dev-pennsieve-postgres-use1-proxy.proxy-ctkakwd4msv8.us-east-1.rds.amazonaws.com"
 	var dbPort int = 5432
 	var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
 	var region string = "us-east-1"
