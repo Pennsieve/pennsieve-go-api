@@ -3,6 +3,7 @@ module github.com/pennsieve/pennsieve-go-api
 go 1.18
 
 require (
+	github.com/aws/aws-lambda-go v1.32.0
 	github.com/aws/aws-sdk-go-v2/config v1.15.7
 	github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.1.21
 	github.com/lib/pq v1.10.6

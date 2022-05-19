@@ -1,10 +1,11 @@
-package models
+package db
 
 import (
 	"encoding/json"
 	"fmt"
-	pennsievePackage "github.com/pennsieve/pennsieve-go-api/models/pennsievePackage"
-	"github.com/pennsieve/pennsieve-go-api/pkg/config"
+	"github.com/pennsieve/pennsieve-go-api/config"
+	"github.com/pennsieve/pennsieve-go-api/models"
+	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"log"
 	"strconv"
 	"strings"
@@ -15,30 +16,37 @@ import (
 type Package struct {
 	Id           int                    `json:"id"`
 	Name         string                 `json:"name"`
-	PackageType  pennsievePackage.Type  `json:"type"`
-	PackageState pennsievePackage.State `json:"state"`
+	PackageType  packageInfo.Type       `json:"type"`
+	PackageState packageInfo.State      `json:"state"`
 	NodeId       string                 `json:"node_id"`
 	ParentId     int                    `json:"parent_id"`
 	DatasetId    int                    `json:"dataset_id"`
 	OwnerId      int                    `json:"owner_id"`
 	Size         int64                  `json:"size"`
 	ImportId     string                 `json:"import_id"`
-	Attributes   []FileAttribute        `json:"attributes"`
+	Attributes   []models.FileAttribute `json:"attributes"`
 	CreatedAt    time.Time              `json:"created_at"`
 	UpdatedAt    time.Time              `json:"updated_at"`
 }
 
 type PackageParams struct {
 	Name         string                 `json:"name"`
-	PackageType  pennsievePackage.Type  `json:"type"`
-	PackageState pennsievePackage.State `json:"state"`
+	PackageType  packageInfo.Type       `json:"type"`
+	PackageState packageInfo.State      `json:"state"`
 	NodeId       string                 `json:"node_id"`
 	ParentId     int                    `json:"parent_id"`
 	DatasetId    int                    `json:"dataset_id"`
 	OwnerId      int                    `json:"owner_id"`
 	Size         int64                  `json:"size"`
 	ImportId     string                 `json:"import_id"`
-	Attributes   []FileAttribute        `json:"attributes"`
+	Attributes   []models.FileAttribute `json:"attributes"`
+}
+
+type FolderUpload struct {
+	Id       string
+	Name     string
+	ParentId string
+	depth    int
 }
 
 // Add adds multiple packages to the Pennsieve Postgres DB

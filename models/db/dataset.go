@@ -1,7 +1,7 @@
-package models
+package db
 
 import (
-	"github.com/pennsieve/pennsieve-go-api/pkg/config"
+	"github.com/pennsieve/pennsieve-go-api/config"
 	"log"
 	"strconv"
 )

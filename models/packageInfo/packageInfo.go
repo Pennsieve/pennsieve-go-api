@@ -1,9 +1,11 @@
-package pennsievePackage
+package packageInfo
 
 import (
+	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/icon"
-	file "github.com/pennsieve/pennsieve-go-api/models/pennsieveFile"
 )
+
+type PackageController struct{}
 
 // PackageState is an enum indicating the state of the Package
 type State int64
@@ -108,488 +110,488 @@ type FileTypeInfo struct {
 }
 
 // fileTypeDict maps filetypes to PackageTypes.
-var FileTypeDict = map[file.Type]FileTypeInfo{
-	file.MEF: {
+var FileTypeDict = map[fileInfo.Type]FileTypeInfo{
+	fileInfo.MEF: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.EDF: {
+	fileInfo.EDF: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.TDMS: {
+	fileInfo.TDMS: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.OpenEphys: {
+	fileInfo.OpenEphys: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Persyst: {
+	fileInfo.Persyst: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.NeuroExplorer: {
+	fileInfo.NeuroExplorer: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.MobergSeries: {
+	fileInfo.MobergSeries: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.BFTS: {
+	fileInfo.BFTS: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Nicolet: {
+	fileInfo.Nicolet: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.MEF3: {
+	fileInfo.MEF3: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Feather: {
+	fileInfo.Feather: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.NEV: {
+	fileInfo.NEV: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Spike2: {
+	fileInfo.Spike2: {
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.MINC: {
+	fileInfo.MINC: {
 		PackageType:    MRI,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.DICOM: {
+	fileInfo.DICOM: {
 		PackageType:    MRI,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.NIFTI: {
+	fileInfo.NIFTI: {
 		PackageType:    MRI,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.ROI: {
+	fileInfo.ROI: {
 		PackageType:    Unsupported,
 		PackageSubType: "Morphology",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.SWC: {
+	fileInfo.SWC: {
 		PackageType:    Unsupported,
 		PackageSubType: "Morphology",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.ANALYZE: {
+	fileInfo.ANALYZE: {
 		PackageType:    MRI,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.MGH: {
+	fileInfo.MGH: {
 		PackageType:    MRI,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.JPEG: {
+	fileInfo.JPEG: {
 		PackageType:    Image,
 		PackageSubType: "Image",
 		Icon:           icon.Image,
 	},
-	file.PNG: {
+	fileInfo.PNG: {
 		PackageType:    Image,
 		PackageSubType: "Image",
 		Icon:           icon.Image,
 	},
-	file.TIFF: {
+	fileInfo.TIFF: {
 		PackageType:    Slide,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.OMETIFF: {
+	fileInfo.OMETIFF: {
 		PackageType:    Slide,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.BRUKERTIFF: {
+	fileInfo.BRUKERTIFF: {
 		PackageType:    Slide,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.CZI: {
+	fileInfo.CZI: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.JPEG2000: {
+	fileInfo.JPEG2000: {
 		PackageType:    Image,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.LSM: {
+	fileInfo.LSM: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.NDPI: {
+	fileInfo.NDPI: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.OIB: {
+	fileInfo.OIB: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.OIF: {
+	fileInfo.OIF: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.GIF: {
+	fileInfo.GIF: {
 		PackageType:    Image,
 		PackageSubType: "Image",
 		Icon:           icon.Image,
 	},
-	file.WEBM: {
+	fileInfo.WEBM: {
 		PackageType:    Video,
 		PackageSubType: "Video",
 		Icon:           icon.Video,
 	},
-	file.MOV: {
+	fileInfo.MOV: {
 		PackageType:    Video,
 		PackageSubType: "Video",
 		Icon:           icon.Video,
 	},
-	file.AVI: {
+	fileInfo.AVI: {
 		PackageType:    Video,
 		PackageSubType: "Video",
 		Icon:           icon.Video,
 	},
-	file.MP4: {
+	fileInfo.MP4: {
 		PackageType:    Video,
 		PackageSubType: "Video",
 		Icon:           icon.Video,
 	},
-	file.CSV: {
+	fileInfo.CSV: {
 		PackageType:    CSV,
 		PackageSubType: "Tabular",
 		Icon:           icon.Tabular,
 	},
-	file.TSV: {
+	fileInfo.TSV: {
 		PackageType:    CSV,
 		PackageSubType: "Tabular",
 		Icon:           icon.Tabular,
 	},
-	file.MSExcel: {
+	fileInfo.MSExcel: {
 		PackageType:    Unsupported,
 		PackageSubType: "MS Excel",
 		Icon:           icon.Excel,
 	},
-	file.Aperio: {
+	fileInfo.Aperio: {
 		PackageType:    Slide,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.MSWord: {
+	fileInfo.MSWord: {
 		PackageType:    MSWord,
 		PackageSubType: "MS Word",
 		Icon:           icon.Word,
 	},
-	file.PDF: {
+	fileInfo.PDF: {
 		PackageType:    PDF,
 		PackageSubType: "PDF",
 		Icon:           icon.PDF,
 	},
-	file.Text: {
+	fileInfo.Text: {
 		PackageType:    Text,
 		PackageSubType: "Text",
 		Icon:           icon.Text,
 	},
-	file.BFANNOT: {
+	fileInfo.BFANNOT: {
 		PackageType:    Unknown,
 		PackageSubType: "Text",
 		Icon:           icon.Generic,
 	},
-	file.AdobeIllustrator: {
+	fileInfo.AdobeIllustrator: {
 		PackageType:    Unsupported,
 		PackageSubType: "Illustrator",
 		Icon:           icon.AdobeIllustrator,
 	},
-	file.AFNI: {
+	fileInfo.AFNI: {
 		PackageType:    Unsupported,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.AFNIBRIK: {
+	fileInfo.AFNIBRIK: {
 		PackageType:    Unsupported,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.Ansys: {
+	fileInfo.Ansys: {
 		PackageType:    Unsupported,
 		PackageSubType: "Ansys",
 		Icon:           icon.Code,
 	},
-	file.BAM: {
+	fileInfo.BAM: {
 		PackageType:    Unsupported,
 		PackageSubType: "Genomics",
 		Icon:           icon.Genomics,
 	},
-	file.CRAM: {
+	fileInfo.CRAM: {
 		PackageType:    Unsupported,
 		PackageSubType: "Genomics",
 		Icon:           icon.Genomics,
 	},
-	file.BIODAC: {
+	fileInfo.BIODAC: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.BioPAC: {
+	fileInfo.BioPAC: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.COMSOL: {
+	fileInfo.COMSOL: {
 		PackageType:    Unsupported,
 		PackageSubType: "Model",
 		Icon:           icon.Model,
 	},
-	file.CPlusPlus: {
+	fileInfo.CPlusPlus: {
 		PackageType:    Unsupported,
 		PackageSubType: "C++",
 		Icon:           icon.Code,
 	},
-	file.CSharp: {
+	fileInfo.CSharp: {
 		PackageType:    Unsupported,
 		PackageSubType: "C#",
 		Icon:           icon.Code,
 	},
-	file.Data: {
+	fileInfo.Data: {
 		PackageType:    Unsupported,
 		PackageSubType: "generic",
 		Icon:           icon.GenericData,
 	},
-	file.Docker: {
+	fileInfo.Docker: {
 		PackageType:    Unsupported,
 		PackageSubType: "Docker",
 		Icon:           icon.Docker,
 	},
-	file.EPS: {
+	fileInfo.EPS: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Image,
 	},
-	file.FCS: {
+	fileInfo.FCS: {
 		PackageType:    Unsupported,
 		PackageSubType: "Flow",
 		Icon:           icon.Flow,
 	},
-	file.FASTA: {
+	fileInfo.FASTA: {
 		PackageType:    Unsupported,
 		PackageSubType: "Tabular",
 		Icon:           icon.Genomics,
 	},
-	file.FASTQ: {
+	fileInfo.FASTQ: {
 		PackageType:    Unsupported,
 		PackageSubType: "Tabular",
 		Icon:           icon.Genomics,
 	},
-	file.FreesurferSurface: {
+	fileInfo.FreesurferSurface: {
 		PackageType:    Unsupported,
 		PackageSubType: "3D Image",
 		Icon:           icon.ClinicalImageBrain,
 	},
-	file.HDF: {
+	fileInfo.HDF: {
 		PackageType:    Unsupported,
 		PackageSubType: "Data Container",
 		Icon:           icon.HDF,
 	},
-	file.HTML: {
+	fileInfo.HTML: {
 		PackageType:    Unsupported,
 		PackageSubType: "HTML",
 		Icon:           icon.Code,
 	},
-	file.Imaris: {
+	fileInfo.Imaris: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.Intan: {
+	fileInfo.Intan: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.IVCurveData: {
+	fileInfo.IVCurveData: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.JAVA: {
+	fileInfo.JAVA: {
 		PackageType:    Unsupported,
 		PackageSubType: "JAVA",
 		Icon:           icon.Code,
 	},
-	file.Javascript: {
+	fileInfo.Javascript: {
 		PackageType:    Unsupported,
 		PackageSubType: "Javascript",
 		Icon:           icon.Code,
 	},
-	file.Json: {
+	fileInfo.Json: {
 		PackageType:    Unsupported,
 		PackageSubType: "JSON",
 		Icon:           icon.JSON,
 	},
-	file.Jupyter: {
+	fileInfo.Jupyter: {
 		PackageType:    Unsupported,
 		PackageSubType: "Notebook",
 		Icon:           icon.Notebook,
 	},
-	file.LabChart: {
+	fileInfo.LabChart: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Leica: {
+	fileInfo.Leica: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.MATLAB: {
+	fileInfo.MATLAB: {
 		PackageType:    HDF5,
 		PackageSubType: "Data Container",
 		Icon:           icon.Matlab,
 	},
-	file.MatlabFigure: {
+	fileInfo.MatlabFigure: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Matlab,
 	},
-	file.Markdown: {
+	fileInfo.Markdown: {
 		PackageType:    Unsupported,
 		PackageSubType: "Markdown",
 		Icon:           icon.Code,
 	},
-	file.Minitab: {
+	fileInfo.Minitab: {
 		PackageType:    Unsupported,
 		PackageSubType: "Generic",
 		Icon:           icon.GenericData,
 	},
-	file.Neuralynx: {
+	fileInfo.Neuralynx: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.NeuroDataWithoutBorders: {
+	fileInfo.NeuroDataWithoutBorders: {
 		PackageType:    HDF5,
 		PackageSubType: "Data Container",
 		Icon:           icon.NWB,
 	},
-	file.Neuron: {
+	fileInfo.Neuron: {
 		PackageType:    Unsupported,
 		PackageSubType: "Code",
 		Icon:           icon.Code,
 	},
-	file.NihonKoden: {
+	fileInfo.NihonKoden: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Nikon: {
+	fileInfo.Nikon: {
 		PackageType:    Unsupported,
 		PackageSubType: "Image",
 		Icon:           icon.Microscope,
 	},
-	file.PatchMaster: {
+	fileInfo.PatchMaster: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.PClamp: {
+	fileInfo.PClamp: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.Plexon: {
+	fileInfo.Plexon: {
 		PackageType:    Unsupported,
 		PackageSubType: "Timeseries",
 		Icon:           icon.Timeseries,
 	},
-	file.PowerPoint: {
+	fileInfo.PowerPoint: {
 		PackageType:    Unsupported,
 		PackageSubType: "MS Powerpoint",
 		Icon:           icon.PowerPoint,
 	},
-	file.Python: {
+	fileInfo.Python: {
 		PackageType:    Unsupported,
 		PackageSubType: "Python",
 		Icon:           icon.Code,
 	},
-	file.R: {
+	fileInfo.R: {
 		PackageType:    Unsupported,
 		PackageSubType: "R",
 		Icon:           icon.Code,
 	},
-	file.RData: {
+	fileInfo.RData: {
 		PackageType:    Unsupported,
 		PackageSubType: "Data Container",
 		Icon:           icon.RData,
 	},
-	file.Shell: {
+	fileInfo.Shell: {
 		PackageType:    Unsupported,
 		PackageSubType: "Shell",
 		Icon:           icon.Code,
 	},
-	file.SolidWorks: {
+	fileInfo.SolidWorks: {
 		PackageType:    Unsupported,
 		PackageSubType: "Model",
 		Icon:           icon.Model,
 	},
-	file.VariantData: {
+	fileInfo.VariantData: {
 		PackageType:    Unsupported,
 		PackageSubType: "Tabular",
 		Icon:           icon.GenomicsVariant,
 	},
-	file.XML: {
+	fileInfo.XML: {
 		PackageType:    Unsupported,
 		PackageSubType: "XML",
 		Icon:           icon.XML,
 	},
-	file.YAML: {
+	fileInfo.YAML: {
 		PackageType:    Unsupported,
 		PackageSubType: "YAML",
 		Icon:           icon.Code,
 	},
-	file.ZIP: {
+	fileInfo.ZIP: {
 		PackageType:    ZIP,
 		PackageSubType: "ZIP",
 		Icon:           icon.Zip,
 	},
-	file.HDF5: {
+	fileInfo.HDF5: {
 		PackageType:    HDF5,
 		PackageSubType: "Data Container",
 		Icon:           icon.HDF,
 	},
-	file.Unknown: {
+	fileInfo.Unknown: {
 		PackageType:    Unknown,
 		PackageSubType: "Generic",
 		Icon:           icon.Generic,

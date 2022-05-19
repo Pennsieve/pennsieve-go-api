@@ -1,4 +1,4 @@
-package pennsieveFile
+package fileInfo
 
 // FileType is an enum indicating the type of the File
 type Type int64
