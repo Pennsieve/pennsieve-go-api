@@ -12,9 +12,11 @@ import (
 
 var DB *sql.DB
 
-// connectRDS returns a DB instance. We are using IAM roles to grant Lambda with access to the RDS Proxy
-// and subsequently the database.
-func ConnectRDS() (*sql.DB, error) {
+// ConnectRDS returns a DB instance.
+// The Lambda function leverages IAM roles to gain access to the DB Proxy.
+// The function does NOT set the search_path to the organization schema as multiple
+// concurrent upload session can be handled across multiple organizations.
+func ConnectRDS(organizationId int) (*sql.DB, error) {
 
 	var dbName string = "pennsieve_postgres"
 	var dbUser string = "dev_rds_proxy_user"

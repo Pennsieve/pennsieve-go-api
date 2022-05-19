@@ -1,15 +1,22 @@
-package models
+package pkg
 
 import (
 	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
-	"github.com/pennsieve/pennsieve-go-api/models/icon"
-	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/pkg/fileInfo"
+	"github.com/pennsieve/pennsieve-go-api/pkg/icon"
+	"github.com/pennsieve/pennsieve-go-api/pkg/packageInfo"
 	"log"
 	"regexp"
 	"strings"
 )
+
+type FolderUpload struct {
+	Id       string
+	Name     string
+	ParentId string
+	depth    int
+}
 
 // Uploadfile is the parsed and cleaned representation of the SQS S3 Put Event
 type UploadFile struct {

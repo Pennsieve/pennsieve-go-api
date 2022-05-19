@@ -1,4 +1,4 @@
-package models
+package pkg
 
 type FileAttribute struct {
 	Key      string `json:"key"`

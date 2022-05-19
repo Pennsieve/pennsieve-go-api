@@ -1,8 +1,8 @@
 package packageInfo
 
 import (
-	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
-	"github.com/pennsieve/pennsieve-go-api/models/icon"
+	"github.com/pennsieve/pennsieve-go-api/pkg/fileInfo"
+	"github.com/pennsieve/pennsieve-go-api/pkg/icon"
 )
 
 type PackageController struct{}
