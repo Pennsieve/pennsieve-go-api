@@ -3,9 +3,9 @@ package pkg
 import (
 	"encoding/json"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/pennsieve/pennsieve-go-api/pkg/fileInfo"
-	"github.com/pennsieve/pennsieve-go-api/pkg/icon"
-	"github.com/pennsieve/pennsieve-go-api/pkg/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/iconInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"log"
 	"regexp"
 	"strings"
@@ -26,7 +26,7 @@ type UploadFile struct {
 	Extension string           // Extension of file (separated from name)
 	Type      packageInfo.Type // Type of the Package.
 	SubType   string           // SubType of the file
-	Icon      icon.Icon        // Icon for the file
+	Icon      iconInfo.Icon    // Icon for the file
 	Size      int64            // Size of file
 	ETag      string           // ETag provided by S3
 

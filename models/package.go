@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pennsieve/pennsieve-go-api/config"
-	"github.com/pennsieve/pennsieve-go-api/pkg"
-	"github.com/pennsieve/pennsieve-go-api/pkg/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"log"
 	"strconv"
 	"strings"
@@ -14,32 +13,32 @@ import (
 
 // Package is a representation of a container on Pennsieve that contains one or more sourceFiles
 type Package struct {
-	Id           int                 `json:"id"`
-	Name         string              `json:"name"`
-	PackageType  packageInfo.Type    `json:"type"`
-	PackageState packageInfo.State   `json:"state"`
-	NodeId       string              `json:"node_id"`
-	ParentId     int                 `json:"parent_id"`
-	DatasetId    int                 `json:"dataset_id"`
-	OwnerId      int                 `json:"owner_id"`
-	Size         int64               `json:"size"`
-	ImportId     string              `json:"import_id"`
-	Attributes   []pkg.FileAttribute `json:"attributes"`
-	CreatedAt    time.Time           `json:"created_at"`
-	UpdatedAt    time.Time           `json:"updated_at"`
+	Id           int                            `json:"id"`
+	Name         string                         `json:"name"`
+	PackageType  packageInfo.Type               `json:"type"`
+	PackageState packageInfo.State              `json:"state"`
+	NodeId       string                         `json:"node_id"`
+	ParentId     int                            `json:"parent_id"`
+	DatasetId    int                            `json:"dataset_id"`
+	OwnerId      int                            `json:"owner_id"`
+	Size         int64                          `json:"size"`
+	ImportId     string                         `json:"import_id"`
+	Attributes   []packageInfo.PackageAttribute `json:"attributes"`
+	CreatedAt    time.Time                      `json:"created_at"`
+	UpdatedAt    time.Time                      `json:"updated_at"`
 }
 
 type PackageParams struct {
-	Name         string              `json:"name"`
-	PackageType  packageInfo.Type    `json:"type"`
-	PackageState packageInfo.State   `json:"state"`
-	NodeId       string              `json:"node_id"`
-	ParentId     int                 `json:"parent_id"`
-	DatasetId    int                 `json:"dataset_id"`
-	OwnerId      int                 `json:"owner_id"`
-	Size         int64               `json:"size"`
-	ImportId     string              `json:"import_id"`
-	Attributes   []pkg.FileAttribute `json:"attributes"`
+	Name         string                         `json:"name"`
+	PackageType  packageInfo.Type               `json:"type"`
+	PackageState packageInfo.State              `json:"state"`
+	NodeId       string                         `json:"node_id"`
+	ParentId     int                            `json:"parent_id"`
+	DatasetId    int                            `json:"dataset_id"`
+	OwnerId      int                            `json:"owner_id"`
+	Size         int64                          `json:"size"`
+	ImportId     string                         `json:"import_id"`
+	Attributes   []packageInfo.PackageAttribute `json:"attributes"`
 }
 
 // getSchemaTable returns a string with the table name prepended with the schema name.

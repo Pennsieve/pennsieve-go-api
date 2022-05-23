@@ -1,4 +1,4 @@
-package icon
+package iconInfo
 
 type Icon int64
 

@@ -1,6 +1,6 @@
-package pkg
+package packageInfo
 
-type FileAttribute struct {
+type PackageAttribute struct {
 	Key      string `json:"key"`
 	Fixed    bool   `json:"fixed"`
 	Value    string `json:"value"`
