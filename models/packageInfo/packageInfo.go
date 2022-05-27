@@ -1,6 +1,7 @@
 package packageInfo
 
 import (
+	"database/sql/driver"
 	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/iconInfo"
 )
@@ -42,6 +43,31 @@ func (s State) String() string {
 	}
 	return "UNKNOWN"
 }
+
+func (s State) DBMap(value string) State {
+	switch value {
+	case "UNAVAILABLE":
+		return Unavailable
+	case "UPLOADED":
+		return Uploaded
+	case "DELETING":
+		return Deleting
+	case "INFECTED":
+		return Infected
+	case "UPLOAD_FAILED":
+		return UploadFailed
+	case "PROCESSING":
+		return Processing
+	case "READY":
+		return Ready
+	case "PROCESSING_FAILED":
+		return ProcessingFailed
+	}
+	return Unavailable
+}
+
+func (u *State) Scan(value interface{}) error { *u = u.DBMap(value.(string)); return nil }
+func (u State) Value() (driver.Value, error)  { return u.String(), nil }
 
 // PackageType is an enum indicating the type of the Package
 type Type int64
@@ -102,6 +128,47 @@ func (s Type) String() string {
 	}
 	return "Unknown"
 }
+
+func (s Type) DBMap(value string) Type {
+	switch value {
+	case "Image":
+		return Image
+	case "MRI":
+		return MRI
+	case "Slide":
+		return Slide
+	case "ExternalFile":
+		return ExternalFile
+	case "MSWord":
+		return MSWord
+	case "PDF":
+		return PDF
+	case "CSV":
+		return CSV
+	case "Tabular":
+		return Tabular
+	case "TimeSeries":
+		return TimeSeries
+	case "Video":
+		return Video
+	case "Unknown":
+		return Unknown
+	case "Collection":
+		return Collection
+	case "Text":
+		return Text
+	case "Unsupported":
+		return Unsupported
+	case "HDF5":
+		return HDF5
+	case "ZIP":
+		return ZIP
+	}
+	return Unknown
+}
+
+func (u *Type) Scan(value interface{}) error { *u = u.DBMap(value.(string)); return nil }
+func (u Type) Value() (driver.Value, error)  { return u.String(), nil }
 
 type FileTypeInfo struct {
 	PackageType    Type
