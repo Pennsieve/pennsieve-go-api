@@ -11,3 +11,7 @@ type PackageController struct{}
 //	//}
 //
 //}
+
+type Container struct {
+	organizationId int
+}

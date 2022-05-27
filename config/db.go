@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
+	"log"
 
 	_ "github.com/lib/pq"
 )
 
-var DB *sql.DB
+//var DB *sql.DB
 
 // ConnectRDS returns a DB instance.
 // The Lambda function leverages IAM roles to gain access to the DB Proxy.
@@ -50,7 +51,16 @@ func ConnectRDS(organizationId int) (*sql.DB, error) {
 		panic(err)
 	}
 
-	DB = db
+	// Set Search Path to organization
+	_, err = db.Exec(fmt.Sprintf("SET search_path = \"%d\";", organizationId))
+	if err != nil {
+		log.Println(fmt.Sprintf("Unable to set search_path to %d.", organizationId))
+		err := db.Close()
+		if err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
 
 	return db, err
 }

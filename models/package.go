@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/pennsieve/pennsieve-go-api/config"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -42,20 +40,23 @@ type PackageParams struct {
 	Attributes   []packageInfo.PackageAttribute `json:"attributes"`
 }
 
+// PackageMap maps path to models.Package
+type PackageMap = map[string]Package
+
 // getSchemaTable returns a string with the table name prepended with the schema name.
-func (*Package) getSchemaTable(organizationId int) string {
-	return "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".packages"
-}
+//func (*Package) getSchemaTable(organizationId int) string {
+//	return "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".packages"
+//}
 
 // Add adds multiple packages to the Pennsieve Postgres DB
-func (p *Package) Add(organizationId int, records []PackageParams) ([]Package, error) {
+func (p *Package) Add(db *sql.DB, organizationId int, records []PackageParams) ([]Package, error) {
 
 	currentTime := time.Now()
 	var vals []interface{}
 	var inserts []string
 
-	sqlInsert := fmt.Sprintf("INSERT INTO %s(name, type, state, node_id, parent_id, dataset_id, owner_id, "+
-		"size, import_id, attributes, created_at, updated_at) VALUES ", p.getSchemaTable(organizationId))
+	sqlInsert := "INSERT INTO packages(name, type, state, node_id, parent_id, " +
+		"dataset_id, owner_id, size, import_id, attributes, created_at, updated_at) VALUES "
 
 	for index, row := range records {
 		inserts = append(inserts, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
@@ -98,7 +99,7 @@ func (p *Package) Add(organizationId int, records []PackageParams) ([]Package, e
 	sqlInsert = sqlInsert + strings.Join(inserts, ",") + fmt.Sprintf("RETURNING %s;", returnRows)
 
 	//prepare the statement
-	stmt, err := config.DB.Prepare(sqlInsert)
+	stmt, err := db.Prepare(sqlInsert)
 	if err != nil {
 		log.Fatalln("ERROR: ", err)
 	}
@@ -139,7 +140,7 @@ func (p *Package) Add(organizationId int, records []PackageParams) ([]Package, e
 }
 
 // Children returns an array of Packages that have a specific parent package or root.
-func (p *Package) Children(organizationId int, parent *Package, datasetId int, onlyFolders bool) ([]Package, error) {
+func (p *Package) Children(db *sql.DB, organizationId int, parent *Package, datasetId int, onlyFolders bool) ([]Package, error) {
 
 	folderFilter := ""
 	if onlyFolders {
@@ -151,19 +152,19 @@ func (p *Package) Children(organizationId int, parent *Package, datasetId int, o
 	queryRows := "id, name, type, state, node_id, parent_id, " +
 		"dataset_id, owner_id, size, created_at, updated_at"
 
-	queryStr := fmt.Sprintf("SELECT %s FROM %s WHERE dataset_id = %d AND parent_id = %d AND state != '%s' %s;",
-		queryRows, p.getSchemaTable(organizationId), datasetId, parent.Id, packageInfo.Deleting.String(), folderFilter)
+	queryStr := fmt.Sprintf("SELECT %s FROM packages WHERE dataset_id = %d AND parent_id = %d AND state != '%s' %s;",
+		queryRows, datasetId, parent.Id, packageInfo.Deleting.String(), folderFilter)
 
 	// If parent is empty => return children of root of dataset.
 	if parent.NodeId == "" {
 		fmt.Println("Getting ROOT FOLDERS FOR", parent.Name)
-		queryStr = fmt.Sprintf("SELECT %s FROM %s WHERE dataset_id = %d AND parent_id IS NULL AND state != '%s' %s;",
-			queryRows, p.getSchemaTable(organizationId), datasetId, packageInfo.Deleting.String(), folderFilter)
+		queryStr = fmt.Sprintf("SELECT %s FROM packages WHERE dataset_id = %d AND parent_id IS NULL AND state != '%s' %s;",
+			queryRows, datasetId, packageInfo.Deleting.String(), folderFilter)
 	}
 
 	log.Println(queryStr)
 
-	rows, err := config.DB.Query(queryStr)
+	rows, err := db.Query(queryStr)
 	var allPackages []Package
 	if err != nil {
 		log.Fatalln("ERROR: ", err)

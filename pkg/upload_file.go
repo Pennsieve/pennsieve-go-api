@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/pennsieve/pennsieve-go-api/models"
+	"github.com/google/uuid"
 	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/iconInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
@@ -13,17 +13,6 @@ import (
 	"sort"
 	"strings"
 )
-
-// UploadFolder represents a folder that is part of an upload session.
-type UploadFolder struct {
-	Id           int64           // Id of the folder
-	NodeId       string          // NodeId of the folder
-	Name         string          // Name of the folder
-	ParentId     int64           // Id of the parent (-1 for root)
-	ParentNodeId string          // NodeId for the parent ("" for root)
-	Depth        int             // Depth of folder in relation to root
-	Children     []*UploadFolder // Children contains folders that need to be created that have current folder as parent.
-}
 
 // UploadFile is the parsed and cleaned representation of the SQS S3 Put Event
 type UploadFile struct {
@@ -38,9 +27,6 @@ type UploadFile struct {
 	ETag      string           // ETag provided by S3
 
 }
-
-type UploadFolderMap = map[string]*UploadFolder //Maps path to UploadFolder
-type PackageMap = map[string]models.Package     // Maps path to models.Package
 
 // String returns a json representation of the UploadFile object
 func (f *UploadFile) String() string {
@@ -95,7 +81,16 @@ func (f *UploadFile) FromS3Event(event *events.S3Event) (UploadFile, error) {
 	return result, nil
 }
 
-// getFileInfo updates the UploadFile object and sets the PackageType
+// Sort sorts []UploadFiles by the depth of the folder the file resides in.
+func (f *UploadFile) Sort(files []UploadFile) {
+	sort.Slice(files, func(i, j int) bool {
+		//pathSlices1 := strings.Split(files[i].Path, "/")
+		//pathSlices2 := strings.Split(files[j].Path, "/")
+		return files[i].Path < files[j].Path
+	})
+}
+
+// getFileInfo returns a FileTypeInfo for a particular extension.
 func getFileInfo(extension string) packageInfo.FileTypeInfo {
 
 	fileType, exists := fileInfo.FileExtensionDict[extension]
@@ -112,77 +107,85 @@ func getFileInfo(extension string) packageInfo.FileTypeInfo {
 	return packageType
 }
 
-// GetCreateUploadFolders creates new folders in the database.
-// It updates UploadFolders with real folder ID for folders that already exist.
-// Assumes map keys are absolute paths in the dataset
-func GetCreateUploadFolders(organizationId int, datasetId int, ownerId int, folders UploadFolderMap) PackageMap {
+// GetUploadFolderMap returns an object that maps path name to Folder object.
+func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder string) UploadFolderMap {
 
-	// Create map to map parentID to array of children
+	// Mapping path from targetFolder to UploadFolder Object
+	var folderNameMap = map[string]*UploadFolder{}
 
-	// Get Root Folders
-	p := models.Package{}
-	rootChildren, _ := p.Children(organizationId, &p, datasetId, true)
+	// Iterate over the files and create the UploadFolder objects.
+	for index, f := range sortedFiles {
 
-	// Map NodeId to Packages for folders that exist in DB
-	existingFolders := PackageMap{}
-	for _, k := range rootChildren {
-		existingFolders[k.Name] = k
-	}
+		if f.Path == "" {
+			continue
+		}
 
-	// Sort the keys of the map so we can iterate over the sorted map
-	pathKeys := make([]string, 0)
-	for k, _ := range folders {
-		pathKeys = append(pathKeys, k)
-	}
-	sort.Strings(pathKeys)
+		fmt.Printf("File index: %d, File Path: %s\n ", index, f.Path)
 
-	// Iterate over the sorted map
-	for _, path := range pathKeys {
+		// Prepend the target-Folder if it exists
+		p := f.Path
+		if targetFolder != "" {
+			p = strings.Join(
+				[]string{
+					targetFolder, p,
+				}, "/")
+		}
 
-		if folder, ok := existingFolders[path]; ok {
+		// Iterate over path segments in a single file and identify folders.
+		pathSegments := strings.Split(p, "/")
+		absoluteSegment := "" // Current location in the path walker for current file.
+		currentNodeId := ""
+		currentFolderPath := ""
+		for depth, segment := range pathSegments {
 
-			// Use existing folder
-			folders[path].NodeId = folder.NodeId
-			folders[path].Id = folder.Id
+			fmt.Printf("Depth: %d, segment: %s, abs_segment: %s\n", depth, segment, absoluteSegment)
 
-			// Iterate over map and update values that have identified current folder as parent.
-			for _, childFolder := range folders[path].Children {
-				childFolder.ParentId = folder.Id
-				childFolder.ParentNodeId = folder.NodeId
+			parentNodeId := currentNodeId
+			parentFolderPath := currentFolderPath
+
+			// If depth > 0 ==> prepend the previous absoluteSegment to the current path name.
+			if depth > 0 {
+				absoluteSegment = strings.Join(
+					[]string{
+
+						absoluteSegment,
+						segment,
+					}, "/")
+			} else {
+				absoluteSegment = segment
 			}
 
-			// Add children of current folder to existing folders
-			children, _ := p.Children(organizationId, &folder, datasetId, true)
-			for _, k := range children {
-				p := fmt.Sprintf("%s/%s", path, k.Name)
-				existingFolders[p] = k
+			// If folder already exists in map, add current folder as a child to the parent
+			// folder (which will exist too at this point). If not, create new folder to the map and add to parent folder.
+
+			folder, ok := folderNameMap[absoluteSegment]
+			if ok {
+				currentNodeId = folder.NodeId
+				currentFolderPath = absoluteSegment
+
+			} else {
+				currentNodeId = fmt.Sprintf("N:collection:%s", uuid.New().String())
+				currentFolderPath = absoluteSegment
+
+				folder = &UploadFolder{
+					NodeId:       currentNodeId,
+					Name:         segment,
+					ParentNodeId: parentNodeId,
+					ParentId:     -1,
+					Depth:        depth,
+				}
+				folderNameMap[absoluteSegment] = folder
+
+				fmt.Printf("Create Folder: %s with Name: %s\n", absoluteSegment, folder.Name)
 			}
 
-		} else {
-			// Create folder
-			pkgParams := models.PackageParams{
-				Name:         folders[path].Name,
-				PackageType:  packageInfo.Collection,
-				PackageState: packageInfo.Ready,
-				NodeId:       folders[path].NodeId,
-				ParentId:     folders[path].ParentId,
-				DatasetId:    datasetId,
-				OwnerId:      ownerId,
-				Size:         0,
-				Attributes:   nil,
+			// Add current segment to parent if exist
+			if parentFolderPath != "" {
+				folderNameMap[parentFolderPath].Children = append(folderNameMap[parentFolderPath].Children, folder)
 			}
 
-			result, _ := p.Add(organizationId, []models.PackageParams{pkgParams})
-			folders[path].Id = result[0].Id
-			existingFolders[path] = result[0]
-
-			for _, childFolder := range folders[path].Children {
-				childFolder.ParentId = result[0].Id
-				childFolder.ParentNodeId = result[0].NodeId
-			}
 		}
 	}
 
-	return existingFolders
-
+	return folderNameMap
 }

@@ -1,9 +1,8 @@
 package models
 
 import (
-	"github.com/pennsieve/pennsieve-go-api/config"
+	"database/sql"
 	"log"
-	"strconv"
 )
 
 type Dataset struct {
@@ -12,15 +11,15 @@ type Dataset struct {
 }
 
 // getSchemaTable returns a string with the table name prepended with the schema name.
-func (*Dataset) getSchemaTable(organizationId int) string {
-	return "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".datasets"
-}
+//func (*Dataset) getSchemaTable(organizationId int) string {
+//	return "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".datasets"
+//}
 
 // GetAll returns all rows in the Upload Record Table
-func (d *Dataset) GetAll(organizationId int) ([]Dataset, error) {
-	queryStr := "SELECT (name, state) FROM " + d.getSchemaTable(organizationId)
+func (d *Dataset) GetAll(db *sql.DB, organizationId int) ([]Dataset, error) {
+	queryStr := "SELECT (name, state) FROM datasets"
 
-	rows, err := config.DB.Query(queryStr)
+	rows, err := db.Query(queryStr)
 	var allDatasets []Dataset
 	if err == nil {
 		for rows.Next() {
