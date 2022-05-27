@@ -14,14 +14,6 @@ import (
 	"strings"
 )
 
-type FolderExists int64
-
-const (
-	UNKNOWN FolderExists = iota
-	EXISTS
-	NEW
-)
-
 // UploadFolder represents a folder that is part of an upload session.
 type UploadFolder struct {
 	Id           int64           // Id of the folder
@@ -30,7 +22,6 @@ type UploadFolder struct {
 	ParentId     int64           // Id of the parent (-1 for root)
 	ParentNodeId string          // NodeId for the parent ("" for root)
 	Depth        int             // Depth of folder in relation to root
-	Exists       FolderExists    // Exists indicates if folder exist in db
 	Children     []*UploadFolder // Children contains folders that need to be created that have current folder as parent.
 }
 
@@ -153,7 +144,6 @@ func GetCreateUploadFolders(organizationId int, datasetId int, ownerId int, fold
 			// Use existing folder
 			folders[path].NodeId = folder.NodeId
 			folders[path].Id = folder.Id
-			folders[path].Exists = EXISTS
 
 			// Iterate over map and update values that have identified current folder as parent.
 			for _, childFolder := range folders[path].Children {
@@ -186,7 +176,6 @@ func GetCreateUploadFolders(organizationId int, datasetId int, ownerId int, fold
 			folders[path].Id = result[0].Id
 			existingFolders[path] = result[0]
 
-			folders[path].Exists = NEW
 			for _, childFolder := range folders[path].Children {
 				childFolder.ParentId = result[0].Id
 				childFolder.ParentNodeId = result[0].NodeId
