@@ -1,4 +1,4 @@
-package pkg
+package uploadFile
 
 import (
 	"fmt"

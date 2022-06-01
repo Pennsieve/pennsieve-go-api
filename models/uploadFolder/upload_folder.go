@@ -1,4 +1,4 @@
-package pkg
+package uploadFolder
 
 // UploadFolder represents a folder that is part of an upload session.
 type UploadFolder struct {

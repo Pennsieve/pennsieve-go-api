@@ -1,12 +1,17 @@
 package pkg
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	"github.com/google/uuid"
-	"github.com/pennsieve/pennsieve-go-api/config"
+	_ "github.com/lib/pq"
 	"github.com/pennsieve/pennsieve-go-api/models"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/uploadFile"
+	"github.com/pennsieve/pennsieve-go-api/models/uploadFolder"
 	"log"
 	"sort"
 )
@@ -31,26 +36,32 @@ func (s *UploadSession) Close() {
 }
 
 // CreateUploadSession returns an authenticated object based on the uploadSession UUID
-func CreateUploadSession(uploadSessionId string) UploadSession {
+func (*UploadSession) CreateUploadSession(uploadSessionId string) (*UploadSession, error) {
 
 	//TODO: Replace by checking DB
 	// This function should check and validate 'credentials' based on the uploadSessionID
 	// The methods associated with type UploadSession can then safely interact with the DB.
 
 	organizationId := 19
-	db, _ := config.ConnectRDS(organizationId)
-	return UploadSession{
+
+	s := UploadSession{
 		organizationId: organizationId, // Pennsieve Test
 		datasetId:      1682,           // Test Upload
 		ownerId:        24,             // Joost
-		db:             db,
 	}
+
+	db, err := s.connectRDS()
+	s.db = db
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
 }
 
 // GetCreateUploadFolders creates new folders in the database.
 // It updates UploadFolders with real folder ID for folders that already exist.
 // Assumes map keys are absolute paths in the dataset
-func (s *UploadSession) GetCreateUploadFolders(folders UploadFolderMap) models.PackageMap {
+func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolderMap) models.PackageMap {
 
 	// Create map to map parentID to array of children
 
@@ -123,7 +134,7 @@ func (s *UploadSession) GetCreateUploadFolders(folders UploadFolderMap) models.P
 }
 
 // GetPackageParams returns an array of PackageParams to insert in the Packages Table.
-func (s *UploadSession) GetPackageParams(uploadFiles []UploadFile, packageMap models.PackageMap) ([]models.PackageParams, error) {
+func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, packageMap models.PackageMap) ([]models.PackageParams, error) {
 	var pkgParams []models.PackageParams
 
 	for _, file := range uploadFiles {
@@ -185,11 +196,11 @@ func (s *UploadSession) GetPackageParams(uploadFiles []UploadFile, packageMap mo
 
 // ImportFiles is the wrapper function to import files from a single upload-session.
 // A single upload session implies that all files belong to the same organization, dataset and owner.
-func (s *UploadSession) ImportFiles(files []UploadFile) {
+func (s *UploadSession) ImportFiles(files []uploadFile.UploadFile) {
 
 	// Sort files by the length of their path
 	// First element closest to root.
-	var f UploadFile
+	var f uploadFile.UploadFile
 	f.Sort(files)
 
 	// Iterate over files and return map of folders and subfolders
@@ -204,4 +215,56 @@ func (s *UploadSession) ImportFiles(files []UploadFile) {
 	var packageTable models.Package
 	packageTable.Add(s.db, s.organizationId, pkgParams)
 
+}
+
+// connectRDS returns a DB instance.
+// The Lambda function leverages IAM roles to gain access to the DB Proxy.
+// The function does NOT set the search_path to the organization schema as multiple
+// concurrent upload session can be handled across multiple organizations.
+func (s *UploadSession) connectRDS() (*sql.DB, error) {
+
+	var dbName string = "pennsieve_postgres"
+	var dbUser string = "dev_rds_proxy_user"
+	var dbHost string = "dev-pennsieve-postgres-use1-proxy.proxy-ctkakwd4msv8.us-east-1.rds.amazonaws.com"
+	var dbPort int = 5432
+	var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
+	var region string = "us-east-1"
+
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		panic("configuration error: " + err.Error())
+	}
+
+	authenticationToken, err := auth.BuildAuthToken(
+		context.TODO(), dbEndpoint, region, dbUser, cfg.Credentials)
+	if err != nil {
+		panic("failed to create authentication token: " + err.Error())
+	}
+
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
+		dbHost, dbPort, dbUser, authenticationToken, dbName,
+	)
+
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		panic(err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		panic(err)
+	}
+
+	// Set Search Path to organization
+	_, err = db.Exec(fmt.Sprintf("SET search_path = \"%d\";", s.organizationId))
+	if err != nil {
+		log.Println(fmt.Sprintf("Unable to set search_path to %d.", s.organizationId))
+		err := db.Close()
+		if err != nil {
+			return nil, err
+		}
+		return nil, err
+	}
+
+	return db, err
 }

@@ -1,4 +1,4 @@
-package pkg
+package uploadFile
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/models/fileInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/iconInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/uploadFolder"
 	"log"
 	"regexp"
 	"sort"
@@ -108,10 +109,10 @@ func getFileInfo(extension string) packageInfo.FileTypeInfo {
 }
 
 // GetUploadFolderMap returns an object that maps path name to Folder object.
-func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder string) UploadFolderMap {
+func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder string) uploadFolder.UploadFolderMap {
 
 	// Mapping path from targetFolder to UploadFolder Object
-	var folderNameMap = map[string]*UploadFolder{}
+	var folderNameMap = map[string]*uploadFolder.UploadFolder{}
 
 	// Iterate over the files and create the UploadFolder objects.
 	for index, f := range sortedFiles {
@@ -167,7 +168,7 @@ func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder s
 				currentNodeId = fmt.Sprintf("N:collection:%s", uuid.New().String())
 				currentFolderPath = absoluteSegment
 
-				folder = &UploadFolder{
+				folder = &uploadFolder.UploadFolder{
 					NodeId:       currentNodeId,
 					Name:         segment,
 					ParentNodeId: parentNodeId,
