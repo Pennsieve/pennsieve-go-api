@@ -12,12 +12,20 @@ variable "domain_name" {}
 
 variable "pennsieve_postgres_host" {}
 
-variable "pool_endpoint" {
+variable "user_pool_endpoint" {
   default = "cognito-idp.us-east-1.amazonaws.com/us-east-1_FVLhJ7CQA"
 }
 
 variable "user_pool_2_client_id" {
   default = "703lm5d8odccu21pagcfjkeaea"
+}
+
+variable "token_pool_endpoint" {
+  default = "cognito-idp.us-east-1.amazonaws.com/us-east-1_uCQXlh5nG"
+}
+
+variable "token_pool_client_id" {
+  default = "p18fdvhilhj2tg5sahtcsh6m6"
 }
 
 locals {
