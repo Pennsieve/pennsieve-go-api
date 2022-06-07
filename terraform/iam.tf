@@ -83,20 +83,10 @@ resource "aws_iam_policy" "authorizer_lambda_iam_policy" {
 data "aws_iam_policy_document" "authorizer_lambda_iam_policy_document" {
 
   statement {
-
-    actions = [
-      "rds-db:connect"
-    ]
-
-    resources = [
-      data.terraform_remote_state.pennsieve_postgres.outputs.rds_proxy_endpoint_arn
-    ]
-  }
-
-  statement {
     sid    = "UploadLambdaPermissions"
     effect = "Allow"
     actions = [
+      "rds-db:connect",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutDestination",
