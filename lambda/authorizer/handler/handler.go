@@ -2,12 +2,13 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/models"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"os"
 	"time"
@@ -60,7 +61,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	token, err := jwt.Parse(jwtB64, jwt.WithKeySet(keySet))
 	if err != nil {
 		fmt.Printf("Failed to parse the JWT.\nError:%s\n\n", err.Error())
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("INVALID_API_KEY")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
 	issuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
@@ -74,18 +75,18 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	clientIdClaim, hasKey := token.Get("client_id")
 	if hasKey != true || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
 		fmt.Println("Audience in token does not match.")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
 	if token.Expiration().Unix() < time.Now().Unix() {
 		fmt.Println("Token expired.")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
 	tokenUseClaim, hasKey := token.Get("token_use")
-	if hasKey != true || tokenUseClaim != "accjhess" {
+	if hasKey != true || tokenUseClaim != "access" {
 		fmt.Println("Incorrect TokenUse Claim")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
 	/*
@@ -94,9 +95,23 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	log.Println("The token is valid.")
 
-	str, _ := json.Marshal(event)
-	str2 := string(str)
-	fmt.Println(str2)
+	db, err := core.ConnectRDS()
+	defer db.Close()
+
+	cognitoUserName, hasKey := token.Get("username")
+	if hasKey != true {
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
+	}
+
+	fmt.Println("Cognito-user: ", cognitoUserName.(string))
+	var user models.User
+	currentUser, err := user.GetByCognitoId(db, cognitoUserName.(string))
+	if err != nil {
+		log.Fatalln("Unable to get user:", err)
+	}
+
+	fmt.Println("GETTING USER")
+	fmt.Println(currentUser)
 
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 		IsAuthorized: true,
