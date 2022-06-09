@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
@@ -79,11 +80,13 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
-	// Get Pennsieve User
-	var user dbTable.User
-	currentUser, err := user.GetByCognitoId(db, cognitoUserName.(string))
+	// Get Pennsieve User from User Table, or Token Table
+	clientIdClaim, _ := token.Get("client_id") // Key is present or method would have returned before.
+	isFromTokenPool := clientIdClaim == tokenClientID
+
+	currentUser, err := getUser(db, cognitoUserName.(string), isFromTokenPool)
 	if err != nil {
-		log.Fatalln("Unable to get user:", err)
+		log.Fatalln("Unable to get User from Cognito Username")
 	}
 
 	// Get Active Org
@@ -123,6 +126,29 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		IsAuthorized: true,
 		Context:      claims,
 	}, nil
+
+}
+
+// getUser returns a Pennsieve user from a cognito ID.
+func getUser(db *sql.DB, cognitoId string, isFromTokenPool bool) (*dbTable.User, error) {
+
+	if isFromTokenPool {
+		fmt.Println("Getting User from Token Pool")
+		var token dbTable.Token
+		currentUser, err := token.GetUserByCognitoId(db, cognitoId)
+		if err != nil {
+			log.Fatalln("Unable to get user:", err)
+		}
+		return currentUser, nil
+
+	} else {
+		var user dbTable.User
+		currentUser, err := user.GetByCognitoId(db, cognitoId)
+		if err != nil {
+			log.Fatalln("Unable to get user:", err)
+		}
+		return currentUser, nil
+	}
 
 }
 
