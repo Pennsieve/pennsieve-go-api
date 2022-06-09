@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/models/dataset"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/pkg/authorizer"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
@@ -65,7 +66,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Validate and parse token, and return unauthorized if not valid
 	token, err := validateCognitoJWT(jwtB64)
 	if err != nil {
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
 	}
 
 	// Open Pennsieve DB Connection
@@ -78,7 +79,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get Cognito User ID
 	cognitoUserName, hasKey := token.Get("username")
 	if hasKey != true {
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
 	}
 
 	// Get Pennsieve User from User Table, or Token Table
@@ -100,14 +101,26 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	orgClaim, err := authorizer.GetOrganizationClaim(db, currentUser.Id, orgInt)
 	if err != nil {
 		log.Println("Unable to get Organization Role")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized") // Return 401: Unauthenticated
 	}
 
 	// Get DATASET Claim
 	datasetClaim, err := authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
 	if err != nil {
 		log.Println("Unable to get Dataset Role")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil // Return 403: Forbidden
+	}
+
+	// If user has no role on provided dataset --> return
+	if datasetClaim.Role == dataset.None {
+		log.Println("User has no access to dataset")
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil // Return 403: Forbidden
 	}
 
 	// Bundle Claims

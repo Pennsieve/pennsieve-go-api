@@ -9,6 +9,7 @@ resource "aws_lambda_function" "authorizer_lambda" {
   memory_size      = 128
   source_code_hash = data.archive_file.authorizer_lambda_archive.output_base64sha256
   filename         = "${path.module}/../lambda/bin/authorizer_lambda.zip"
+  publish          = false
 
   vpc_config {
     subnet_ids         = tolist(data.terraform_remote_state.vpc.outputs.private_subnet_ids)
@@ -28,8 +29,20 @@ resource "aws_lambda_function" "authorizer_lambda" {
   }
 }
 
+#resource "aws_lambda_provisioned_concurrency_config" "authorizer_lambda" {
+#  function_name                     = aws_lambda_function.authorizer_lambda.function_name
+#  provisioned_concurrent_executions = 2
+#  qualifier                         = aws_lambda_function.authorizer_lambda.version
+#}
+
 data "archive_file" "authorizer_lambda_archive" {
   type        = "zip"
   source_dir  = "${path.module}/../lambda/bin/authorizer"
   output_path = "${path.module}/../lambda/bin/authorizer_lambda.zip"
 }
+
+#resource "aws_lambda_alias" "authorizer_lambda_live" {
+#  name             = "live"
+#  function_name    = aws_lambda_function.authorizer_lambda.function_name
+#  function_version = aws_lambda_function.authorizer_lambda.version
+#}

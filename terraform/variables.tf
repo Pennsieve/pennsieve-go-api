@@ -28,6 +28,10 @@ variable "token_pool_client_id" {
   default = "p18fdvhilhj2tg5sahtcsh6m6"
 }
 
+variable "authorizer_version" {
+  default = 1
+}
+
 locals {
   domain_name = data.terraform_remote_state.account.outputs.domain_name
   hosted_zone = data.terraform_remote_state.account.outputs.public_hosted_zone_id
