@@ -59,6 +59,7 @@ func init() {
 // Handler runs in response to authorization event from the AWS API Gateway.
 func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
 
+	// Get Identity Sources
 	jwtB64 := []byte(event.Headers["authorization"])
 	datasetNodeId, hasKey := event.QueryStringParameters["dataset_id"]
 
@@ -68,6 +69,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
+	// Open Pennsieve DB Connection
 	db, err := core.ConnectRDS()
 	if err != nil {
 		log.Fatalln("Unable to connect to RDS instance.")
@@ -83,7 +85,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get Pennsieve User from User Table, or Token Table
 	clientIdClaim, _ := token.Get("client_id") // Key is present or method would have returned before.
 	isFromTokenPool := clientIdClaim == tokenClientID
-
 	currentUser, err := getUser(db, cognitoUserName.(string), isFromTokenPool)
 	if err != nil {
 		log.Fatalln("Unable to get User from Cognito Username")
@@ -93,21 +94,20 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	orgInt := currentUser.PreferredOrg
 	jwtOrg, hasKey := token.Get("custom:organization_id")
 	if hasKey {
-		fmt.Println("Using Cognito Org ID from JWT")
 		orgInt = jwtOrg.(int64)
 	}
 
 	// Get ORG Claim
 	orgClaim, err := organization.GetOrganizationClaim(db, currentUser.Id, orgInt)
 	if err != nil {
-		fmt.Println("Unable to get Organization Role")
+		log.Println("Unable to get Organization Role")
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
 	// Get DATASET Claim
 	datasetClaim, err := authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
 	if err != nil {
-		fmt.Println("Unable to get Dataset Role")
+		log.Println("Unable to get Dataset Role")
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")
 	}
 
@@ -120,8 +120,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		"dataset_claim":   datasetClaim,
 	}
 
-	fmt.Println(claims)
-
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 		IsAuthorized: true,
 		Context:      claims,
@@ -133,7 +131,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 func getUser(db *sql.DB, cognitoId string, isFromTokenPool bool) (*dbTable.User, error) {
 
 	if isFromTokenPool {
-		fmt.Println("Getting User from Token Pool")
 		var token dbTable.Token
 		currentUser, err := token.GetUserByCognitoId(db, cognitoId)
 		if err != nil {
@@ -158,31 +155,31 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwt.WithKeySet(keySet))
 	if err != nil {
-		fmt.Printf("Failed to parse the JWT.\nError:%s\n\n", err.Error())
+		log.Printf("Failed to parse the JWT.\nError:%s\n\n", err.Error())
 		return nil, errors.New("unauthorized")
 	}
 
 	issuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
 	tokenIssuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, tokenPoolID)
 	if token.Issuer() != issuer && token.Issuer() != tokenIssuer {
-		fmt.Println("Issuer in token does not match.")
+		log.Println("Issuer in token does not match.")
 		return nil, errors.New("AUTHORIZER_FAILURE: Issuer in token does not match Pennsieve token issuers")
 	}
 
 	clientIdClaim, hasKey := token.Get("client_id")
 	if hasKey != true || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
-		fmt.Println("Audience in token does not match.")
+		log.Println("Audience in token does not match.")
 		return nil, errors.New("unauthorized")
 	}
 
 	if token.Expiration().Unix() < time.Now().Unix() {
-		fmt.Println("Token expired.")
+		log.Println("Token expired.")
 		return nil, errors.New("unauthorized")
 	}
 
 	tokenUseClaim, hasKey := token.Get("token_use")
 	if hasKey != true || tokenUseClaim != "access" {
-		fmt.Println("Incorrect TokenUse Claim")
+		log.Println("Incorrect TokenUse Claim")
 		return nil, errors.New("unauthorized")
 	}
 

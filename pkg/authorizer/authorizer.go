@@ -30,8 +30,6 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 	var datasetId int64
 	var maybeDatasetRole sql.NullString
 
-	fmt.Println(datasetQuery)
-
 	row := db.QueryRow(datasetQuery)
 	err := row.Scan(
 		&datasetId,
@@ -40,10 +38,10 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			fmt.Println("No rows were returned!")
+			log.Println("No rows were returned!")
 			return nil, err
 		default:
-			fmt.Println("Uknown Error while scanning dataset table: ", err)
+			log.Println("Uknown Error while scanning dataset table: ", err)
 			panic(err)
 		}
 	}
@@ -74,8 +72,6 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 	// Combine all queries in a single Union.
 	fullQuery := teamQueryStr + " UNION " + userQueryStr + ";"
 
-	fmt.Println(fullQuery)
-
 	rows, err := db.Query(fullQuery)
 	if err != nil {
 		return nil, err
@@ -100,20 +96,18 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 		roles = append(roles, role)
 	}
 
-	fmt.Println(roles)
-
 	// Sort roles by enum value --> first entry is the highest level of permission.
 	sort.Slice(roles, func(i, j int) bool {
 		return roles[i] > roles[j]
 	})
 
+	// return the maximum role that the user has.
 	claim := dataset.Claim{
 		Role:   roles[0],
 		NodeId: datasetNodeId,
 		IntId:  datasetId,
 	}
 
-	// return the maximum role that the user has.
 	return &claim, nil
 
 }

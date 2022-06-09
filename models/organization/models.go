@@ -6,12 +6,14 @@ import (
 	"log"
 )
 
+// Claim combines the role of the user in the org, and the features in the organization.
 type Claim struct {
 	Role            dbTable.DbPermission
 	IntId           int64
 	EnabledFeatures []dbTable.FeatureFlags
 }
 
+// GetOrganizationClaim returns an organization claim for a specific user.
 func GetOrganizationClaim(db *sql.DB, userId int64, organizationId int64) (*Claim, error) {
 
 	var orgUser dbTable.OrganizationUser
