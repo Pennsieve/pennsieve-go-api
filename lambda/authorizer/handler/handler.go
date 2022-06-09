@@ -9,7 +9,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
-	"github.com/pennsieve/pennsieve-go-api/models/organization"
 	"github.com/pennsieve/pennsieve-go-api/pkg/authorizer"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
@@ -98,7 +97,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Get ORG Claim
-	orgClaim, err := organization.GetOrganizationClaim(db, currentUser.Id, orgInt)
+	orgClaim, err := authorizer.GetOrganizationClaim(db, currentUser.Id, orgInt)
 	if err != nil {
 		log.Println("Unable to get Organization Role")
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("unauthorized")

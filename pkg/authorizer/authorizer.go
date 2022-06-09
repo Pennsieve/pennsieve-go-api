@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pennsieve/pennsieve-go-api/models/dataset"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
+	"github.com/pennsieve/pennsieve-go-api/models/organization"
 	"log"
 	"sort"
 )
@@ -109,5 +110,32 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 	}
 
 	return &claim, nil
+
+}
+
+// GetOrganizationClaim returns an organization claim for a specific user.
+func GetOrganizationClaim(db *sql.DB, userId int64, organizationId int64) (*organization.Claim, error) {
+
+	var orgUser dbTable.OrganizationUser
+	currentOrgUser, err := orgUser.GetByUserId(db, userId)
+	if err != nil {
+		log.Println("Unable to check Org User: ", err)
+		return nil, err
+	}
+
+	var orgFeat dbTable.FeatureFlags
+	allFeatures, err := orgFeat.GetAll(db, organizationId)
+	if err != nil {
+		log.Println("Unable to check Feature Flags: ", err)
+		return nil, err
+	}
+
+	orgRole := organization.Claim{
+		Role:            currentOrgUser.DbPermission,
+		IntId:           organizationId,
+		EnabledFeatures: allFeatures,
+	}
+
+	return &orgRole, nil
 
 }
