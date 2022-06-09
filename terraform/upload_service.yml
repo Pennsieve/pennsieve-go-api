@@ -13,18 +13,19 @@ components:
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
   securitySchemes:
-    api_v2_authorizer:
+    token_dataset_auth:
       type: "apiKey"
-      name: "Authorization"
+      name: "Unused"
       in: "header"
+      x-amazon-apigateway-authtype: "custom"
       x-amazon-apigateway-authorizer:
-        identitySource: "$request.header.Authorization"
+        type: "request"
+        identitySource: "$request.header.Authorization, $request.querystring.dataset_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
         authorizerPayloadFormatVersion: "2.0"
         authorizerResultTtlInSeconds: 300
         authorizerCredentials: ${gateway_authorizer_role}
-        type: "request"
-        enableSimpleResponses: false
+        enableSimpleResponses: true
   schemas:
     manifest:
       type: object
@@ -55,7 +56,7 @@ paths:
       operationId: createManifest
       summary: Get details for a single manifest.
       security:
-        - api_v2_authorizer: [ ]
+        - token_dataset_auth: [ ]
       responses:
         '200':
           description: A list of manifests.
@@ -72,7 +73,7 @@ paths:
       operationId: createManifest
       summary: Get a list of active manifest for user
       security:
-        - api_v2_authorizer: [ ]
+        - token_dataset_auth: [ ]
       requestBody:
       # ...
       responses:
@@ -92,7 +93,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: createManifest
       security:
-        - api_v2_authorizer: [ ]
+        - token_dataset_auth: [ ]
       requestBody:
         description: Optional description in *Markdown*
         required: true

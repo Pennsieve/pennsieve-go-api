@@ -1,4 +1,4 @@
-package models
+package dbTable
 
 import (
 	"database/sql"

@@ -1,19 +1,33 @@
-package models
+package dbTable
 
 import (
 	"database/sql"
+	"github.com/pennsieve/pennsieve-go-api/models/dataset"
 	"log"
+	"time"
 )
 
 type Dataset struct {
 	Name  string `json:"name"`
 	State string `json:"state"`
+	Role  string `json:"role"`
 }
 
-// getSchemaTable returns a string with the table name prepended with the schema name.
-//func (*Dataset) getSchemaTable(organizationId int) string {
-//	return "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".datasets"
-//}
+type DatasetUser struct {
+	DatasetId int64        `json:"dataset_id"`
+	UserId    int64        `json:"user_id"`
+	Role      dataset.Role `json:"role"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+}
+
+type DatasetTeam struct {
+	DatasetId int64        `json:"dataset_id"`
+	TeamId    int64        `json:"team_id"`
+	Role      dataset.Role `json:"role"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+}
 
 // GetAll returns all rows in the Upload Record Table
 func (d *Dataset) GetAll(db *sql.DB, organizationId int) ([]Dataset, error) {

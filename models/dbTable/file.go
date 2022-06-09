@@ -1,4 +1,4 @@
-package models
+package dbTable
 
 import (
 	"github.com/aws/smithy-go/rand"

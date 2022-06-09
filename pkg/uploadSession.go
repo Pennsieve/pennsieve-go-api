@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/pennsieve/pennsieve-go-api/models"
+	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/uploadFile"
 	"github.com/pennsieve/pennsieve-go-api/models/uploadFolder"
@@ -22,7 +22,7 @@ type UploadSession struct {
 	db              *sql.DB
 }
 
-// Close closes the database connection associated with the session.
+// Close closes the organization connection associated with the session.
 func (s *UploadSession) Close() {
 	err := s.db.Close()
 	if err != nil {
@@ -55,19 +55,19 @@ func (*UploadSession) CreateUploadSession(uploadSessionId string) (*UploadSessio
 	return &s, nil
 }
 
-// GetCreateUploadFolders creates new folders in the database.
+// GetCreateUploadFolders creates new folders in the organization.
 // It updates UploadFolders with real folder ID for folders that already exist.
 // Assumes map keys are absolute paths in the dataset
-func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolderMap) models.PackageMap {
+func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolderMap) dbTable.PackageMap {
 
 	// Create map to map parentID to array of children
 
 	// Get Root Folders
-	p := models.Package{}
+	p := dbTable.Package{}
 	rootChildren, _ := p.Children(s.db, s.organizationId, &p, s.datasetId, true)
 
 	// Map NodeId to Packages for folders that exist in DB
-	existingFolders := models.PackageMap{}
+	existingFolders := dbTable.PackageMap{}
 	for _, k := range rootChildren {
 		existingFolders[k.Name] = k
 	}
@@ -103,7 +103,7 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 
 		} else {
 			// Create folder
-			pkgParams := models.PackageParams{
+			pkgParams := dbTable.PackageParams{
 				Name:         folders[path].Name,
 				PackageType:  packageInfo.Collection,
 				PackageState: packageInfo.Ready,
@@ -115,7 +115,7 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 				Attributes:   nil,
 			}
 
-			result, _ := p.Add(s.db, s.organizationId, []models.PackageParams{pkgParams})
+			result, _ := p.Add(s.db, s.organizationId, []dbTable.PackageParams{pkgParams})
 			folders[path].Id = result[0].Id
 			existingFolders[path] = result[0]
 
@@ -131,8 +131,8 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 }
 
 // GetPackageParams returns an array of PackageParams to insert in the Packages Table.
-func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, packageMap models.PackageMap) ([]models.PackageParams, error) {
-	var pkgParams []models.PackageParams
+func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, packageMap dbTable.PackageMap) ([]dbTable.PackageParams, error) {
+	var pkgParams []dbTable.PackageParams
 
 	for _, file := range uploadFiles {
 		packageID := fmt.Sprintf("N:package:%s", uuid.New().String())
@@ -166,7 +166,7 @@ func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, pa
 			DataType: "string",
 		})
 
-		pkgParam := models.PackageParams{
+		pkgParam := dbTable.PackageParams{
 			Name:         file.Name,
 			PackageType:  file.Type,
 			PackageState: packageInfo.Uploaded,
@@ -203,13 +203,13 @@ func (s *UploadSession) ImportFiles(files []uploadFile.UploadFile) {
 	// Iterate over files and return map of folders and subfolders
 	folderMap := f.GetUploadFolderMap(files, "")
 
-	// Iterate over folders and create them if they do not exist in database
+	// Iterate over folders and create them if they do not exist in organization
 	packageMap := s.GetCreateUploadFolders(folderMap)
 
 	// 3. Create Package Params to add files to packages table.
 	pkgParams, _ := s.GetPackageParams(files, packageMap)
 
-	var packageTable models.Package
+	var packageTable dbTable.Package
 	packageTable.Add(s.db, s.organizationId, pkgParams)
 
 }
