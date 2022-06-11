@@ -23,8 +23,6 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 
 	}
 
-	// USER IS NOT A SUPER-ADMIN
-
 	// 1. Get Dataset Role and integer ID
 	datasetQuery := fmt.Sprintf("SELECT id, role FROM \"%d\".datasets WHERE node_id='%s';", organizationId, datasetNodeId)
 

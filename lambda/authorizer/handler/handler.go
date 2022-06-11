@@ -60,8 +60,12 @@ func init() {
 func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
 
 	// Get Identity Sources
+	// If single identity source, then no dataset claim should be generated.
 	jwtB64 := []byte(event.Headers["authorization"])
-	datasetNodeId, hasKey := event.QueryStringParameters["dataset_id"]
+	datasetNodeId, hasDatasetId := event.QueryStringParameters["dataset_id"]
+	if hasDatasetId && len(event.IdentitySource) < 2 {
+		log.Fatalln("Request cannot have dataset_id as query-param with the used authorizer.")
+	}
 
 	// Validate and parse token, and return unauthorized if not valid
 	token, err := validateCognitoJWT(jwtB64)
@@ -105,22 +109,28 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Get DATASET Claim
-	datasetClaim, err := authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
-	if err != nil {
-		log.Println("Unable to get Dataset Role")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
-			IsAuthorized: false,
-			Context:      nil,
-		}, nil // Return 403: Forbidden
-	}
+	var datasetClaim *dataset.Claim
+	if hasDatasetId {
+		datasetClaim, err = authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
+		if err != nil {
+			log.Println("Unable to get Dataset Role")
+			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+				IsAuthorized: false,
+				Context:      nil,
+			}, nil // Return 403: Forbidden
+		}
 
-	// If user has no role on provided dataset --> return
-	if datasetClaim.Role == dataset.None {
-		log.Println("User has no access to dataset")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
-			IsAuthorized: false,
-			Context:      nil,
-		}, nil // Return 403: Forbidden
+		// If user has no role on provided dataset --> return
+		if datasetClaim.Role == dataset.None {
+			log.Println("User has no access to dataset")
+			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+				IsAuthorized: false,
+				Context:      nil,
+			}, nil // Return 403: Forbidden
+		}
+
+	} else {
+		datasetClaim = nil
 	}
 
 	// Bundle Claims

@@ -1,8 +1,26 @@
 openapi: 3.0.1
 info:
   version: 1.0.0
-  title: Pennsieve Go API
-  description: Pennsieve Go Based Serverless API
+  title: Pennsieve API Version 2
+  description: |
+    Version 2 of the Pennsieve API.\
+    \
+    This is the second iteration of the Pennsieve API and will, over time, replace functionality that is currently included in the first version of the API.
+  termsOfService: https://docs.pennsieve.io/page/pennsieve-terms-of-use
+  contact:
+    name: Pennsieve Support
+    email: support@pennsieve.net
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+externalDocs:
+  description: Find more info here
+  url: https://docs.pennsieve.io
+tags:
+  - name: Upload Service
+    description: Management of upload manifests.
+    externalDocs:
+      url: https://docs.pennsieve.io/reference
 components:
   x-amazon-apigateway-integrations:
     manifest-service:
@@ -17,65 +35,124 @@ components:
       type: "apiKey"
       name: "Unused"
       in: "header"
-      x-amazon-apigateway-authtype: "custom"
       x-amazon-apigateway-authorizer:
-        type: "request"
-        identitySource: "$request.header.Authorization, $request.querystring.dataset_id"
+        identitySource: "$request.header.Authorization,$request.querystring.dataset_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
         authorizerPayloadFormatVersion: "2.0"
         authorizerResultTtlInSeconds: 300
-        authorizerCredentials: ${gateway_authorizer_role}
+        type: "request"
         enableSimpleResponses: true
+        authorizerCredentials: ${gateway_authorizer_role}
+    token_auth:
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
+      x-amazon-apigateway-authorizer:
+        identitySource: "$request.header.Authorization"
+        authorizerUri: ${authorize_lambda_invoke_uri}
+        authorizerPayloadFormatVersion: "2.0"
+        authorizerResultTtlInSeconds: 300
+        type: "request"
+        enableSimpleResponses: true
+        authorizerCredentials: ${gateway_authorizer_role}
+  responses:
+    Unauthorized:
+      description: Incorrect authentication or user has incorrect permissions.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    Error:
+      description: Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
   schemas:
-    manifest:
+    user:
       type: object
       properties:
         id:
           type: integer
-          format: int64
-        name:
+          description: UserId.
+        firstName:
           type: string
-    manifestCreate:
+          description: Firstname of the user.
+        lastName:
+          type: string
+          description: Lastname of the user.
+    manifestCreateRequest:
       type: object
       properties:
-        datasetId:
+        id:
           type: string
-        manifestId:
+          description: UUID of the manifest.
+        files:
+          $ref: '#/components/schemas/manifestFiles'
+    manifestResponse:
+      type: object
+      description: Successfull created new manifest.
+      properties:
+        id:
           type: string
-        targetPackageId:
+          description: UUID of the manifest.
+        dataset:
           type: string
-      required:
-        - datasetId
-        - manifestId
-
+          description: UUID of the dataset where files will be uploaded to.
+        organization:
+          type: string
+          description: Name of the organization where the dataset is located.
+        status:
+          type: string
+          description: Status of the manifest.
+        created:
+          type: string
+          description: Date when the manifest was created.
+        updated:
+          type: string
+          description: Date when the manifest was last updated.
+        files:
+          $ref: '#/components/schemas/manifestFiles'
+    manifestFiles:
+      type: array
+      items:
+        type: object
+        properties:
+          s3Key:
+            type: string
+            description: The S3-key for the uploaded asset. This includes the manifest prefix
+          targetPath:
+            type: string
+            description: Absolute path in the datset where the file should be uploaded to.
+          targetName:
+            type: string
+            description: Name of the uploaded file as it should appear on the platform. This includes the extension of the file.
 paths:
-  /manifest/{id}:
-    get:
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: createManifest
-      summary: Get details for a single manifest.
-      security:
-        - token_dataset_auth: [ ]
-      responses:
-        '200':
-          description: A list of manifests.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/manifest'
-        default:
-          description: Success
   /manifest:
     get:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: createManifest
+      operationId: getManifestList
       summary: Get a list of active manifest for user
       security:
-        - token_dataset_auth: [ ]
-      requestBody:
-      # ...
+        - token_auth: [ ]
+      tags:
+        - Upload Service
       responses:
         '200':
           description: A list of manifests.
@@ -84,9 +161,11 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/manifest'
-        default:
-          description: Success
+                  $ref: '#/components/schemas/manifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     post:
       summary: Create a new upload manifest
       x-amazon-apigateway-integration:
@@ -94,13 +173,172 @@ paths:
       operationId: createManifest
       security:
         - token_dataset_auth: [ ]
+      tags:
+        - Upload Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where the
       requestBody:
-        description: Optional description in *Markdown*
+        description: Create a new upload manifest with files
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/manifestCreate'
+              $ref: '#/components/schemas/manifestCreateRequest'
+      responses:
+        '200':
+          description: The created manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/manifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /manifest/{id}:
+    get:
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: getManifest
+      summary: Get details for a single manifest.
+      security:
+        - token_auth: [ ]
+      tags:
+        - Upload Service
+      description: |
+        Return a previously created manifest based on its ID. \
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The UUID of the Upload Manifest.
+        - in: query
+          name: offest
+          schema:
+            type: integer
+            default: 0
+          description: The UUID of the Upload Manifest.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+          description: The UUID of the Upload Manifest.
+        - in: query
+          name: includeFiles
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Should files be returned as part of this call?
+      responses:
+        '200':
+          description: The requested manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/manifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: deleteManifest
+      summary: Delete a previously created manifest.
+      security:
+        - token_auth: [ ]
+      tags:
+        - Upload Service
+      description: |
+        Deleting a manifest can be useful when a manifest was created but is no longer expected to be uploaded.\
+        \
+        If a manifest is deleted which already was deleted due to completion of the upload, this method returns success.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The UUID of the Upload Manifest.
+      responses:
+        '200':
+          description: Successfully deleted the manifest.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+        default:
+          description: Success
+  /manifest/{id}/add:
+    post:
+      summary: Add files to a manifest
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: addFilesToManifest
+      security:
+        - token_auth: [ ]
+      tags:
+        - Upload Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The UUID of the Upload Manifest.
+      requestBody:
+        description: List of files to be added to the manifest.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/manifestFiles'
+      responses:
+        '200':
+          description: Successfully added files.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nrFilesAdded:
+                    type: integer
+                  nrFilesUpdated:
+                    type: integer
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /manifest/{id}/remove:
+    post:
+      summary: Remove files from existing manifest.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: deleteFiles
+      security:
+        - token_auth: [ ]
+      tags:
+        - Upload Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The UUID of the Upload Manifest.
       responses:
         default:
           description: Success
