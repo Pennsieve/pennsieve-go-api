@@ -104,38 +104,29 @@ components:
           description: UUID of the manifest.
         files:
           $ref: '#/components/schemas/manifestFiles'
-    manifestResponse:
+    addFilesResponse:
       type: object
-      description: Successfull created new manifest.
+      description: Response for addFiles endpoint.
       properties:
-        id:
-          type: string
-          description: UUID of the manifest.
-        dataset:
-          type: string
-          description: UUID of the dataset where files will be uploaded to.
-        organization:
-          type: string
-          description: Name of the organization where the dataset is located.
-        status:
-          type: string
-          description: Status of the manifest.
-        created:
-          type: string
-          description: Date when the manifest was created.
-        updated:
-          type: string
-          description: Date when the manifest was last updated.
-        files:
-          $ref: '#/components/schemas/manifestFiles'
+        nrFilesAdded:
+          description: Number of added files to the manifest.
+          type: integer
+        failedFiles:
+          description: Array of uploadIds that were not added to manifest.
+          type: array
+          items:
+            type: string
     manifestFiles:
       type: array
       items:
         type: object
         properties:
+          uploadId:
+            type: string
+            description: The upload id for the file.
           s3Key:
             type: string
-            description: The S3-key for the uploaded asset. This includes the manifest prefix
+            description: The S3-key for the uploaded asset. (typically sessionID/uploadID)
           targetPath:
             type: string
             description: Absolute path in the datset where the file should be uploaded to.
@@ -161,13 +152,32 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/manifestResponse'
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: UUID of the manifest.
+                    dataset:
+                      type: string
+                      description: UUID of the dataset where files will be uploaded to.
+                    organization:
+                      type: string
+                      description: Name of the organization where the dataset is located.
+                    status:
+                      type: string
+                      description: Status of the manifest.
+                    created:
+                      type: string
+                      description: Date when the manifest was created.
+                    updated:
+                      type: string
+                      description: Date when the manifest was last updated.
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
     post:
-      summary: Create a new upload manifest
+      summary: Add files to a new or existing manifest.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: createManifest
@@ -195,7 +205,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/manifestResponse'
+                $ref: '#/components/schemas/addFilesResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
@@ -221,6 +231,13 @@ paths:
             minimum: 1
           description: The UUID of the Upload Manifest.
         - in: query
+          name: includeFiles
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Should files be returned as part of this call?
+        - in: query
           name: offest
           schema:
             type: integer
@@ -231,21 +248,38 @@ paths:
           schema:
             type: integer
             default: 100
+            maximum: 1000
           description: The UUID of the Upload Manifest.
-        - in: query
-          name: includeFiles
-          required: false
-          schema:
-            type: boolean
-            default: false
-          description: Should files be returned as part of this call?
+
       responses:
         '200':
           description: The requested manifest.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/manifestResponse'
+                type: object
+                description: Successfull created new manifest.
+                properties:
+                  id:
+                    type: string
+                    description: UUID of the manifest.
+                  dataset:
+                    type: string
+                    description: UUID of the dataset where files will be uploaded to.
+                  organization:
+                    type: string
+                    description: Name of the organization where the dataset is located.
+                  status:
+                    type: string
+                    description: Status of the manifest.
+                  created:
+                    type: string
+                    description: Date when the manifest was created.
+                  updated:
+                    type: string
+                    description: Date when the manifest was last updated.
+                  files:
+                    $ref: '#/components/schemas/manifestFiles'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
@@ -280,12 +314,13 @@ paths:
           $ref: '#/components/responses/Error'
         default:
           description: Success
-  /manifest/{id}/add:
-    post:
-      summary: Add files to a manifest
+  /manifest/{id}/updates:
+    get:
+      summary: Get file status updates from server
+      description: Get updates to datasets after the provided timestamp in unix-time.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: addFilesToManifest
+      operationId: syncFiles
       security:
         - token_auth: [ ]
       tags:
@@ -298,13 +333,20 @@ paths:
             type: string
             minimum: 1
           description: The UUID of the Upload Manifest.
-      requestBody:
-        description: List of files to be added to the manifest.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/manifestFiles'
+        - in: query
+          name: timestamp
+          required: true
+          schema:
+            type: integer
+          description: Timestamp in Unix time (seconds since 1/1/1970).
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            default: 1000
+            maximum: 2000
+          description: Maximum number of returned items
       responses:
         '200':
           description: Successfully added files.
@@ -313,14 +355,25 @@ paths:
               schema:
                 type: object
                 properties:
-                  nrFilesAdded:
+                  nrReturnedItems:
                     type: integer
-                  nrFilesUpdated:
+                  lastReturnedTime:
                     type: integer
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        uploadId:
+                          type: string
+                        status:
+                          type: string
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+        default:
+          description: Success
   /manifest/{id}/remove:
     post:
       summary: Remove files from existing manifest.
@@ -340,8 +393,19 @@ paths:
             minimum: 1
           description: The UUID of the Upload Manifest.
       responses:
-        default:
-          description: Success
+        '200':
+          description: Successfully removed files.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nrFilesRemoved:
+                    type: integer
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
 
 

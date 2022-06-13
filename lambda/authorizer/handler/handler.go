@@ -14,6 +14,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -61,7 +62,10 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Get Identity Sources
 	// If single identity source, then no dataset claim should be generated.
-	jwtB64 := []byte(event.Headers["authorization"])
+	r := regexp.MustCompile(`Bearer (?P<token>.*)`)
+	tokenParts := r.FindStringSubmatch(event.Headers["authorization"])
+	jwtB64 := []byte(tokenParts[r.SubexpIndex("token")])
+
 	datasetNodeId, hasDatasetId := event.QueryStringParameters["dataset_id"]
 	if hasDatasetId && len(event.IdentitySource) < 2 {
 		log.Fatalln("Request cannot have dataset_id as query-param with the used authorizer.")
