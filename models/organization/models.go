@@ -1,6 +1,7 @@
 package organization
 
 import (
+	"fmt"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
 )
 
@@ -9,4 +10,8 @@ type Claim struct {
 	Role            dbTable.DbPermission
 	IntId           int64
 	EnabledFeatures []dbTable.FeatureFlags
+}
+
+func (c Claim) String() string {
+	return fmt.Sprintf("OrganizationId: %d - %s", c.IntId, c.Role.String())
 }

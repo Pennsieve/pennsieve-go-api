@@ -191,7 +191,7 @@ paths:
           schema:
             type: string
           required: true
-          description: The dataset where the
+          description: The dataset where file will be uploaded.
       requestBody:
         description: Create a new upload manifest with files
         required: true

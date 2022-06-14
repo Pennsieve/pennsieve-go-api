@@ -1,6 +1,7 @@
 package dataset
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -49,4 +50,8 @@ type Claim struct {
 	Role   Role
 	NodeId string
 	IntId  int64
+}
+
+func (c Claim) String() string {
+	return fmt.Sprintf("%s (%d) - %s", c.NodeId, c.IntId, c.Role.String())
 }

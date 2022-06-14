@@ -18,6 +18,27 @@ const (
 	Owner                     = 32
 )
 
+func (s DbPermission) String() string {
+	switch s {
+	case NoPermission:
+		return "NoPermission"
+	case Collaborate:
+		return "Collaborate"
+	case Read:
+		return "Read"
+	case Write:
+		return "Write"
+	case Delete:
+		return "Delete"
+	case Administer:
+		return "Administer"
+	case Owner:
+		return "Owner"
+	}
+
+	return "NoPermission"
+}
+
 type OrganizationUser struct {
 	OrganizationId int64        `json:"organization_id"`
 	UserId         int64        `json:"user_id"`
