@@ -1,5 +1,43 @@
 package manifest
 
+type ManifestStatus int64
+
+const (
+	ManifestInitiated ManifestStatus = iota
+	ManifestUploading
+	ManifestCompleted
+	ManifestCancelled
+)
+
+func (s ManifestStatus) String() string {
+	switch s {
+	case ManifestInitiated:
+		return "Initiated"
+	case ManifestUploading:
+		return "InProgress"
+	case ManifestCompleted:
+		return "Completed"
+	case ManifestCancelled:
+		return "Cancelled"
+	default:
+		return "Initiated"
+	}
+}
+
+func (s ManifestStatus) ManifestStatusMap(value string) ManifestStatus {
+	switch value {
+	case "Initiated":
+		return ManifestInitiated
+	case "InProgress":
+		return ManifestUploading
+	case "Completed":
+		return ManifestCompleted
+	case "Cancelled":
+		return ManifestCancelled
+	}
+	return ManifestInitiated
+}
+
 type FileDTO struct {
 	UploadID   string `json:"uploadId"`
 	S3Key      string `json:"s3Key"`
@@ -11,4 +49,10 @@ type DTO struct {
 	ID        string    `json:"id"`
 	DatasetId string    `json:"dataset_id"`
 	Files     []FileDTO `json:"files"`
+}
+
+type PostResponse struct {
+	ManifestNodeId string   `json:"manifest_node_id"'`
+	NrFilesAdded   int      `json:"nrFilesAdded"`
+	FailedFiles    []string `json:"failedFiles"`
 }
