@@ -38,6 +38,54 @@ func (s ManifestStatus) ManifestStatusMap(value string) ManifestStatus {
 	return ManifestInitiated
 }
 
+type ManifestFileStatus int64
+
+const (
+	FileRegistered ManifestFileStatus = iota
+	FileSynced
+	FileUploading
+	FileCompleted
+	FileVerified
+	FileCancelled
+)
+
+func (s ManifestFileStatus) String() string {
+	switch s {
+	case FileRegistered:
+		return "Indexed"
+	case FileSynced:
+		return "Synced"
+	case FileUploading:
+		return "Uploading"
+	case FileCompleted:
+		return "Completed"
+	case FileVerified:
+		return "Verified"
+	case FileCancelled:
+		return "Cancelled"
+	default:
+		return "Initiated"
+	}
+}
+
+func (s ManifestFileStatus) ManifestFileStatusMap(value string) ManifestFileStatus {
+	switch value {
+	case "Indexed":
+		return FileRegistered
+	case "Synced":
+		return FileSynced
+	case "Uploading":
+		return FileUploading
+	case "Completed":
+		return FileCompleted
+	case "Verified":
+		return FileVerified
+	case "Cancelled":
+		return FileCancelled
+	}
+	return FileRegistered
+}
+
 type FileDTO struct {
 	UploadID   string `json:"uploadId"`
 	S3Key      string `json:"s3Key"`
