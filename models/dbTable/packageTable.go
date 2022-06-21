@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/lib/pq"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -27,6 +29,7 @@ type Package struct {
 	UpdatedAt    time.Time                      `json:"updated_at"`
 }
 
+// PackageParams is used as the input to create a package
 type PackageParams struct {
 	Name         string                         `json:"name"`
 	PackageType  packageInfo.Type               `json:"type"`
@@ -43,17 +46,62 @@ type PackageParams struct {
 // PackageMap maps path to models.Package
 type PackageMap = map[string]Package
 
-// getSchemaTable returns a string with the table name prepended with the schema name.
-//func (*Package) getSchemaTable(organizationId int) string {
-//	return "\"" + strconv.FormatInt(int64(organizationId), 10) + "\".packages"
-//}
-
 // Add adds multiple packages to the Pennsieve Postgres DB
 func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 
 	currentTime := time.Now()
 	var vals []interface{}
 	var inserts []string
+
+	// All records have the same datasetID
+	datasetId := records[0].DatasetId
+
+	// CHECK EXISTING FILES IN FOLDER AND UPDATE NAME IF NECESSARY
+
+	// Group files by parentID so we can combine SQL queries for children of the parent.
+	parentIdMap := map[int64][]PackageParams{}
+	for _, r := range records {
+		parentIdMap[r.ParentId] = append(parentIdMap[r.ParentId], r)
+	}
+
+	// Iterate over map of parentIDs and get children that have names like the ones uploaded.
+	for key, value := range parentIdMap {
+		var names []string
+		for _, v := range value {
+			r := regexp.MustCompile(`(?P<FileName>[^\.]*)?\.?(?P<Extension>.*)`)
+			pathParts := r.FindStringSubmatch(v.Name)
+			fName := pathParts[r.SubexpIndex("FileName")]
+			names = append(names, fmt.Sprintf("'%s%%'", fName))
+		}
+		arrayString := strings.Join(names, ",")
+
+		sqlString := fmt.Sprintf("SELECT name FROM packages WHERE dataset_id=%d AND parent_id=%d AND name LIKE ANY (ARRAY[%s]);", datasetId, key, arrayString)
+		if key == -1 {
+			sqlString = fmt.Sprintf("SELECT name FROM packages WHERE dataset_id=%d AND parent_id IS NULL AND name LIKE ANY (ARRAY[%s]);", datasetId, arrayString)
+		}
+
+		stmt, err := db.Prepare(sqlString)
+		if err != nil {
+			log.Fatalln("Something is wrong", err)
+		}
+
+		// format all vals at once
+		var allNames []string
+		rows, _ := stmt.Query(vals...)
+		for rows.Next() {
+			var currentFile string
+			err = rows.Scan(
+				&currentFile,
+			)
+			allNames = append(allNames, currentFile)
+		}
+
+		// Update names if suggested name exists.
+		for i, _ := range records {
+			checkUpdateName(&records[i], 1, "", allNames)
+		}
+
+	}
 
 	sqlInsert := "INSERT INTO packages(name, type, state, node_id, parent_id, " +
 		"dataset_id, owner_id, size, import_id, attributes, created_at, updated_at) VALUES "
@@ -89,8 +137,6 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 			}
 		}
 
-		fmt.Println("DatasetId: ", row.DatasetId)
-
 		vals = append(vals, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, sqlParentId, row.DatasetId,
 			row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)
 	}
@@ -109,7 +155,14 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 
 	// format all vals at once
 	var allInsertedPackages []Package
-	rows, _ := stmt.Query(vals...)
+	rows, err := stmt.Query(vals...)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			log.Println(pqErr)
+		}
+		return nil, err
+	}
+
 	for rows.Next() {
 		var currentRecord Package
 		err = rows.Scan(
@@ -159,12 +212,9 @@ func (p *Package) Children(db *sql.DB, organizationId int, parent *Package, data
 
 	// If parent is empty => return children of root of dataset.
 	if parent.NodeId == "" {
-		fmt.Println("Getting ROOT FOLDERS FOR", parent.Name)
 		queryStr = fmt.Sprintf("SELECT %s FROM packages WHERE dataset_id = %d AND parent_id IS NULL AND state != '%s' %s;",
 			queryRows, datasetId, packageInfo.Deleting.String(), folderFilter)
 	}
-
-	log.Println(queryStr)
 
 	rows, err := db.Query(queryStr)
 	var allPackages []Package
@@ -195,4 +245,38 @@ func (p *Package) Children(db *sql.DB, organizationId int, parent *Package, data
 		allPackages = append(allPackages, currentRecord)
 	}
 	return allPackages, err
+}
+
+// checkUpdateName Recursively checks name and append integer if name exists.
+func checkUpdateName(item *PackageParams, index int, newName string, namesInFolder []string) {
+
+	if newName == "" {
+		newName = item.Name
+	}
+
+	for _, n := range namesInFolder {
+		if newName == n {
+			r := regexp.MustCompile(`(?P<FileName>[^\.]*)?\.?(?P<Extension>.*)`)
+			pathParts := r.FindStringSubmatch(item.Name)
+
+			name := pathParts[r.SubexpIndex("FileName")]
+			extension := pathParts[r.SubexpIndex("Extension")]
+
+			index++
+
+			updatedName := ""
+			if extension != "" {
+				updatedName = fmt.Sprintf("%s (%d).%s", name, index, extension)
+			} else {
+				updatedName = fmt.Sprintf("%s (%d)", name, index)
+			}
+
+			// Recursively call this function to check if updated name also exists.
+			checkUpdateName(item, index, updatedName, namesInFolder)
+			return
+		}
+	}
+
+	// Update name to new name
+	item.Name = newName
 }

@@ -14,6 +14,7 @@ import (
 // UploadFile is the parsed and cleaned representation of the SQS S3 Put Event
 type UploadFile struct {
 	ManifestId string           // ManifestId is id for the entire upload session.
+	UploadId   string           // UploadId ID is used as part of the s3key for uploaded files.
 	Path       string           // Path to collection without file-name
 	Name       string           // Name is the filename including extension(s)
 	Extension  string           // Extension of file (separated from name)
@@ -34,8 +35,6 @@ func (f *UploadFile) String() string {
 // Sort sorts []UploadFiles by the depth of the folder the file resides in.
 func (f *UploadFile) Sort(files []UploadFile) {
 	sort.Slice(files, func(i, j int) bool {
-		//pathSlices1 := strings.Split(files[i].Path, "/")
-		//pathSlices2 := strings.Split(files[j].Path, "/")
 		return files[i].Path < files[j].Path
 	})
 }
@@ -47,13 +46,11 @@ func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder s
 	var folderNameMap = map[string]*uploadFolder.UploadFolder{}
 
 	// Iterate over the files and create the UploadFolder objects.
-	for index, f := range sortedFiles {
+	for _, f := range sortedFiles {
 
 		if f.Path == "" {
 			continue
 		}
-
-		fmt.Printf("File index: %d, File Path: %s\n ", index, f.Path)
 
 		// Prepend the target-Folder if it exists
 		p := f.Path
@@ -70,8 +67,6 @@ func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder s
 		currentNodeId := ""
 		currentFolderPath := ""
 		for depth, segment := range pathSegments {
-
-			fmt.Printf("Depth: %d, segment: %s, abs_segment: %s\n", depth, segment, absoluteSegment)
 
 			parentNodeId := currentNodeId
 			parentFolderPath := currentFolderPath
@@ -108,8 +103,6 @@ func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder s
 					Depth:        depth,
 				}
 				folderNameMap[absoluteSegment] = folder
-
-				fmt.Printf("Create Folder: %s with Name: %s\n", absoluteSegment, folder.Name)
 			}
 
 			// Add current segment to parent if exist

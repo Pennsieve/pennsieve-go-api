@@ -15,11 +15,11 @@ import (
 
 // UploadSession contains the information that is shared based on the upload session ID
 type UploadSession struct {
-	organizationId  int    `json:"organization_id"`
-	datasetId       int    `json:"dataset_id"`
-	datasetNodeId   string `json:"dataset_node_id"`
-	ownerId         int    `json:"owner_id"`
-	targetPackageId string `json:"target_package_id"`
+	organizationId  int
+	datasetId       int
+	datasetNodeId   string
+	ownerId         int
+	targetPackageId string
 	db              *sql.DB
 }
 
@@ -43,7 +43,7 @@ func (*UploadSession) CreateUploadSession(manifest *dbTable.ManifestTable) (*Upl
 		ownerId:        int(manifest.UserId),
 	}
 
-	db, err := core.ConnectRDSWithOrg(int(s.organizationId))
+	db, err := core.ConnectRDSWithOrg(s.organizationId)
 	s.db = db
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 
 	// Sort the keys of the map so we can iterate over the sorted map
 	pathKeys := make([]string, 0)
-	for k, _ := range folders {
+	for k := range folders {
 		pathKeys = append(pathKeys, k)
 	}
 	sort.Strings(pathKeys)
@@ -111,9 +111,6 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 				Attributes:   nil,
 			}
 
-			log.Println(s.organizationId)
-			log.Println(pkgParams)
-
 			result, _ := p.Add(s.db, []dbTable.PackageParams{pkgParams})
 			folders[path].Id = result[0].Id
 			existingFolders[path] = result[0]
@@ -130,7 +127,7 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 }
 
 // GetPackageParams returns an array of PackageParams to insert in the Packages Table.
-func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, packageMap dbTable.PackageMap) ([]dbTable.PackageParams, error) {
+func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, pathToFolderMap dbTable.PackageMap) ([]dbTable.PackageParams, error) {
 	var pkgParams []dbTable.PackageParams
 
 	for _, file := range uploadFiles {
@@ -138,12 +135,11 @@ func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, pa
 
 		parentId := int64(-1)
 		if file.Path != "" {
-			parentId = packageMap[file.Path].Id
+			parentId = pathToFolderMap[file.Path].Id
 		}
 
-		//TODO: Replace by s3Key when mapped
 		uploadId := sql.NullString{
-			String: uuid.New().String(),
+			String: file.UploadId,
 			Valid:  true,
 		}
 
@@ -181,18 +177,13 @@ func (s *UploadSession) GetPackageParams(uploadFiles []uploadFile.UploadFile, pa
 		pkgParams = append(pkgParams, pkgParam)
 	}
 
-	fmt.Println("PKGPARAMS")
-	for _, pkg := range pkgParams {
-		fmt.Printf("Name: %s, ParentId: %d, NodeId: %s", pkg.Name, pkg.ParentId, pkg.NodeId)
-	}
-
 	return pkgParams, nil
 
 }
 
 // ImportFiles is the wrapper function to import files from a single upload-session.
 // A single upload session implies that all files belong to the same organization, dataset and owner.
-func (s *UploadSession) ImportFiles(files []uploadFile.UploadFile) {
+func (s *UploadSession) ImportFiles(files []uploadFile.UploadFile) error {
 
 	// Sort files by the length of their path
 	// First element closest to root.
@@ -203,11 +194,16 @@ func (s *UploadSession) ImportFiles(files []uploadFile.UploadFile) {
 	folderMap := f.GetUploadFolderMap(files, "")
 
 	// Iterate over folders and create them if they do not exist in organization
-	packageMap := s.GetCreateUploadFolders(folderMap)
+	folderPackageMap := s.GetCreateUploadFolders(folderMap)
 
 	// 3. Create Package Params to add files to packages table.
-	pkgParams, _ := s.GetPackageParams(files, packageMap)
+	pkgParams, _ := s.GetPackageParams(files, folderPackageMap)
 
 	var packageTable dbTable.Package
-	packageTable.Add(s.db, pkgParams)
+	_, err := packageTable.Add(s.db, pkgParams)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
