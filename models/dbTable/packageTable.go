@@ -49,7 +49,7 @@ type PackageMap = map[string]Package
 //}
 
 // Add adds multiple packages to the Pennsieve Postgres DB
-func (p *Package) Add(db *sql.DB, organizationId int, records []PackageParams) ([]Package, error) {
+func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 
 	currentTime := time.Now()
 	var vals []interface{}
@@ -88,6 +88,8 @@ func (p *Package) Add(db *sql.DB, organizationId int, records []PackageParams) (
 				Valid: true,
 			}
 		}
+
+		fmt.Println("DatasetId: ", row.DatasetId)
 
 		vals = append(vals, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, sqlParentId, row.DatasetId,
 			row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)

@@ -3,21 +3,21 @@ package manifest
 type ManifestStatus int64
 
 const (
-	ManifestInitiated ManifestStatus = iota
-	ManifestUploading
-	ManifestCompleted
-	ManifestCancelled
+	Initiated ManifestStatus = iota
+	Uploading
+	Completed
+	Cancelled
 )
 
 func (s ManifestStatus) String() string {
 	switch s {
-	case ManifestInitiated:
+	case Initiated:
 		return "Initiated"
-	case ManifestUploading:
-		return "InProgress"
-	case ManifestCompleted:
+	case Uploading:
+		return "Uploading"
+	case Completed:
 		return "Completed"
-	case ManifestCancelled:
+	case Cancelled:
 		return "Cancelled"
 	default:
 		return "Initiated"
@@ -27,42 +27,42 @@ func (s ManifestStatus) String() string {
 func (s ManifestStatus) ManifestStatusMap(value string) ManifestStatus {
 	switch value {
 	case "Initiated":
-		return ManifestInitiated
-	case "InProgress":
-		return ManifestUploading
+		return Initiated
+	case "Uploading":
+		return Uploading
 	case "Completed":
-		return ManifestCompleted
+		return Completed
 	case "Cancelled":
-		return ManifestCancelled
+		return Cancelled
 	}
-	return ManifestInitiated
+	return Initiated
 }
 
 type ManifestFileStatus int64
 
 const (
-	FileRegistered ManifestFileStatus = iota
+	FileInitiated ManifestFileStatus = iota
 	FileSynced
-	FileUploading
-	FileCompleted
+	FileUploaded
 	FileVerified
-	FileCancelled
+	FileFailed
+	FileRemoved
 )
 
 func (s ManifestFileStatus) String() string {
 	switch s {
-	case FileRegistered:
-		return "Indexed"
+	case FileInitiated:
+		return "Initiated"
 	case FileSynced:
 		return "Synced"
-	case FileUploading:
-		return "Uploading"
-	case FileCompleted:
-		return "Completed"
+	case FileUploaded:
+		return "Uploaded"
 	case FileVerified:
 		return "Verified"
-	case FileCancelled:
-		return "Cancelled"
+	case FileFailed:
+		return "Failed"
+	case FileRemoved:
+		return "Removed"
 	default:
 		return "Initiated"
 	}
@@ -70,37 +70,47 @@ func (s ManifestFileStatus) String() string {
 
 func (s ManifestFileStatus) ManifestFileStatusMap(value string) ManifestFileStatus {
 	switch value {
-	case "Indexed":
-		return FileRegistered
+	case "Initiated":
+		return FileInitiated
 	case "Synced":
 		return FileSynced
-	case "Uploading":
-		return FileUploading
-	case "Completed":
-		return FileCompleted
+	case "Uploaded":
+		return FileUploaded
 	case "Verified":
 		return FileVerified
-	case "Cancelled":
-		return FileCancelled
+	case "Removed":
+		return FileRemoved
+	case "Failed":
+		return FileFailed
 	}
-	return FileRegistered
+	return FileInitiated
 }
 
 type FileDTO struct {
-	UploadID   string `json:"uploadId"`
-	S3Key      string `json:"s3Key"`
-	TargetPath string `json:"targetPath"`
-	TargetName string `json:"targetName"`
+	UploadID   string             `json:"upload_id"`
+	S3Key      string             `json:"s3_key"`
+	TargetPath string             `json:"target_path"`
+	TargetName string             `json:"target_name"`
+	Status     ManifestFileStatus `json:"status"`
 }
 
 type DTO struct {
-	ID        string    `json:"id"`
-	DatasetId string    `json:"dataset_id"`
-	Files     []FileDTO `json:"files"`
+	ID        string         `json:"id"`
+	DatasetId string         `json:"dataset_id"`
+	Files     []FileDTO      `json:"files"`
+	Status    ManifestStatus `json:"status"`
 }
 
 type PostResponse struct {
 	ManifestNodeId string   `json:"manifest_node_id"'`
-	NrFilesAdded   int      `json:"nrFilesAdded"`
-	FailedFiles    []string `json:"failedFiles"`
+	NrFilesUpdated int      `json:"nr_files_updated"`
+	NrFilesRemoved int      `json:"nr_files_removed"`
+	FailedFiles    []string `json:"failed_files"`
+}
+
+// AddFilesStats object that is returned to the client.
+type AddFilesStats struct {
+	NrFilesUpdated int
+	NrFilesRemoved int
+	FailedFiles    []string
 }

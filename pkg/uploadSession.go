@@ -17,6 +17,7 @@ import (
 type UploadSession struct {
 	organizationId  int    `json:"organization_id"`
 	datasetId       int    `json:"dataset_id"`
+	datasetNodeId   string `json:"dataset_node_id"`
 	ownerId         int    `json:"owner_id"`
 	targetPackageId string `json:"target_package_id"`
 	db              *sql.DB
@@ -33,21 +34,16 @@ func (s *UploadSession) Close() {
 }
 
 // CreateUploadSession returns an authenticated object based on the uploadSession UUID
-func (*UploadSession) CreateUploadSession(uploadSessionId string) (*UploadSession, error) {
-
-	//TODO: Replace by checking DB
-	// This function should check and validate 'credentials' based on the uploadSessionID
-	// The methods associated with type UploadSession can then safely interact with the DB.
-
-	organizationId := 19
+func (*UploadSession) CreateUploadSession(manifest *dbTable.ManifestTable) (*UploadSession, error) {
 
 	s := UploadSession{
-		organizationId: organizationId, // Pennsieve Test
-		datasetId:      1682,           // Test Upload
-		ownerId:        24,             // Joost
+		organizationId: int(manifest.OrganizationId),
+		datasetId:      int(manifest.DatasetId),
+		datasetNodeId:  manifest.DatasetNodeId,
+		ownerId:        int(manifest.UserId),
 	}
 
-	db, err := core.ConnectRDSWithOrg(organizationId)
+	db, err := core.ConnectRDSWithOrg(int(s.organizationId))
 	s.db = db
 	if err != nil {
 		return nil, err
@@ -115,7 +111,10 @@ func (s *UploadSession) GetCreateUploadFolders(folders uploadFolder.UploadFolder
 				Attributes:   nil,
 			}
 
-			result, _ := p.Add(s.db, s.organizationId, []dbTable.PackageParams{pkgParams})
+			log.Println(s.organizationId)
+			log.Println(pkgParams)
+
+			result, _ := p.Add(s.db, []dbTable.PackageParams{pkgParams})
 			folders[path].Id = result[0].Id
 			existingFolders[path] = result[0]
 
@@ -210,6 +209,5 @@ func (s *UploadSession) ImportFiles(files []uploadFile.UploadFile) {
 	pkgParams, _ := s.GetPackageParams(files, packageMap)
 
 	var packageTable dbTable.Package
-	packageTable.Add(s.db, s.organizationId, pkgParams)
-
+	packageTable.Add(s.db, pkgParams)
 }
