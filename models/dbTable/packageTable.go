@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/lib/pq"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/packageInfo/packageState"
+	"github.com/pennsieve/pennsieve-go-api/models/packageInfo/packageType"
 	"log"
 	"regexp"
 	"strings"
@@ -16,14 +18,14 @@ import (
 type Package struct {
 	Id           int64                          `json:"id"`
 	Name         string                         `json:"name"`
-	PackageType  packageInfo.Type               `json:"type"`
-	PackageState packageInfo.State              `json:"state"`
+	PackageType  packageType.Type               `json:"type"`
+	PackageState packageState.State             `json:"state"`
 	NodeId       string                         `json:"node_id"`
 	ParentId     sql.NullInt64                  `json:"parent_id"`
 	DatasetId    int                            `json:"dataset_id"`
 	OwnerId      int                            `json:"owner_id"`
 	Size         sql.NullInt64                  `json:"size"`
-	ImportId     sql.NullInt64                  `json:"import_id"`
+	ImportId     sql.NullString                 `json:"import_id"`
 	Attributes   []packageInfo.PackageAttribute `json:"attributes"`
 	CreatedAt    time.Time                      `json:"created_at"`
 	UpdatedAt    time.Time                      `json:"updated_at"`
@@ -32,8 +34,8 @@ type Package struct {
 // PackageParams is used as the input to create a package
 type PackageParams struct {
 	Name         string                         `json:"name"`
-	PackageType  packageInfo.Type               `json:"type"`
-	PackageState packageInfo.State              `json:"state"`
+	PackageType  packageType.Type               `json:"type"`
+	PackageState packageState.State             `json:"state"`
 	NodeId       string                         `json:"node_id"`
 	ParentId     int64                          `json:"parent_id"`
 	DatasetId    int                            `json:"dataset_id"`
@@ -142,7 +144,7 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 	}
 
 	returnRows := "id, name, type, state, node_id, parent_id, " +
-		"dataset_id, owner_id, size, created_at, updated_at"
+		"dataset_id, owner_id, size, import_id, created_at, updated_at"
 
 	sqlInsert = sqlInsert + strings.Join(inserts, ",") + fmt.Sprintf("RETURNING %s;", returnRows)
 
@@ -175,6 +177,7 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 			&currentRecord.DatasetId,
 			&currentRecord.OwnerId,
 			&currentRecord.Size,
+			&currentRecord.ImportId,
 			&currentRecord.CreatedAt,
 			&currentRecord.UpdatedAt,
 		)
@@ -199,7 +202,7 @@ func (p *Package) Children(db *sql.DB, organizationId int, parent *Package, data
 
 	folderFilter := ""
 	if onlyFolders {
-		folderFilter = fmt.Sprintf("AND type = '%s'", packageInfo.Collection.String())
+		folderFilter = fmt.Sprintf("AND type = '%s'", packageType.Collection.String())
 	}
 
 	// Return children for specific dataset in specific org with specific parent.
@@ -208,12 +211,12 @@ func (p *Package) Children(db *sql.DB, organizationId int, parent *Package, data
 		"dataset_id, owner_id, size, created_at, updated_at"
 
 	queryStr := fmt.Sprintf("SELECT %s FROM packages WHERE dataset_id = %d AND parent_id = %d AND state != '%s' %s;",
-		queryRows, datasetId, parent.Id, packageInfo.Deleting.String(), folderFilter)
+		queryRows, datasetId, parent.Id, packageState.Deleting.String(), folderFilter)
 
 	// If parent is empty => return children of root of dataset.
 	if parent.NodeId == "" {
 		queryStr = fmt.Sprintf("SELECT %s FROM packages WHERE dataset_id = %d AND parent_id IS NULL AND state != '%s' %s;",
-			queryRows, datasetId, packageInfo.Deleting.String(), folderFilter)
+			queryRows, datasetId, packageState.Deleting.String(), folderFilter)
 	}
 
 	rows, err := db.Query(queryStr)

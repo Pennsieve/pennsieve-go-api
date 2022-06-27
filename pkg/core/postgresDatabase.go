@@ -16,6 +16,8 @@ import (
 func ConnectRDS() (*sql.DB, error) {
 	var dbName string = "pennsieve_postgres"
 	var dbUser string = "dev_rds_proxy_user"
+
+	// TODO: Replace postgres location dynamically
 	var dbHost string = "dev-pennsieve-postgres-use1-proxy.proxy-ctkakwd4msv8.us-east-1.rds.amazonaws.com"
 	var dbPort int = 5432
 	var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
@@ -31,8 +33,6 @@ func ConnectRDS() (*sql.DB, error) {
 	if err != nil {
 		panic("failed to create authentication token: " + err.Error())
 	}
-
-	fmt.Println("AUTH TOKEN: ", authenticationToken)
 
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s",
 		dbHost, dbPort, dbUser, authenticationToken, dbName,

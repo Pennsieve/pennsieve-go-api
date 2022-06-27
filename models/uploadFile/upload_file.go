@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/pennsieve/pennsieve-go-api/models/fileInfo/fileType"
 	"github.com/pennsieve/pennsieve-go-api/models/iconInfo"
-	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
+	"github.com/pennsieve/pennsieve-go-api/models/packageInfo/packageType"
 	"github.com/pennsieve/pennsieve-go-api/models/uploadFolder"
 	"sort"
 	"strings"
@@ -15,10 +16,13 @@ import (
 type UploadFile struct {
 	ManifestId string           // ManifestId is id for the entire upload session.
 	UploadId   string           // UploadId ID is used as part of the s3key for uploaded files.
+	S3Bucket   string           // S3Bucket is bucket where file is uploaded to
+	S3Key      string           // S3Key is the S3 key of the file
 	Path       string           // Path to collection without file-name
 	Name       string           // Name is the filename including extension(s)
 	Extension  string           // Extension of file (separated from name)
-	Type       packageInfo.Type // Type of the Package.
+	FileType   fileType.Type    // FileType is the type of the file
+	Type       packageType.Type // Type of the Package.
 	SubType    string           // SubType of the file
 	Icon       iconInfo.Icon    // Icon for the file
 	Size       int64            // Size of file

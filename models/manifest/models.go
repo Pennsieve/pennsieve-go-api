@@ -43,7 +43,8 @@ type ManifestFileStatus int64
 const (
 	FileInitiated ManifestFileStatus = iota
 	FileSynced
-	FileUploaded
+	FileImported
+	FileFinalized
 	FileVerified
 	FileFailed
 	FileRemoved
@@ -55,8 +56,10 @@ func (s ManifestFileStatus) String() string {
 		return "Initiated"
 	case FileSynced:
 		return "Synced"
-	case FileUploaded:
-		return "Uploaded"
+	case FileImported:
+		return "Imported"
+	case FileFinalized:
+		return "Finalized"
 	case FileVerified:
 		return "Verified"
 	case FileFailed:
@@ -74,8 +77,10 @@ func (s ManifestFileStatus) ManifestFileStatusMap(value string) ManifestFileStat
 		return FileInitiated
 	case "Synced":
 		return FileSynced
-	case "Uploaded":
-		return FileUploaded
+	case "Imported":
+		return FileImported
+	case "Finalized":
+		return FileFinalized
 	case "Verified":
 		return FileVerified
 	case "Removed":
