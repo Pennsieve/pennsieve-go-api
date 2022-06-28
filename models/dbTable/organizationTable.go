@@ -6,67 +6,42 @@ import (
 	"time"
 )
 
-type DbPermission int64
-
-const (
-	NoPermission DbPermission = 0
-	Collaborate               = 1
-	Read                      = 2
-	Write                     = 4
-	Delete                    = 8
-	Administer                = 16
-	Owner                     = 32
-)
-
-func (s DbPermission) String() string {
-	switch s {
-	case NoPermission:
-		return "NoPermission"
-	case Collaborate:
-		return "Collaborate"
-	case Read:
-		return "Read"
-	case Write:
-		return "Write"
-	case Delete:
-		return "Delete"
-	case Administer:
-		return "Administer"
-	case Owner:
-		return "Owner"
-	}
-
-	return "NoPermission"
+type Organization struct {
+	Id            int64     `json:"id"`
+	Name          string    `json:"name"`
+	Slug          string    `json:"slug"`
+	NodeId        string    `json:"node_id"`
+	StorageBucket string    `json:"storage_bucket"`
+	PublishBucket string    `json:"publish_bucket"`
+	EmbargoBucket string    `json:"embargo_bucket"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
-type OrganizationUser struct {
-	OrganizationId int64        `json:"organization_id"`
-	UserId         int64        `json:"user_id"`
-	DbPermission   DbPermission `json:"permission_bit"`
-	CreatedAt      time.Time    `json:"created_at"`
-	UpdatedAt      time.Time    `json:"updated_at"`
-}
+func (o *Organization) Get(db *sql.DB, id int64) (*Organization, error) {
 
-func (o *OrganizationUser) GetByUserId(db *sql.DB, id int64) (*OrganizationUser, error) {
+	queryStr := "SELECT id, name, slug, node_id, storage_bucket, publish_bucket, embargo_bucket, created_at, updated_at " +
+		"FROM pennsieve.organizations WHERE id=$1;"
 
-	queryStr := "SELECT organization_id, user_id, permission_bit, created_at, updated_at " +
-		"FROM pennsieve.organization_user WHERE user_id=$1;"
-
-	var orgUser OrganizationUser
+	var organization Organization
 	row := db.QueryRow(queryStr, id)
 	err := row.Scan(
-		&orgUser.OrganizationId,
-		&orgUser.UserId,
-		&orgUser.DbPermission,
-		&orgUser.CreatedAt,
-		&orgUser.UpdatedAt)
+		&organization.Id,
+		&organization.Name,
+		&organization.Slug,
+		&organization.NodeId,
+		&organization.StorageBucket,
+		&organization.PublishBucket,
+		&organization.EmbargoBucket,
+		&organization.CreatedAt,
+		&organization.UpdatedAt)
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
 		return nil, err
 	case nil:
-		return &orgUser, nil
+		return &organization, nil
 	default:
 		panic(err)
 	}

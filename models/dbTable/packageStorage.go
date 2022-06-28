@@ -26,7 +26,7 @@ func (p *PackageStorage) Increment(db *sql.DB, packageId int64, size int64) erro
 }
 
 // IncrementAncestors increases the storage associated with the parents of the provided package.
-func (p *PackageStorage) IncrementAncestors(db *sql.DB, packageId int64, size int64) error {
+func (p *PackageStorage) IncrementAncestors(db *sql.DB, parentId int64, size int64) error {
 
 	queryStr := "" +
 		"WITH RECURSIVE ancestors(id, parent_id) AS (" +
@@ -34,7 +34,7 @@ func (p *PackageStorage) IncrementAncestors(db *sql.DB, packageId int64, size in
 		"packages.id, " +
 		"packages.parent_id " +
 		"FROM packages packages " +
-		"WHERE packages.id = ${pkg.parentId} " +
+		"WHERE packages.id = $1 " +
 		"UNION " +
 		"SELECT parents.id, parents.parent_id " +
 		"FROM packages parents " +
@@ -42,11 +42,11 @@ func (p *PackageStorage) IncrementAncestors(db *sql.DB, packageId int64, size in
 		") " +
 		"INSERT INTO package_storage " +
 		"AS package_storage (package_id, size) " +
-		"SELECT id, $size FROM ancestors " +
+		"SELECT id, $2 FROM ancestors " +
 		"ON CONFLICT (package_id) " +
 		"DO UPDATE SET size = COALESCE(package_storage.size, 0) + EXCLUDED.size;"
 
-	_, err := db.Exec(queryStr, packageId, size)
+	_, err := db.Exec(queryStr, parentId, size)
 	if err != nil {
 		log.Println("Error incrementing package size: ", err)
 	}
