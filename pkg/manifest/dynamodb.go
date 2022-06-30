@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/models/manifest"
 	"log"
@@ -23,6 +24,8 @@ type ManifestSession struct {
 	FileTableName string
 	TableName     string
 	Client        *dynamodb.Client
+	SNSClient     *sns.Client
+	SNSTopic      string
 }
 
 // fileWalk channel used to distribute FileDTOs to the workers importing the files in DynamoDB
@@ -164,6 +167,8 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifest.
 		}
 
 		writeRequests = append(writeRequests, request)
+
+		// Send message to Imported SNS topic
 	}
 
 	// Format requests and call DynamoDB
