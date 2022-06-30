@@ -143,3 +143,19 @@ func (p *File) Add(db *sql.DB, files []FileParams) ([]File, error) {
 
 	return allInsertedFiles, err
 }
+
+// UpdateBucket updates the storage bucket as part of upload process and sets Status
+func (p *File) UpdateBucket(db *sql.DB, uploadId string, bucket string, organizationId int64) error {
+
+	queryStr := fmt.Sprintf("UPDATE \"%d\".files SET s3_bucket=$1 WHERE UUID=$2;", organizationId)
+
+	_, err := db.Exec(queryStr, bucket, uploadId)
+	if err != nil {
+
+		log.Println("Error updating the bucket location: ", err)
+		return err
+	}
+
+	return nil
+
+}
