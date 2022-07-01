@@ -2,6 +2,7 @@ package dbTable
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -149,11 +150,18 @@ func (p *File) UpdateBucket(db *sql.DB, uploadId string, bucket string, organiza
 
 	queryStr := fmt.Sprintf("UPDATE \"%d\".files SET s3_bucket=$1 WHERE UUID=$2;", organizationId)
 
-	_, err := db.Exec(queryStr, bucket, uploadId)
+	result, err := db.Exec(queryStr, bucket, uploadId)
 	if err != nil {
-
 		log.Println("Error updating the bucket location: ", err)
 		return err
+	}
+
+	affectedRows, err := result.RowsAffected()
+	if affectedRows != 1 {
+		log.Println("UpdateBucket: Unexpected number of updated rows!", affectedRows)
+		if affectedRows == 0 {
+			return errors.New("zero rows updated when 1 expected``")
+		}
 	}
 
 	return nil
