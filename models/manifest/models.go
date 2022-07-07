@@ -1,15 +1,17 @@
 package manifest
 
-type ManifestStatus int64
+import "github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
+
+type Status int64
 
 const (
-	Initiated ManifestStatus = iota
+	Initiated Status = iota
 	Uploading
 	Completed
 	Cancelled
 )
 
-func (s ManifestStatus) String() string {
+func (s Status) String() string {
 	switch s {
 	case Initiated:
 		return "Initiated"
@@ -24,7 +26,7 @@ func (s ManifestStatus) String() string {
 	}
 }
 
-func (s ManifestStatus) ManifestStatusMap(value string) ManifestStatus {
+func (s Status) ManifestStatusMap(value string) Status {
 	switch value {
 	case "Initiated":
 		return Initiated
@@ -38,84 +40,25 @@ func (s ManifestStatus) ManifestStatusMap(value string) ManifestStatus {
 	return Initiated
 }
 
-type ManifestFileStatus int64
-
-const (
-	FileInitiated ManifestFileStatus = iota
-	FileSynced
-	FileImported
-	FileFinalized
-	FileVerified
-	FileFailed
-	FileRemoved
-)
-
-func (s ManifestFileStatus) String() string {
-	switch s {
-	case FileInitiated:
-		return "Initiated"
-	case FileSynced:
-		return "Synced"
-	case FileImported:
-		return "Imported"
-	case FileFinalized:
-		return "Finalized"
-	case FileVerified:
-		return "Verified"
-	case FileFailed:
-		return "Failed"
-	case FileRemoved:
-		return "Removed"
-	default:
-		return "Initiated"
-	}
-}
-
-func (s ManifestFileStatus) ManifestFileStatusMap(value string) ManifestFileStatus {
-	switch value {
-	case "Initiated":
-		return FileInitiated
-	case "Synced":
-		return FileSynced
-	case "Imported":
-		return FileImported
-	case "Finalized":
-		return FileFinalized
-	case "Verified":
-		return FileVerified
-	case "Removed":
-		return FileRemoved
-	case "Failed":
-		return FileFailed
-	}
-	return FileInitiated
-}
-
-type FileDTO struct {
-	UploadID   string             `json:"upload_id"`
-	S3Key      string             `json:"s3_key"`
-	TargetPath string             `json:"target_path"`
-	TargetName string             `json:"target_name"`
-	Status     ManifestFileStatus `json:"status"`
-}
-
 type DTO struct {
-	ID        string         `json:"id"`
-	DatasetId string         `json:"dataset_id"`
-	Files     []FileDTO      `json:"files"`
-	Status    ManifestStatus `json:"status"`
+	ID        string                 `json:"id"`
+	DatasetId string                 `json:"dataset_id"`
+	Files     []manifestFile.FileDTO `json:"files"`
+	Status    Status                 `json:"status"`
 }
 
 type PostResponse struct {
-	ManifestNodeId string   `json:"manifest_node_id"'`
-	NrFilesUpdated int      `json:"nr_files_updated"`
-	NrFilesRemoved int      `json:"nr_files_removed"`
-	FailedFiles    []string `json:"failed_files"`
+	ManifestNodeId string                       `json:"manifest_node_id"'`
+	NrFilesUpdated int                          `json:"nr_files_updated"`
+	NrFilesRemoved int                          `json:"nr_files_removed"`
+	UpdatedFiles   []manifestFile.FileStatusDTO `json:"updated_files"`
+	FailedFiles    []string                     `json:"failed_files"`
 }
 
 // AddFilesStats object that is returned to the client.
 type AddFilesStats struct {
 	NrFilesUpdated int
 	NrFilesRemoved int
+	FileStatus     []manifestFile.FileStatusDTO
 	FailedFiles    []string
 }

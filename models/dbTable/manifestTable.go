@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/pennsieve/pennsieve-go-api/models/manifest"
+	"github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
 )
 
 // ManifestTable is a representation of a Manifest in DynamoDB
@@ -64,7 +64,7 @@ func GetFromManifest(client *dynamodb.Client, manifestTableName string, manifest
 }
 
 // UpdateFileTableStatus updates the status of the file in the file-table dynamodb
-func UpdateFileTableStatus(client *dynamodb.Client, tableName string, manifestId string, uploadId string, status manifest.ManifestFileStatus) error {
+func UpdateFileTableStatus(client *dynamodb.Client, tableName string, manifestId string, uploadId string, status manifestFile.Status) error {
 
 	_, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),

@@ -50,6 +50,15 @@ type PackageMap = map[string]Package
 
 // Add adds multiple packages to the Pennsieve Postgres DB
 func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
+	// Steps:
+	// 1. Checks current packages in folder and check if they have sugested name.
+	// 2. If package already exists, append (#) and check if that name exists recursively.
+	// 3. Insert packages
+	// 4. return Package objects for returned objects.
+
+	// Handling folders...
+	// 1. If folder already exist --> return existing folder
+	// 2. Update parentId for all records to reflect existing record.
 
 	currentTime := time.Now()
 	var vals []interface{}
@@ -77,9 +86,23 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 		}
 		arrayString := strings.Join(names, ",")
 
-		sqlString := fmt.Sprintf("SELECT name FROM packages WHERE dataset_id=%d AND parent_id=%d AND name LIKE ANY (ARRAY[%s]);", datasetId, key, arrayString)
-		if key == -1 {
-			sqlString = fmt.Sprintf("SELECT name FROM packages WHERE dataset_id=%d AND parent_id IS NULL AND name LIKE ANY (ARRAY[%s]);", datasetId, arrayString)
+		var sqlString string
+		switch key {
+		case -1:
+			// Check for files in root folder.
+			sqlString = fmt.Sprintf("SELECT name "+
+				"FROM packages "+
+				"WHERE dataset_id=%d "+
+				"AND parent_id IS NULL "+
+				"AND name LIKE ANY (ARRAY[%s]) "+
+				"AND state != '%s';", datasetId, arrayString, packageState.Deleting.String())
+		default:
+			sqlString = fmt.Sprintf("SELECT name "+
+				"FROM packages "+
+				"WHERE dataset_id=%d "+
+				"AND parent_id=%d "+
+				"AND name LIKE ANY (ARRAY[%s]) "+
+				"AND state != '%s';", datasetId, key, arrayString, packageState.Deleting.String())
 		}
 
 		stmt, err := db.Prepare(sqlString)
@@ -98,9 +121,12 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 			allNames = append(allNames, currentFile)
 		}
 
-		// Update names if suggested name exists.
+		// Update names if suggested name exists for files
+		// Don't do anything for folders as conflict will return the existing folder.
 		for i, _ := range records {
-			checkUpdateName(&records[i], 1, "", allNames)
+			if records[i].PackageType != packageType.Collection {
+				checkUpdateName(&records[i], 1, "", allNames)
+			}
 		}
 
 	}
@@ -146,7 +172,9 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 	returnRows := "id, name, type, state, node_id, parent_id, " +
 		"dataset_id, owner_id, size, import_id, created_at, updated_at"
 
-	sqlInsert = sqlInsert + strings.Join(inserts, ",") + fmt.Sprintf("RETURNING %s;", returnRows)
+	sqlInsert = sqlInsert + strings.Join(inserts, ",") +
+		fmt.Sprintf("ON CONFLICT(name, parent_id) DO UPDATE SET updated_at=EXCLUDED.updated_at") +
+		fmt.Sprintf("RETURNING %s;", returnRows)
 
 	//prepare the statement
 	stmt, err := db.Prepare(sqlInsert)
