@@ -173,8 +173,8 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 		"dataset_id, owner_id, size, import_id, created_at, updated_at"
 
 	sqlInsert = sqlInsert + strings.Join(inserts, ",") +
-		fmt.Sprintf("ON CONFLICT(name, parent_id) DO UPDATE SET updated_at=EXCLUDED.updated_at") +
-		fmt.Sprintf("RETURNING %s;", returnRows)
+		//fmt.Sprintf("ON CONFLICT(name, parent_id) DO UPDATE SET updated_at=EXCLUDED.updated_at") +
+		fmt.Sprintf(" RETURNING %s;", returnRows)
 
 	//prepare the statement
 	stmt, err := db.Prepare(sqlInsert)

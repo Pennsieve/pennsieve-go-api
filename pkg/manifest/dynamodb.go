@@ -56,7 +56,7 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 }
 
 // addFiles manages the workers and defines the go routines to add files to manifest db.
-func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDTO) (*manifest.AddFilesStats, error) {
+func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDTO, forceStatus *manifestFile.Status) (*manifest.AddFilesStats, error) {
 
 	walker := make(fileWalk, batchSize)
 	result := make(chan manifest.AddFilesStats, nrWorkers)
@@ -81,7 +81,7 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 		log.Println("starting worker:", w2)
 
 		go func() {
-			stats, _ := s.createOrUpdateFile(w2, walker, manifestId)
+			stats, _ := s.createOrUpdateFile(w2, walker, manifestId, forceStatus)
 			result <- *stats
 		}()
 	}
@@ -103,7 +103,7 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 }
 
 // updateDynamoDb sends a set of FileDTOs to dynamodb.
-func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestFile.FileDTO) (*manifest.AddFilesStats, error) {
+func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestFile.FileDTO, forceStatus *manifestFile.Status) (*manifest.AddFilesStats, error) {
 	// Create Batch Put request for the fileslice and update dynamodb with one call
 	var writeRequests []types.WriteRequest
 
@@ -116,15 +116,41 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 	for _, file := range fileSlice {
 
 		// Get existing status for file in dynamodb, Unknown if does not exist
-		curStatus, err := s.statusForFileItem(manifestId, &file)
-		if err != nil {
-			log.Fatalf("Unable to check status of existing manifest file.")
-		}
+		var request *types.WriteRequest
+		var setStatus manifestFile.Status
+		if forceStatus == nil {
+			curStatus, err := s.statusForFileItem(manifestId, &file)
+			if err != nil {
+				log.Fatalf("Unable to check status of existing manifest file.")
+			}
 
-		// Determine the sync action based on provided status and current status.
-		request, setStatus, err := s.getAction(manifestId, file, curStatus)
-		if err != nil {
-			log.Fatalf("Unable to get action for manifest file.")
+			// Determine the sync action based on provided status and current status.
+			request, setStatus, err = s.getAction(manifestId, file, curStatus)
+			if err != nil {
+				log.Fatalf("Unable to get action for manifest file.")
+			}
+		} else {
+
+			item := dbTable.ManifestFileTable{
+				ManifestId: manifestId,
+				UploadId:   file.UploadID,
+				FilePath:   file.TargetPath,
+				FileName:   file.TargetName,
+				Status:     forceStatus.String(),
+			}
+
+			data, err := attributevalue.MarshalMap(item)
+			if err != nil {
+				log.Fatalf("MarshalMap: %v\n", err)
+			}
+
+			request = &types.WriteRequest{
+				PutRequest: &types.PutRequest{
+					Item: data,
+				},
+			}
+
+			setStatus = *forceStatus
 		}
 
 		// If action requires dynamodb actionm add request to array of requests
@@ -218,7 +244,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 }
 
 // createOrUpdateFile is run in a goroutine and grabs set of files from channel and calls updateDynamoDb.
-func (s ManifestSession) createOrUpdateFile(workerId int32, files fileWalk, manifestId string) (*manifest.AddFilesStats, error) {
+func (s ManifestSession) createOrUpdateFile(workerId int32, files fileWalk, manifestId string, forceStatus *manifestFile.Status) (*manifest.AddFilesStats, error) {
 	defer func() {
 		log.Println("Closing Worker: ", workerId)
 		syncWG.Done()
@@ -233,7 +259,7 @@ func (s ManifestSession) createOrUpdateFile(workerId int32, files fileWalk, mani
 
 		// When the number of items in fileSize matches the batchSize --> make call to update dynamodb
 		if len(fileSlice) == batchSize {
-			stats, _ := s.updateDynamoDb(manifestId, fileSlice)
+			stats, _ := s.updateDynamoDb(manifestId, fileSlice, forceStatus)
 			fileSlice = nil
 
 			response.NrFilesUpdated += stats.NrFilesUpdated
@@ -244,7 +270,7 @@ func (s ManifestSession) createOrUpdateFile(workerId int32, files fileWalk, mani
 
 	// Add final partially filled fileSlice to database
 	if fileSlice != nil {
-		stats, _ := s.updateDynamoDb(manifestId, fileSlice)
+		stats, _ := s.updateDynamoDb(manifestId, fileSlice, forceStatus)
 		response.NrFilesUpdated += stats.NrFilesUpdated
 		response.NrFilesRemoved += stats.NrFilesRemoved
 		response.FailedFiles = append(response.FailedFiles, stats.FailedFiles...)
