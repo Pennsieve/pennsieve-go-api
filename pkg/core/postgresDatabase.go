@@ -8,20 +8,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
 	_ "github.com/lib/pq"
 	"log"
+	"os"
 )
 
 // ConnectRDS returns a DB instance.
 // The Lambda function leverages IAM roles to gain access to the DB Proxy.
 // The function does NOT set the search_path to the organization schema.
+// Requires following LAMBDA ENV VARIABLES:
+// 		- RDS_PROXY_ENDPOINT
+//		- REGION
+//		- ENV
 func ConnectRDS() (*sql.DB, error) {
 	var dbName string = "pennsieve_postgres"
-	var dbUser string = "dev_rds_proxy_user"
-
-	// TODO: Replace postgres location dynamically
-	var dbHost string = "dev-pennsieve-postgres-use1-proxy.proxy-ctkakwd4msv8.us-east-1.rds.amazonaws.com"
+	var dbUser string = fmt.Sprintf("%s_rds_proxy_user", os.Getenv("ENV"))
+	var dbHost string = os.Getenv("RDS_PROXY_ENDPOINT")
 	var dbPort int = 5432
 	var dbEndpoint string = fmt.Sprintf("%s:%d", dbHost, dbPort)
-	var region string = "us-east-1"
+	var region string = os.Getenv("REGION")
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
