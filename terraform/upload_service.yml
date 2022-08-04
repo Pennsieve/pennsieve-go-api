@@ -191,10 +191,12 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
     post:
-      summary: Add files to a new or existing manifest.
+      summary: Synchronize manifest with server.
+      description: |
+        Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: createManifest
+      operationId: syncManifest
       security:
         - token_dataset_auth: [ ]
       tags:
@@ -328,102 +330,6 @@ paths:
           $ref: '#/components/responses/Error'
         default:
           description: Success
-  /manifest/{id}/updates:
-    get:
-      summary: Get file status updates from server
-      description: Get updates to datasets after the provided timestamp in unix-time.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: syncFiles
-      security:
-        - token_auth: [ ]
-      tags:
-        - Upload Service
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The UUID of the Upload Manifest.
-        - in: query
-          name: timestamp
-          required: true
-          schema:
-            type: integer
-          description: Timestamp in Unix time (seconds since 1/1/1970).
-        - in: query
-          name: limit
-          required: false
-          schema:
-            type: integer
-            default: 1000
-            maximum: 2000
-          description: Maximum number of returned items
-      responses:
-        '200':
-          description: Successfully added files.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  nrReturnedItems:
-                    type: integer
-                  lastReturnedTime:
-                    type: integer
-                  files:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        uploadId:
-                          type: string
-                        status:
-                          type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-        default:
-          description: Success
-  /manifest/{id}/remove:
-    post:
-      summary: Remove files from existing manifest.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: deleteFiles
-      security:
-        - token_auth: [ ]
-      tags:
-        - Upload Service
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The UUID of the Upload Manifest.
-      responses:
-        '200':
-          description: Successfully removed files.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  nrFilesRemoved:
-                    type: integer
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-
-
-
 
 
 
