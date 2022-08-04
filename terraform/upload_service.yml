@@ -15,7 +15,7 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
   - url: https://api2.pennsieve.io
-        description: Production server
+    description: Production server
   - url: https://api2.pennsieve.net
     description: Development server
 externalDocs:
