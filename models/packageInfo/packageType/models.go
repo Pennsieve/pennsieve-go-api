@@ -112,6 +112,7 @@ type Info struct {
 	PackageType    Type
 	PackageSubType string
 	Icon           iconInfo.Icon
+	HasGrouping    bool
 }
 
 // fileTypeDict maps filetypes to PackageTypes.
@@ -140,6 +141,7 @@ var FileTypeToInfoDict = map[fileType.Type]Info{
 		PackageType:    TimeSeries,
 		PackageSubType: "Timeseries",
 		Icon:           iconInfo.Timeseries,
+		HasGrouping:    true,
 	},
 	fileType.NeuroExplorer: {
 		PackageType:    TimeSeries,

@@ -62,11 +62,13 @@ func (s Status) ManifestFileStatusMap(value string) Status {
 
 // FileDTO used to transfer file object in API requests.
 type FileDTO struct {
-	UploadID   string `json:"upload_id"`
-	S3Key      string `json:"s3_key"`
-	TargetPath string `json:"target_path"`
-	TargetName string `json:"target_name"`
-	Status     Status `json:"status"`
+	UploadID       string `json:"upload_id"`
+	S3Key          string `json:"s3_key"`
+	TargetPath     string `json:"target_path"`
+	TargetName     string `json:"target_name"`
+	Status         Status `json:"status"`
+	MergePackageId string `json:"merge_package_id"` // MergePackageId is ID of package if not using UploadID
+	FileType       string `json:"file_type"`        // FileType is string representation of fileType (auto populated if empty)
 }
 
 // FileStatusDTO used to transfer status information in API requests.

@@ -52,9 +52,10 @@ type PackageMap = map[string]Package
 func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 	// Steps:
 	// 1. Checks current packages in folder and check if they have sugested name.
-	// 2. If package already exists, append (#) and check if that name exists recursively.
+	// 2. If package with name already exists, append (#) and check if that name exists recursively.
 	// 3. Insert packages
-	// 4. return Package objects for returned objects.
+	// 4. If package with provided packageId exists, don't create new one but return existing one.
+	// 5. return Package objects for returned objects.
 
 	// Handling folders...
 	// 1. If folder already exist --> return existing folder
@@ -125,6 +126,11 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 		// Don't do anything for folders as conflict will return the existing folder.
 		for i, _ := range records {
 			if records[i].PackageType != packageType.Collection {
+
+				// TODO: Check Package Merge
+				// If we need to merge --> set flag in record so we don't add package and only add file to the existing package.
+
+				// Check Name Collision
 				checkUpdateName(&records[i], 1, "", allNames)
 			}
 		}
@@ -173,7 +179,7 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 		"dataset_id, owner_id, size, import_id, created_at, updated_at"
 
 	sqlInsert = sqlInsert + strings.Join(inserts, ",") +
-		//fmt.Sprintf("ON CONFLICT(name, parent_id) DO UPDATE SET updated_at=EXCLUDED.updated_at") +
+		fmt.Sprintf("ON CONFLICT(node_id) DO UPDATE SET updated_at=EXCLUDED.updated_at") +
 		fmt.Sprintf(" RETURNING %s;", returnRows)
 
 	//prepare the statement

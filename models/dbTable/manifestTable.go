@@ -22,11 +22,13 @@ type ManifestTable struct {
 
 // ManifestFileTable is a representation of a ManifestFile in DynamoDB
 type ManifestFileTable struct {
-	ManifestId string `dynamodbav:"ManifestId"`
-	UploadId   string `dynamodbav:"UploadId"`
-	FilePath   string `dynamodbav:"FilePath,omitempty"`
-	FileName   string `dynamodbav:"FileName"`
-	Status     string `dynamodbav:"Status"`
+	ManifestId     string `dynamodbav:"ManifestId"`
+	UploadId       string `dynamodbav:"UploadId"`
+	FilePath       string `dynamodbav:"FilePath,omitempty"`
+	FileName       string `dynamodbav:"FileName"`
+	MergePackageId string `dynamodbav:"MergePackageId,omitempty"`
+	Status         string `dynamodbav:"Status"`
+	FileType       string `dynamodbav:"FileType"`
 }
 
 type ManifestFilePrimaryKey struct {
@@ -81,4 +83,56 @@ func UpdateFileTableStatus(client *dynamodb.Client, tableName string, manifestId
 		},
 	})
 	return err
+}
+
+// GetFilesForPath returns files in path for a manifest with optional filter.
+func GetFilesForPath(client *dynamodb.Client, tableName string, manifestId string, path string, filter string,
+	limit int32, startKey map[string]types.AttributeValue) (*dynamodb.QueryOutput, error) {
+
+	queryInput := dynamodb.QueryInput{
+		TableName:                 aws.String(tableName),
+		IndexName:                 aws.String("PathIndex"),
+		ExclusiveStartKey:         startKey,
+		ExpressionAttributeNames:  nil,
+		ExpressionAttributeValues: nil,
+		FilterExpression:          aws.String(filter),
+		KeyConditionExpression:    aws.String(fmt.Sprintf("partitionKeyName=%s AND sortKeyName=%s", manifestId, path)),
+		Limit:                     &limit,
+		Select:                    "ALL_ATTRIBUTES",
+	}
+
+	result, err := client.Query(context.Background(), &queryInput)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetManifestFile returns a manifest file from the ManifestFile Table.
+func GetManifestFile(client *dynamodb.Client, tableName string, manifestId string, uploadId string) (*ManifestFileTable, error) {
+	item := ManifestFileTable{}
+
+	data, err := client.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"ManifestId": &types.AttributeValueMemberS{Value: manifestId},
+			"UploadId":   &types.AttributeValueMemberS{Value: uploadId},
+		},
+	})
+
+	if err != nil {
+		return &item, fmt.Errorf("GetItem: %v\n", err)
+	}
+
+	if data.Item == nil {
+		return &item, fmt.Errorf("GetItem: ManifestFile not found.\n")
+	}
+
+	err = attributevalue.UnmarshalMap(data.Item, &item)
+	if err != nil {
+		return &item, fmt.Errorf("UnmarshalMap: %v\n", err)
+	}
+
+	return &item, nil
 }

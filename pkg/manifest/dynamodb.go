@@ -55,9 +55,10 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 	return nil
 }
 
-// addFiles manages the workers and defines the go routines to add files to manifest db.
+// AddFiles manages the workers and defines the go routines to add files to manifest db.
 func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDTO, forceStatus *manifestFile.Status) (*manifest.AddFilesStats, error) {
 
+	// Populate DynamoDB with concurrent workers.
 	walker := make(fileWalk, batchSize)
 	result := make(chan manifest.AddFilesStats, nrWorkers)
 
@@ -112,9 +113,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 	// Iterate over files in the fileSlice array and create writeRequests.
 	var nrFilesUpdated int
 	var nrFilesRemoved int
-	//var request types.WriteRequest
 	for _, file := range fileSlice {
-
 		// Get existing status for file in dynamodb, Unknown if does not exist
 		var request *types.WriteRequest
 		var setStatus manifestFile.Status
@@ -132,11 +131,13 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 		} else {
 
 			item := dbTable.ManifestFileTable{
-				ManifestId: manifestId,
-				UploadId:   file.UploadID,
-				FilePath:   file.TargetPath,
-				FileName:   file.TargetName,
-				Status:     forceStatus.String(),
+				ManifestId:     manifestId,
+				UploadId:       file.UploadID,
+				FilePath:       file.TargetPath,
+				FileName:       file.TargetName,
+				Status:         forceStatus.String(),
+				MergePackageId: file.MergePackageId,
+				FileType:       file.FileType,
 			}
 
 			data, err := attributevalue.MarshalMap(item)
@@ -317,12 +318,16 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 	*/
 	item := dbTable.ManifestFileTable{
-		ManifestId: manifestId,
-		UploadId:   file.UploadID,
-		FilePath:   file.TargetPath,
-		FileName:   file.TargetName,
-		Status:     manifestFile.Synced.String(),
+		ManifestId:     manifestId,
+		UploadId:       file.UploadID,
+		FilePath:       file.TargetPath,
+		FileName:       file.TargetName,
+		Status:         manifestFile.Synced.String(),
+		MergePackageId: file.MergePackageId,
+		FileType:       file.FileType,
 	}
+
+	log.Println("Item: ", item.MergePackageId)
 
 	// Switch based on provided status from client
 	switch file.Status {
@@ -395,13 +400,8 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			return &request, manifestFile.Verified, nil
 		case manifestFile.Synced, manifestFile.Failed, manifestFile.Unknown:
 			// server is synced, failed, unknown --> add/update the entry in dynamodb
-			item := dbTable.ManifestFileTable{
-				ManifestId: manifestId,
-				UploadId:   file.UploadID,
-				FilePath:   file.TargetPath,
-				FileName:   file.TargetName,
-				Status:     manifestFile.Synced.String(),
-			}
+			item.Status = manifestFile.Synced.String()
+
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
 				log.Fatalf("MarshalMap: %v\n", err)

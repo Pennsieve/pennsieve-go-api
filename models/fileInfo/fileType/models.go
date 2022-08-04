@@ -462,7 +462,7 @@ var ExtensionToTypeDict = map[string]Type{
 	"tdm":           TDMS,
 	"tdms":          TDMS,
 	"lay":           Persyst,
-	"dat":           Persyst,
+	"dat":           Data,
 	"nex":           NeuroExplorer,
 	"nex5":          NeuroExplorer,
 	"smr":           Spike2,
