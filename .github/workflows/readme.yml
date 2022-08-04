@@ -15,5 +15,5 @@ jobs:
           replace: "Authorization"
           include: "terraform/upload-service.yml"
       - uses: readmeio/rdme@7.3.0
-      with:
-        rdme: openapi [file] --key=${{ secrets.README_OAS_KEY }} --id=API_DEFINITION_ID
+        with:
+          rdme: openapi [file] --key=${{ secrets.README_OAS_KEY }} --id=API_DEFINITION_ID
