@@ -11,7 +11,7 @@ jobs:
       - name: Find and Replace
         uses: jacobtomlinson/gha-find-replace@master
         with:
-          find: "unused"
+          find: "Unused"
           replace: "Authorization"
           include: "terraform/upload_service.yml"
       - uses: readmeio/rdme@7.3.0
