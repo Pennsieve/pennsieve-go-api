@@ -1,0 +1,19 @@
+name: Sync OAS to ReadMe
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@master
+        with:
+          find: "unused"
+          replace: "Authorization"
+          include: "terraform/upload-service.yml"
+      - uses: readmeio/rdme@7.3.0
+      with:
+        rdme: openapi [file] --key=${{ secrets.README_OAS_KEY }} --id=API_DEFINITION_ID

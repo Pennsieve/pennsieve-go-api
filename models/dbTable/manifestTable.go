@@ -18,6 +18,7 @@ type ManifestTable struct {
 	OrganizationId int64  `dynamodbav:"OrganizationId"`
 	UserId         int64  `dynamodbav:"UserId"`
 	Status         string `dynamodbav:"Status"`
+	DateCreated    int64  `dynamodbav:"DateCreated"`
 }
 
 // ManifestFileTable is a representation of a ManifestFile in DynamoDB
@@ -62,7 +63,37 @@ func GetFromManifest(client *dynamodb.Client, manifestTableName string, manifest
 	}
 
 	return &item, nil
+}
 
+// GetManifestsForDataset returns all manifests for a given dataset.
+func GetManifestsForDataset(client *dynamodb.Client, manifestTableName string, datasetNodeId string) ([]ManifestTable, error) {
+
+	queryInput := dynamodb.QueryInput{
+		TableName:              aws.String(manifestTableName),
+		IndexName:              aws.String("DatasetManifestIndex"),
+		KeyConditionExpression: aws.String("DatasetNodeId = :datasetValue"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":datasetValue": &types.AttributeValueMemberS{Value: datasetNodeId},
+		},
+		Select: "ALL_ATTRIBUTES",
+	}
+
+	result, err := client.Query(context.Background(), &queryInput)
+	if err != nil {
+		return nil, err
+	}
+
+	items := []ManifestTable{}
+	for _, item := range result.Items {
+		manifest := ManifestTable{}
+		err = attributevalue.UnmarshalMap(item, &manifest)
+		if err != nil {
+			return nil, fmt.Errorf("UnmarshalMap: %v\n", err)
+		}
+		items = append(items, manifest)
+	}
+
+	return items, nil
 }
 
 // UpdateFileTableStatus updates the status of the file in the file-table dynamodb

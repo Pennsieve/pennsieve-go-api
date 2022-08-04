@@ -13,6 +13,11 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: https://api2.pennsieve.io
+        description: Production server
+  - url: https://api2.pennsieve.net
+    description: Development server
 externalDocs:
   description: Find more info here
   url: https://docs.pennsieve.io
@@ -139,9 +144,18 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestList
-      summary: Get a list of active manifest for user
+      summary: Get a list of manifest for a dataset.
+      description: |
+        Returns a list of manifests that are defined for a dataset.
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset for which we want to retrieve datasets.
       security:
-        - token_auth: [ ]
+        - token_dataset_auth: [ ]
       tags:
         - Upload Service
       responses:

@@ -47,6 +47,19 @@ type DTO struct {
 	Status    Status                 `json:"status"`
 }
 
+type ManifestDTO struct {
+	Id            string `json:"id"`
+	DatasetId     int64  `json:"dataset_id"`
+	DatasetNodeId string `json:"dataset_node_id"`
+	Status        string `json:"status"`
+	User          int64  `json:"user"`
+	DateCreated   int64  `json:"date_created"`
+}
+
+type GetResponse struct {
+	Manifests []ManifestDTO `json:"manifests"`
+}
+
 type PostResponse struct {
 	ManifestNodeId string                       `json:"manifest_node_id"'`
 	NrFilesUpdated int                          `json:"nr_files_updated"`
