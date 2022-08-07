@@ -230,15 +230,21 @@ paths:
     get:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: getManifest
-      summary: Get details for a single manifest.
+      operationId: getManifestFiles
+      summary: Get files for a manifest
       security:
-        - token_auth: [ ]
+        - token_dataset_auth: [ ]
       tags:
         - Upload Service
       description: |
-        Return a previously created manifest based on its ID. \
+        Returns a paginated list of files that are associated with an upload manifest. \
       parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where file will be uploaded.
         - in: path
           name: id
           required: true
@@ -247,29 +253,27 @@ paths:
             minimum: 1
           description: The UUID of the Upload Manifest.
         - in: query
-          name: includeFiles
-          required: false
-          schema:
-            type: boolean
-            default: false
-          description: Should files be returned as part of this call?
-        - in: query
           name: offest
           schema:
             type: integer
             default: 0
-          description: The UUID of the Upload Manifest.
+          description: The pagination offset.
         - in: query
           name: limit
           schema:
             type: integer
             default: 100
             maximum: 1000
-          description: The UUID of the Upload Manifest.
-
+          description: The number of returned files per page.
+         - in: query
+           name: status
+           schema:
+             type: string
+             required: false
+           description: filter by upload status.
       responses:
         '200':
-          description: The requested manifest.
+          description: The requested files for a manifest.
           content:
             application/json:
               schema:
