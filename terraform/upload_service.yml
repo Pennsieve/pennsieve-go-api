@@ -270,7 +270,7 @@ paths:
           schema:
             type: string
             required: false
-description: filter by upload status.
+          description: filter by upload status.
       responses:
         '200':
           description: The requested files for a manifest.
