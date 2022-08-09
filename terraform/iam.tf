@@ -83,6 +83,27 @@ resource "aws_iam_policy" "authorizer_lambda_iam_policy" {
 data "aws_iam_policy_document" "authorizer_lambda_iam_policy_document" {
 
   statement {
+    sid = "LambdaAccessToDynamoDB"
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:DescribeTable",
+      "dynamodb:BatchGetItem",
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+    ]
+
+    resources = [
+      data.terraform_remote_state.upload_service_v2.outputs.manifest_table_arn,
+      "${data.terraform_remote_state.upload_service_v2.outputs.manifest_table_arn}/*",
+      data.terraform_remote_state.upload_service_v2.outputs.manifest_table_arn,
+      "${data.terraform_remote_state.upload_service_v2.outputs.manifest_table_arn}/*"
+    ]
+
+  }
+
+  statement {
     sid    = "UploadLambdaPermissions"
     effect = "Allow"
     actions = [

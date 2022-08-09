@@ -73,7 +73,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		log.Fatalln("Request cannot have dataset_id as query-param with the used authorizer.")
 	}
 
-	manifestId, hasManifestId := event.PathParameters["manifestId"]
+	manifestId, hasManifestId := event.QueryStringParameters["manifest_id"]
 	if hasManifestId && len(event.IdentitySource) < 2 {
 		log.Fatalln("Request cannot have manifest_id as query-param with the used authorizer.")
 	}
@@ -82,8 +82,11 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		log.Fatalln("Request cannot have both manifest_id and dataset_id as query-params with the used authorizer.")
 	}
 
+	fmt.Println("LKJLKJ Manifest from DYNAMODB")
+
 	// Get Dataset associated with the requested manifest
 	if hasManifestId {
+		fmt.Println("Getting Manifest from DYNAMODB")
 		cfg, err := config.LoadDefaultConfig(context.Background())
 		if err != nil {
 			panic("unable to load SDK config, " + err.Error())
@@ -95,9 +98,14 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 		manifest, err := dbTable.GetFromManifest(client, table, manifestId)
 		if err != nil {
-			log.Fatalln("Manifest could not be found.")
+			log.Fatalln("Manifest could not be found: ", err)
 		}
+
+		fmt.Println(manifest)
+
 		datasetNodeId = manifest.DatasetNodeId
+		fmt.Println(datasetNodeId)
+		hasDatasetId = true
 	}
 
 	// Validate and parse token, and return unauthorized if not valid
@@ -144,6 +152,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get DATASET Claim
 	var datasetClaim *dataset.Claim
 	if hasDatasetId {
+		fmt.Println("HASDATASETID")
 		datasetClaim, err = authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
 		if err != nil {
 			log.Println("Unable to get Dataset Role")

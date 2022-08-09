@@ -26,6 +26,7 @@ resource "aws_lambda_function" "authorizer_lambda" {
       TOKEN_POOL = data.terraform_remote_state.authentication_service.outputs.token_pool_id,
       TOKEN_CLIENT = data.terraform_remote_state.authentication_service.outputs.token_pool_client_id,
       RDS_PROXY_ENDPOINT = data.terraform_remote_state.pennsieve_postgres.outputs.rds_proxy_endpoint,
+      MANIFEST_TABLE = data.terraform_remote_state.upload_service_v2.outputs.manifest_table_name,
     }
   }
 }
