@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-api/models/dataset"
@@ -69,6 +71,33 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	datasetNodeId, hasDatasetId := event.QueryStringParameters["dataset_id"]
 	if hasDatasetId && len(event.IdentitySource) < 2 {
 		log.Fatalln("Request cannot have dataset_id as query-param with the used authorizer.")
+	}
+
+	manifestId, hasManifestId := event.PathParameters["manifestId"]
+	if hasManifestId && len(event.IdentitySource) < 2 {
+		log.Fatalln("Request cannot have manifest_id as query-param with the used authorizer.")
+	}
+
+	if hasDatasetId && hasManifestId {
+		log.Fatalln("Request cannot have both manifest_id and dataset_id as query-params with the used authorizer.")
+	}
+
+	// Get Dataset associated with the requested manifest
+	if hasManifestId {
+		cfg, err := config.LoadDefaultConfig(context.Background())
+		if err != nil {
+			panic("unable to load SDK config, " + err.Error())
+		}
+
+		// Create an Amazon DynamoDB client.
+		client := dynamodb.NewFromConfig(cfg)
+		table := os.Getenv("MANIFEST_TABLE")
+
+		manifest, err := dbTable.GetFromManifest(client, table, manifestId)
+		if err != nil {
+			log.Fatalln("Manifest could not be found.")
+		}
+		datasetNodeId = manifest.DatasetNodeId
 	}
 
 	// Validate and parse token, and return unauthorized if not valid
