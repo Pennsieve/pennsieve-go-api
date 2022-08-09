@@ -329,7 +329,7 @@ paths:
         If a manifest is deleted which already was deleted due to completion of the upload, this method returns success.
       parameters:
         - in: path
-          name: id
+          name: manifestId
           required: true
           schema:
             type: string
