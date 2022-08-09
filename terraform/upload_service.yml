@@ -226,7 +226,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /manifest/{id}:
+  /manifest/{manifestId}:
     get:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
@@ -244,7 +244,7 @@ paths:
           schema:
             type: string
           required: true
-          description: The dataset where file will be uploaded.
+          description: The dataset associated with the requested manifest.
         - in: path
           name: id
           required: true
@@ -270,7 +270,8 @@ paths:
           schema:
             type: string
           required: false
-          description: filter by upload status.
+          description: Filter by upload status. Valid entries are
+          Initiated, Synced, Imported, Finalized, Verified, Failed, Removed, Unknown
       responses:
         '200':
           description: The requested files for a manifest.
