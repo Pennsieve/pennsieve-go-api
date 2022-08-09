@@ -269,8 +269,18 @@ paths:
           name: status
           schema:
             type: string
+            enum:
+              - Initiated
+              - Synced
+              - Imported
+              - Finalized
+              - Verified
+              - Failed
+              - Removed
+              - Unknown
+              - null
           required: false
-          description: Filter by upload status. Valid entries are Initiated, Synced, Imported, Finalized, Verified, Failed, Removed, Unknown.
+          description: Filter by upload status.
       responses:
         '200':
           description: The requested files for a manifest.
