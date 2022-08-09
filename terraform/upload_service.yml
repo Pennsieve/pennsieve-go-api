@@ -253,11 +253,11 @@ paths:
             minimum: 1
           description: The UUID of the Upload Manifest.
         - in: query
-          name: offest
+          name: continuation_token
           schema:
-            type: integer
-            default: 0
-          description: The pagination offset.
+            type: string
+          required: false
+          description: The UploadID of the last returned item in the previous page.
         - in: query
           name: limit
           schema:

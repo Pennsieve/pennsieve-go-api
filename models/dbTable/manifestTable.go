@@ -178,25 +178,31 @@ func GetFilesPaginated(client *dynamodb.Client, tableName string, manifestId str
 	case true:
 		// Query from Status index
 		queryInput = dynamodb.QueryInput{
-			TableName:                 aws.String(tableName),
-			IndexName:                 aws.String("StatusIndex"),
-			ExclusiveStartKey:         startKey,
-			ExpressionAttributeNames:  nil,
-			ExpressionAttributeValues: nil,
-			KeyConditionExpression:    aws.String(fmt.Sprintf("partitionKeyName=%s AND sortKeyName=%s", status.String, manifestId)),
-			Limit:                     &limit,
-			Select:                    "ALL_ATTRIBUTES",
+			TableName:         aws.String(tableName),
+			IndexName:         aws.String("StatusIndex"),
+			ExclusiveStartKey: startKey,
+			ExpressionAttributeNames: map[string]string{
+				"#S": "Status",
+			},
+			KeyConditionExpression: aws.String("ManifestId = :manifestValue AND #S = :statusValue"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":manifestValue": &types.AttributeValueMemberS{Value: manifestId},
+				":statusValue":   &types.AttributeValueMemberS{Value: status.String},
+			},
+			Limit:  &limit,
+			Select: "ALL_PROJECTED_ATTRIBUTES",
 		}
 	case false:
 		// Query from main dynamodb
 		queryInput = dynamodb.QueryInput{
-			TableName:                 aws.String(tableName),
-			ExclusiveStartKey:         startKey,
-			ExpressionAttributeNames:  nil,
-			ExpressionAttributeValues: nil,
-			KeyConditionExpression:    aws.String(fmt.Sprintf("partitionKeyName=%s", manifestId)),
-			Limit:                     &limit,
-			Select:                    "ALL_ATTRIBUTES",
+			TableName:              aws.String(tableName),
+			ExclusiveStartKey:      startKey,
+			KeyConditionExpression: aws.String("ManifestId = :manifestValue"),
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":manifestValue": &types.AttributeValueMemberS{Value: manifestId},
+			},
+			Limit:  &limit,
+			Select: "ALL_ATTRIBUTES",
 		}
 	}
 
@@ -207,6 +213,7 @@ func GetFilesPaginated(client *dynamodb.Client, tableName string, manifestId str
 
 	var items []ManifestFileTable
 	for _, item := range result.Items {
+		fmt.Println("Hello item: ", item)
 		manifestFile := ManifestFileTable{}
 		err = attributevalue.UnmarshalMap(item, &manifestFile)
 		if err != nil {

@@ -76,3 +76,17 @@ type FileStatusDTO struct {
 	UploadId string `json:"upload_id"`
 	Status   Status `json:"status"`
 }
+
+type DTO struct {
+	FileName string `json:"file_name"`
+	FilePath string `json:"file_path"`
+	FileType string `json:"file_type"`
+	UploadId string `json:"upload_id""`
+	Status   string `json:"status"`
+}
+
+type GetManifestFilesResponse struct {
+	ManifestId        string `json:"manifest_id"`
+	Files             []DTO  `json:"files"`
+	ContinuationToken string `json:"continuation_token"` //Upload ID of the last returned item
+}
