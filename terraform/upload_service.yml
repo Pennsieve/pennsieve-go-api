@@ -252,7 +252,7 @@ paths:
         Returns a paginated list of files that are associated with an upload manifest. \
       parameters:
         - in: query
-          name: manifestId
+          name: manifest_id
           required: true
           schema:
             type: string
