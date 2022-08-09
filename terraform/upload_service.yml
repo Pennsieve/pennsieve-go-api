@@ -226,7 +226,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /manifest/{manifestId}:
+  /manifest/files:
     get:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
@@ -245,7 +245,7 @@ paths:
             type: string
           required: true
           description: The dataset associated with the requested manifest.
-        - in: path
+        - in: query
           name: manifestId
           required: true
           schema:
