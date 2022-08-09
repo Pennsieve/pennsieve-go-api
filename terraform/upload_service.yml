@@ -269,7 +269,7 @@ paths:
           name: status
           schema:
             type: string
-            required: false
+          required: false
           description: filter by upload status.
       responses:
         '200':
