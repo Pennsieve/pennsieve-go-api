@@ -2,6 +2,7 @@ package dbTable
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -166,4 +167,53 @@ func GetManifestFile(client *dynamodb.Client, tableName string, manifestId strin
 	}
 
 	return &item, nil
+}
+
+// GetFilesPaginated returns paginated list of files for a given manifestID and optional status.
+func GetFilesPaginated(client *dynamodb.Client, tableName string, manifestId string, status sql.NullString,
+	limit int32, startKey map[string]types.AttributeValue) ([]ManifestFileTable, map[string]types.AttributeValue, error) {
+
+	var queryInput dynamodb.QueryInput
+	switch status.Valid {
+	case true:
+		// Query from Status index
+		queryInput = dynamodb.QueryInput{
+			TableName:                 aws.String(tableName),
+			IndexName:                 aws.String("StatusIndex"),
+			ExclusiveStartKey:         startKey,
+			ExpressionAttributeNames:  nil,
+			ExpressionAttributeValues: nil,
+			KeyConditionExpression:    aws.String(fmt.Sprintf("partitionKeyName=%s AND sortKeyName=%s", status.String, manifestId)),
+			Limit:                     &limit,
+			Select:                    "ALL_ATTRIBUTES",
+		}
+	case false:
+		// Query from main dynamodb
+		queryInput = dynamodb.QueryInput{
+			TableName:                 aws.String(tableName),
+			ExclusiveStartKey:         startKey,
+			ExpressionAttributeNames:  nil,
+			ExpressionAttributeValues: nil,
+			KeyConditionExpression:    aws.String(fmt.Sprintf("partitionKeyName=%s", manifestId)),
+			Limit:                     &limit,
+			Select:                    "ALL_ATTRIBUTES",
+		}
+	}
+
+	result, err := client.Query(context.Background(), &queryInput)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var items []ManifestFileTable
+	for _, item := range result.Items {
+		manifestFile := ManifestFileTable{}
+		err = attributevalue.UnmarshalMap(item, &manifestFile)
+		if err != nil {
+			return nil, nil, fmt.Errorf("UnmarshalMap: %v\n", err)
+		}
+		items = append(items, manifestFile)
+	}
+
+	return items, result.LastEvaluatedKey, nil
 }

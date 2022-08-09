@@ -41,6 +41,8 @@ func ConnectRDS() (*sql.DB, error) {
 		dbHost, dbPort, dbUser, authenticationToken, dbName,
 	)
 
+	log.Println("DEBUG: ", dsn)
+
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
