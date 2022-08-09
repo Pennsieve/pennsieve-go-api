@@ -246,7 +246,7 @@ paths:
           required: true
           description: The dataset associated with the requested manifest.
         - in: path
-          name: id
+          name: manifestId
           required: true
           schema:
             type: string
