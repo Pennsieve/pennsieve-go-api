@@ -1,6 +1,8 @@
 package permissions
 
-import "github.com/pennsieve/pennsieve-go-api/models/dataset"
+import (
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
+)
 
 type DatasetPermission int64
 

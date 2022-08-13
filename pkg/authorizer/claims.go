@@ -3,17 +3,17 @@ package authorizer
 import (
 	"database/sql"
 	"fmt"
-	"github.com/pennsieve/pennsieve-go-api/models/dataset"
-	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
-	"github.com/pennsieve/pennsieve-go-api/models/organization"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
+	dbTable2 "github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/organization"
 	"log"
 	"sort"
 )
 
 // GetDatasetClaim returns the highest role that the user has for a given dataset.
 // This method checks the roles of the dataset, the teams, and the specific user roles.
-func GetDatasetClaim(db core.PostgresAPI, user *dbTable.User, datasetNodeId string, organizationId int64) (*dataset.Claim, error) {
+func GetDatasetClaim(db core.PostgresAPI, user *dbTable2.User, datasetNodeId string, organizationId int64) (*dataset.Claim, error) {
 
 	// if user is super-admin
 	if user.IsSuperAdmin {
@@ -115,14 +115,14 @@ func GetDatasetClaim(db core.PostgresAPI, user *dbTable.User, datasetNodeId stri
 // GetOrganizationClaim returns an organization claim for a specific user.
 func GetOrganizationClaim(db core.PostgresAPI, userId int64, organizationId int64) (*organization.Claim, error) {
 
-	var orgUser dbTable.OrganizationUser
+	var orgUser dbTable2.OrganizationUser
 	currentOrgUser, err := orgUser.GetByUserId(db, userId)
 	if err != nil {
 		log.Println("Unable to check Org User: ", err)
 		return nil, err
 	}
 
-	var orgFeat dbTable.FeatureFlags
+	var orgFeat dbTable2.FeatureFlags
 	allFeatures, err := orgFeat.GetAll(db, organizationId)
 	if err != nil {
 		log.Println("Unable to check Feature Flags: ", err)

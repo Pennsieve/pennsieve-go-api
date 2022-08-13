@@ -1,8 +1,8 @@
 package dbTable
 
 import (
-	"github.com/pennsieve/pennsieve-go-api/models/dataset"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
 	"log"
 	"time"
 )

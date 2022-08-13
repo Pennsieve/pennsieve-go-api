@@ -1,6 +1,8 @@
 package manifest
 
-import "github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
+import (
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest/manifestFile"
+)
 
 type Status int64
 

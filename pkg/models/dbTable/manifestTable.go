@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest/manifestFile"
 )
 
 // ManifestTable is a representation of a Manifest in DynamoDB

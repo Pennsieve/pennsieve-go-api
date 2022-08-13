@@ -2,8 +2,8 @@ package packageType
 
 import (
 	"database/sql/driver"
-	"github.com/pennsieve/pennsieve-go-api/models/fileInfo/fileType"
-	"github.com/pennsieve/pennsieve-go-api/models/iconInfo"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/fileInfo/fileType"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/iconInfo"
 )
 
 // PackageType is an enum indicating the type of the Package
