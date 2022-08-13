@@ -1,7 +1,7 @@
 package dbTable
 
 import (
-	"database/sql"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 )
 
@@ -11,7 +11,7 @@ type DatasetStorage struct {
 }
 
 // Increment increases the storage associated with the provided dataset.
-func (d *DatasetStorage) Increment(db *sql.DB, datasetId int64, size int64) error {
+func (d *DatasetStorage) Increment(db core.PostgresAPI, datasetId int64, size int64) error {
 
 	queryStr := "INSERT INTO dataset_storage " +
 		"AS dataset_storage (dataset_id, size) " +

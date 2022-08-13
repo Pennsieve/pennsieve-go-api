@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/aws/aws-lambda-go/events"
@@ -81,8 +80,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	if hasDatasetId && hasManifestId {
 		log.Fatalln("Request cannot have both manifest_id and dataset_id as query-params with the used authorizer.")
 	}
-
-	fmt.Println("LKJLKJ Manifest from DYNAMODB")
 
 	// Get Dataset associated with the requested manifest
 	if hasManifestId {
@@ -192,7 +189,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 }
 
 // getUser returns a Pennsieve user from a cognito ID.
-func getUser(db *sql.DB, cognitoId string, isFromTokenPool bool) (*dbTable.User, error) {
+func getUser(db core.PostgresAPI, cognitoId string, isFromTokenPool bool) (*dbTable.User, error) {
 
 	if isFromTokenPool {
 		var token dbTable.Token

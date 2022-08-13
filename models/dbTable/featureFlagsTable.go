@@ -1,7 +1,7 @@
 package dbTable
 
 import (
-	"database/sql"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"time"
 )
@@ -15,7 +15,7 @@ type FeatureFlags struct {
 }
 
 // GetAll returns all rows in the FeatureFlags Table
-func (d *FeatureFlags) GetAll(db *sql.DB, organizationId int64) ([]FeatureFlags, error) {
+func (d *FeatureFlags) GetAll(db core.PostgresAPI, organizationId int64) ([]FeatureFlags, error) {
 	queryStr := "SELECT organization_id, feature, enabled,created_at, updated_at FROM pennsieve.feature_flags WHERE organization_id=$1; "
 
 	rows, err := db.Query(queryStr, organizationId)

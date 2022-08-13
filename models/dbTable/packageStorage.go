@@ -1,7 +1,7 @@
 package dbTable
 
 import (
-	"database/sql"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 )
 
@@ -11,7 +11,7 @@ type PackageStorage struct {
 }
 
 // Increment increases the storage associated with the provided package.
-func (p *PackageStorage) Increment(db *sql.DB, packageId int64, size int64) error {
+func (p *PackageStorage) Increment(db core.PostgresAPI, packageId int64, size int64) error {
 
 	queryStr := "INSERT INTO package_storage AS package_storage (package_id, size) " +
 		"VALUES ($1, $2) ON CONFLICT (package_id) " +
@@ -26,7 +26,7 @@ func (p *PackageStorage) Increment(db *sql.DB, packageId int64, size int64) erro
 }
 
 // IncrementAncestors increases the storage associated with the parents of the provided package.
-func (p *PackageStorage) IncrementAncestors(db *sql.DB, parentId int64, size int64) error {
+func (p *PackageStorage) IncrementAncestors(db core.PostgresAPI, parentId int64, size int64) error {
 
 	queryStr := "" +
 		"WITH RECURSIVE ancestors(id, parent_id) AS (" +

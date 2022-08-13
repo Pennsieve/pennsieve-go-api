@@ -1,7 +1,6 @@
 package dbTable
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -10,6 +9,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/models/fileInfo/objectType"
 	"github.com/pennsieve/pennsieve-go-api/models/fileInfo/processingState"
 	"github.com/pennsieve/pennsieve-go-api/models/fileInfo/uploadState"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"strings"
 	"time"
@@ -44,7 +44,7 @@ type FileParams struct {
 	UUID       uuid.UUID             `json:"uuid"`
 }
 
-func (p *File) Add(db *sql.DB, files []FileParams) ([]File, error) {
+func (p *File) Add(db core.PostgresAPI, files []FileParams) ([]File, error) {
 
 	currentTime := time.Now()
 	var vals []interface{}
@@ -146,7 +146,7 @@ func (p *File) Add(db *sql.DB, files []FileParams) ([]File, error) {
 }
 
 // UpdateBucket updates the storage bucket as part of upload process and sets Status
-func (p *File) UpdateBucket(db *sql.DB, uploadId string, bucket string, organizationId int64) error {
+func (p *File) UpdateBucket(db core.PostgresAPI, uploadId string, bucket string, organizationId int64) error {
 
 	queryStr := fmt.Sprintf("UPDATE \"%d\".files SET s3_bucket=$1 WHERE UUID=$2;", organizationId)
 

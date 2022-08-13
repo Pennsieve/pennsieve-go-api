@@ -3,6 +3,7 @@ package dbTable
 import (
 	"database/sql"
 	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 )
 
 type User struct {
@@ -16,7 +17,7 @@ type User struct {
 
 //GetByCognitoId returns a user from Postgress based on his/her cognito-id
 //This function also returns the preferred org and whether the user is a super-admin.
-func (u *User) GetByCognitoId(db *sql.DB, id string) (*User, error) {
+func (u *User) GetByCognitoId(db core.PostgresAPI, id string) (*User, error) {
 
 	queryStr := "SELECT id, email, first_name, last_name, is_super_admin, preferred_org_id " +
 		"FROM pennsieve.users WHERE cognito_id=$1;"

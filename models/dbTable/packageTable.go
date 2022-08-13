@@ -8,6 +8,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo/packageState"
 	"github.com/pennsieve/pennsieve-go-api/models/packageInfo/packageType"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"regexp"
 	"strings"
@@ -49,7 +50,7 @@ type PackageParams struct {
 type PackageMap = map[string]Package
 
 // Add adds multiple packages to the Pennsieve Postgres DB
-func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
+func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, error) {
 	// Steps:
 	// 1. Checks current packages in folder and check if they have sugested name.
 	// 2. If package with name already exists, append (#) and check if that name exists recursively.
@@ -232,7 +233,7 @@ func (p *Package) Add(db *sql.DB, records []PackageParams) ([]Package, error) {
 }
 
 // Children returns an array of Packages that have a specific parent package or root.
-func (p *Package) Children(db *sql.DB, organizationId int, parent *Package, datasetId int, onlyFolders bool) ([]Package, error) {
+func (p *Package) Children(db core.PostgresAPI, organizationId int, parent *Package, datasetId int, onlyFolders bool) ([]Package, error) {
 
 	folderFilter := ""
 	if onlyFolders {

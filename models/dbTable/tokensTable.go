@@ -3,6 +3,7 @@ package dbTable
 import (
 	"database/sql"
 	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"time"
 )
 
@@ -20,7 +21,7 @@ type Token struct {
 
 //GetByCognitoId returns a user from Postgress based on his/her cognito-id
 //This function also returns the preferred org and whether the user is a super-admin.
-func (t *Token) GetByCognitoId(db *sql.DB, id string) (*Token, error) {
+func (t *Token) GetByCognitoId(db core.PostgresAPI, id string) (*Token, error) {
 
 	queryStr := "SELECT id, name, token, organization_id, user_id, cognito_id, last_used, created_at, updated_at " +
 		"FROM pennsieve.users WHERE cognito_id=$1;"
@@ -50,7 +51,7 @@ func (t *Token) GetByCognitoId(db *sql.DB, id string) (*Token, error) {
 }
 
 // GetUserByCognitoId returns a Pennsieve User based on the cognito id in the token pool.
-func (t *Token) GetUserByCognitoId(db *sql.DB, id string) (*User, error) {
+func (t *Token) GetUserByCognitoId(db core.PostgresAPI, id string) (*User, error) {
 
 	queryStr := "SELECT pennsieve.users.id, email, first_name, last_name, is_super_admin, preferred_org_id " +
 		"FROM pennsieve.users JOIN pennsieve.tokens ON pennsieve.tokens.user_id = pennsieve.users.id WHERE pennsieve.tokens.token=$1;"

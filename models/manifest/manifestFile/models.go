@@ -37,6 +37,14 @@ func (s Status) String() string {
 	}
 }
 
+// IsInProgress returns a boolean indicating whether upload status reflects a finalized status
+func (s Status) IsInProgress() string {
+	if s == Imported || s == Verified || s == Finalized || s == Removed {
+		return ""
+	}
+	return "x"
+}
+
 // ManifestFileStatusMap maps string values to FileStatus objects.
 func (s Status) ManifestFileStatusMap(value string) Status {
 	switch value {
@@ -83,6 +91,7 @@ type DTO struct {
 	FileType string `json:"file_type"`
 	UploadId string `json:"upload_id""`
 	Status   string `json:"status"`
+	Icon     string `json:"icon"`
 }
 
 type GetManifestFilesResponse struct {

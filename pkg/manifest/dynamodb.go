@@ -8,10 +8,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go-v2/service/sns"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/models/manifest"
 	"github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"sync"
 	"time"
@@ -25,15 +25,15 @@ const nrWorkers = 2  // preliminary profiling shows that more workers don't impr
 type ManifestSession struct {
 	FileTableName string
 	TableName     string
-	Client        *dynamodb.Client
-	SNSClient     *sns.Client
+	Client        core.DynamoDBAPI
+	SNSClient     core.SnsAPI
 	SNSTopic      string
 }
 
 // fileWalk channel used to distribute FileDTOs to the workers importing the files in DynamoDB
 type fileWalk chan manifestFile.FileDTO
 
-// createManifest creates a new Manifest in DynamoDB
+// CreateManifest creates a new Manifest in DynamoDB
 func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 
 	data, err := attributevalue.MarshalMap(item)
@@ -130,6 +130,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 			}
 		} else {
 
+			isInProgress := forceStatus.IsInProgress()
 			item := dbTable.ManifestFileTable{
 				ManifestId:     manifestId,
 				UploadId:       file.UploadID,
@@ -140,9 +141,16 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 				FileType:       file.FileType,
 			}
 
+			if len(isInProgress) > 0 {
+				item.InProgress = isInProgress
+			}
+
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
 				log.Fatalf("MarshalMap: %v\n", err)
+			}
+			if len(isInProgress) == 0 {
+				delete(data, "InProgress")
 			}
 
 			request = &types.WriteRequest{
@@ -327,9 +335,9 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 		FileType:       file.FileType,
 	}
 
-	log.Println("Item: ", item.MergePackageId)
-
 	// Switch based on provided status from client
+	// file --> provided as part of request
+	// curStatus --> current status in dynamodb
 	switch file.Status {
 	case manifestFile.Removed:
 		// File is removed after being synced --> remove from dynamodb if not uploaded already.
@@ -346,6 +354,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			if err != nil {
 				log.Fatalf("MarshalMap: %v\n", err)
 			}
+			delete(data, "InProgress")
 
 			request := types.WriteRequest{
 				PutRequest: &types.PutRequest{
@@ -390,6 +399,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			if err != nil {
 				log.Fatalf("MarshalMap: %v\n", err)
 			}
+			delete(data, "InProgress")
 
 			request := types.WriteRequest{
 				PutRequest: &types.PutRequest{
@@ -401,6 +411,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 		case manifestFile.Synced, manifestFile.Failed, manifestFile.Unknown:
 			// server is synced, failed, unknown --> add/update the entry in dynamodb
 			item.Status = manifestFile.Synced.String()
+			item.InProgress = "x"
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
@@ -428,6 +439,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			if err != nil {
 				log.Fatalf("MarshalMap: %v\n", err)
 			}
+			delete(data, "InProgress")
 
 			request := types.WriteRequest{
 				PutRequest: &types.PutRequest{
@@ -447,6 +459,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			// server is synced --> update dynamobd in case target path has changed
 
 			item.Status = manifestFile.Synced.String()
+			item.InProgress = "x"
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
@@ -460,15 +473,16 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			}
 
 			return &request, manifestFile.Synced, nil
-		case manifestFile.Finalized:
+		case manifestFile.Finalized, manifestFile.Imported, manifestFile.Verified:
 			// If client is synced and server is Finalized --> respond with verified
 
-			item.Status = manifestFile.Verified.String()
+			item.Status = curStatus.String()
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
 				log.Fatalf("MarshalMap: %v\n", err)
 			}
+			delete(data, "InProgress")
 
 			request := types.WriteRequest{
 				PutRequest: &types.PutRequest{

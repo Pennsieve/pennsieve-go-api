@@ -3,6 +3,7 @@ package dbTable
 import (
 	"database/sql"
 	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type Organization struct {
 	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-func (o *Organization) Get(db *sql.DB, id int64) (*Organization, error) {
+func (o *Organization) Get(db core.PostgresAPI, id int64) (*Organization, error) {
 
 	queryStr := "SELECT id, name, slug, node_id, storage_bucket, publish_bucket, embargo_bucket, created_at, updated_at " +
 		"FROM pennsieve.organizations WHERE id=$1;"

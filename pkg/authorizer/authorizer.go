@@ -6,13 +6,14 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/models/dataset"
 	"github.com/pennsieve/pennsieve-go-api/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/models/organization"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"sort"
 )
 
 // GetDatasetClaim returns the highest role that the user has for a given dataset.
 // This method checks the roles of the dataset, the teams, and the specific user roles.
-func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organizationId int64) (*dataset.Claim, error) {
+func GetDatasetClaim(db core.PostgresAPI, user *dbTable.User, datasetNodeId string, organizationId int64) (*dataset.Claim, error) {
 
 	// if user is super-admin
 	if user.IsSuperAdmin {
@@ -112,7 +113,7 @@ func GetDatasetClaim(db *sql.DB, user *dbTable.User, datasetNodeId string, organ
 }
 
 // GetOrganizationClaim returns an organization claim for a specific user.
-func GetOrganizationClaim(db *sql.DB, userId int64, organizationId int64) (*organization.Claim, error) {
+func GetOrganizationClaim(db core.PostgresAPI, userId int64, organizationId int64) (*organization.Claim, error) {
 
 	var orgUser dbTable.OrganizationUser
 	currentOrgUser, err := orgUser.GetByUserId(db, userId)

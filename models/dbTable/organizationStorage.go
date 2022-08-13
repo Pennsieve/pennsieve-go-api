@@ -1,7 +1,7 @@
 package dbTable
 
 import (
-	"database/sql"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 )
 
@@ -11,7 +11,7 @@ type OrganizationStorage struct {
 }
 
 // Increment increases the storage associated with the provided organization.
-func (d *OrganizationStorage) Increment(db *sql.DB, organizationId int64, size int64) error {
+func (d *OrganizationStorage) Increment(db core.PostgresAPI, organizationId int64, size int64) error {
 
 	queryStr := "INSERT INTO pennsieve.organization_storage " +
 		"AS organization_storage (organization_id, size) " +

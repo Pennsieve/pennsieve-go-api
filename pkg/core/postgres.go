@@ -6,10 +6,17 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
-	_ "github.com/lib/pq"
 	"log"
 	"os"
 )
+
+type PostgresAPI interface {
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+	Exec(query string, args ...any) (sql.Result, error)
+	Prepare(query string) (*sql.Stmt, error)
+	Close() error
+}
 
 // ConnectRDS returns a DB instance.
 // The Lambda function leverages IAM roles to gain access to the DB Proxy.

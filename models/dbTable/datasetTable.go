@@ -1,8 +1,8 @@
 package dbTable
 
 import (
-	"database/sql"
 	"github.com/pennsieve/pennsieve-go-api/models/dataset"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"log"
 	"time"
 )
@@ -30,7 +30,7 @@ type DatasetTeam struct {
 }
 
 // GetAll returns all rows in the Upload Record Table
-func (d *Dataset) GetAll(db *sql.DB, organizationId int) ([]Dataset, error) {
+func (d *Dataset) GetAll(db core.PostgresAPI, organizationId int) ([]Dataset, error) {
 	queryStr := "SELECT (name, state) FROM datasets"
 
 	rows, err := db.Query(queryStr)

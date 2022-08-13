@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
+	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 )
 
 // ManifestTable is a representation of a Manifest in DynamoDB
@@ -31,6 +32,7 @@ type ManifestFileTable struct {
 	MergePackageId string `dynamodbav:"MergePackageId,omitempty"`
 	Status         string `dynamodbav:"Status"`
 	FileType       string `dynamodbav:"FileType"`
+	InProgress     string `dynamodbav:"InProgress"`
 }
 
 type ManifestFilePrimaryKey struct {
@@ -39,7 +41,7 @@ type ManifestFilePrimaryKey struct {
 }
 
 // GetFromManifest returns a Manifest item for a given manifest ID.
-func GetFromManifest(client *dynamodb.Client, manifestTableName string, manifestId string) (*ManifestTable, error) {
+func GetFromManifest(client core.DynamoDBAPI, manifestTableName string, manifestId string) (*ManifestTable, error) {
 
 	item := ManifestTable{}
 
@@ -67,7 +69,7 @@ func GetFromManifest(client *dynamodb.Client, manifestTableName string, manifest
 }
 
 // GetManifestsForDataset returns all manifests for a given dataset.
-func GetManifestsForDataset(client *dynamodb.Client, manifestTableName string, datasetNodeId string) ([]ManifestTable, error) {
+func GetManifestsForDataset(client core.DynamoDBAPI, manifestTableName string, datasetNodeId string) ([]ManifestTable, error) {
 
 	queryInput := dynamodb.QueryInput{
 		TableName:              aws.String(manifestTableName),
@@ -98,7 +100,7 @@ func GetManifestsForDataset(client *dynamodb.Client, manifestTableName string, d
 }
 
 // UpdateFileTableStatus updates the status of the file in the file-table dynamodb
-func UpdateFileTableStatus(client *dynamodb.Client, tableName string, manifestId string, uploadId string, status manifestFile.Status) error {
+func UpdateFileTableStatus(client core.DynamoDBAPI, tableName string, manifestId string, uploadId string, status manifestFile.Status) error {
 
 	_, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
@@ -118,7 +120,7 @@ func UpdateFileTableStatus(client *dynamodb.Client, tableName string, manifestId
 }
 
 // GetFilesForPath returns files in path for a manifest with optional filter.
-func GetFilesForPath(client *dynamodb.Client, tableName string, manifestId string, path string, filter string,
+func GetFilesForPath(client core.DynamoDBAPI, tableName string, manifestId string, path string, filter string,
 	limit int32, startKey map[string]types.AttributeValue) (*dynamodb.QueryOutput, error) {
 
 	queryInput := dynamodb.QueryInput{
@@ -142,7 +144,7 @@ func GetFilesForPath(client *dynamodb.Client, tableName string, manifestId strin
 }
 
 // GetManifestFile returns a manifest file from the ManifestFile Table.
-func GetManifestFile(client *dynamodb.Client, tableName string, manifestId string, uploadId string) (*ManifestFileTable, error) {
+func GetManifestFile(client core.DynamoDBAPI, tableName string, manifestId string, uploadId string) (*ManifestFileTable, error) {
 	item := ManifestFileTable{}
 
 	data, err := client.GetItem(context.TODO(), &dynamodb.GetItemInput{
@@ -170,27 +172,42 @@ func GetManifestFile(client *dynamodb.Client, tableName string, manifestId strin
 }
 
 // GetFilesPaginated returns paginated list of files for a given manifestID and optional status.
-func GetFilesPaginated(client *dynamodb.Client, tableName string, manifestId string, status sql.NullString,
+func GetFilesPaginated(client core.DynamoDBAPI, tableName string, manifestId string, status sql.NullString,
 	limit int32, startKey map[string]types.AttributeValue) ([]ManifestFileTable, map[string]types.AttributeValue, error) {
 
 	var queryInput dynamodb.QueryInput
 	switch status.Valid {
 	case true:
-		// Query from Status index
-		queryInput = dynamodb.QueryInput{
-			TableName:         aws.String(tableName),
-			IndexName:         aws.String("StatusIndex"),
-			ExclusiveStartKey: startKey,
-			ExpressionAttributeNames: map[string]string{
-				"#S": "Status",
-			},
-			KeyConditionExpression: aws.String("ManifestId = :manifestValue AND #S = :statusValue"),
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":manifestValue": &types.AttributeValueMemberS{Value: manifestId},
-				":statusValue":   &types.AttributeValueMemberS{Value: status.String},
-			},
-			Limit:  &limit,
-			Select: "ALL_PROJECTED_ATTRIBUTES",
+		if status.String == "InProgress" {
+			// Query from Status index
+			queryInput = dynamodb.QueryInput{
+				TableName:              aws.String(tableName),
+				IndexName:              aws.String("InProgressIndex"),
+				ExclusiveStartKey:      startKey,
+				KeyConditionExpression: aws.String("ManifestId = :manifestValue"),
+				ExpressionAttributeValues: map[string]types.AttributeValue{
+					":manifestValue": &types.AttributeValueMemberS{Value: manifestId},
+				},
+				Limit:  &limit,
+				Select: "ALL_PROJECTED_ATTRIBUTES",
+			}
+		} else {
+			// Query from Status index
+			queryInput = dynamodb.QueryInput{
+				TableName:         aws.String(tableName),
+				IndexName:         aws.String("StatusIndex"),
+				ExclusiveStartKey: startKey,
+				ExpressionAttributeNames: map[string]string{
+					"#S": "Status",
+				},
+				KeyConditionExpression: aws.String("ManifestId = :manifestValue AND #S = :statusValue"),
+				ExpressionAttributeValues: map[string]types.AttributeValue{
+					":manifestValue": &types.AttributeValueMemberS{Value: manifestId},
+					":statusValue":   &types.AttributeValueMemberS{Value: status.String},
+				},
+				Limit:  &limit,
+				Select: "ALL_PROJECTED_ATTRIBUTES",
+			}
 		}
 	case false:
 		// Query from main dynamodb
