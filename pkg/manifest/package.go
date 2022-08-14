@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/pennsieve/pennsieve-go-api/models/fileInfo/fileType"
-	"github.com/pennsieve/pennsieve-go-api/models/manifest/manifestFile"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/fileInfo/fileType"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest/manifestFile"
 	"log"
 	"regexp"
 	"strings"
