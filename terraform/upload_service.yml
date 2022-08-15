@@ -360,11 +360,10 @@ paths:
         - token_manifest_auth: [ ]
       tags:
         - Upload Service
-      description: `
-        Returns a list of files that have the requested status on the server for the given manifest.
-
-      You can use this endpoint to check import progress of files during or after uploading a manifest.
-      `
+      description: |
+        Returns a list of files that have the requested status on the server for the given manifest.\
+        \
+        You can use this endpoint to check import progress of files during or after uploading a manifest.
       parameters:
         - in: query
           name: manifest_id
@@ -380,13 +379,6 @@ paths:
           required: false
           description: The UploadID of the last returned item in the previous page.
         - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 100
-            maximum: 1000
-          description: The number of returned files per page.
-        - in: query
           name: status
           schema:
             type: string
@@ -398,6 +390,12 @@ paths:
               - Failed
           required: true
           description: Filter by upload status.
+        - in: query
+          name: verify
+          required: false
+          schema:
+            type: boolean
+          description: Update status to verified for returned files. If checked, this will always check for Finalized status.
       responses:
         '200':
           description: The requested files for a manifest.
