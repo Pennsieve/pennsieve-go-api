@@ -2,7 +2,13 @@ resource "aws_apigatewayv2_api" "upload-service-gateway" {
   name          = "serverless_upload_service"
   protocol_type = "HTTP"
   description = "API Gateway for Upload-Service V2"
-  cors_configuration {}
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["*"]
+    allow_headers = ["*"]
+    expose_headers = ["*"]
+    max_age = 300
+  }
   body          = templatefile("${path.module}/upload_service.yml", {
     upload_service_lambda_arn = data.terraform_remote_state.upload-service.outputs.service_lambda_arn,
     user_pool_2_client_id = data.terraform_remote_state.authentication_service.outputs.user_pool_2_client_id,

@@ -62,6 +62,13 @@ type GetResponse struct {
 	Manifests []ManifestDTO `json:"manifests"`
 }
 
+type GetStatusEndpointResponse struct {
+	ManifestId        string   `json:"manifest_id"`
+	Status            string   `json:"status"`
+	Files             []string `json:"files"`
+	ContinuationToken string   `json:"continuation_token"`
+}
+
 type PostResponse struct {
 	ManifestNodeId string                       `json:"manifest_node_id"'`
 	NrFilesUpdated int                          `json:"nr_files_updated"`

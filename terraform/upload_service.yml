@@ -150,19 +150,6 @@ components:
           targetName:
             type: string
             description: Name of the uploaded file as it should appear on the platform. This includes the extension of the file.
-    fileStatusArray:
-      type: array
-      items:
-        type: object
-        properties:
-          uploadId:
-            type: string
-            description: The upload id for the file.
-          status:
-            type: string
-            description: Current status of hte
-
-
 paths:
   /manifest:
     get:
@@ -373,8 +360,11 @@ paths:
         - token_manifest_auth: [ ]
       tags:
         - Upload Service
-      description: |
-        Returns a paginated list of file-statuses for a manifest. \
+      description: `
+        Returns a list of files that have the requested status on the server for the given manifest.
+
+      You can use this endpoint to check import progress of files during or after uploading a manifest.
+      `
       parameters:
         - in: query
           name: manifest_id
@@ -428,6 +418,9 @@ paths:
                     description: List of upload ids for files with requested status.
                     items:
                       type: string
+                  continuation_token:
+                    type: string
+                    description: ID of the last returned item.
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
