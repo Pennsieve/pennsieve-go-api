@@ -19,8 +19,6 @@ func (s ManifestSession) PackageTypeResolver(items []manifestFile.FileDTO) []man
 		if len(items[i].FileType) == 0 {
 			// 1. Find FileType
 
-			log.Println("FILETYPE IS NOT SET")
-
 			r := regexp.MustCompile(`(?P<FileName>[^\.]*)?\.?(?P<Extension>.*)`)
 			pathParts := r.FindStringSubmatch(f.TargetName)
 			if pathParts == nil {
@@ -35,12 +33,8 @@ func (s ManifestSession) PackageTypeResolver(items []manifestFile.FileDTO) []man
 			// Set the type if not previously set.
 			items[i].FileType = fType.String()
 		} else {
-
-			log.Println("FILETYPE IS SET")
 			fType = fileType.Dict[items[i].FileType]
 		}
-
-		log.Println("File type: ", items[i].FileType)
 
 		// 2. Implement Merge Strategy
 		switch fType {

@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest/manifestFile"
 )
 
@@ -97,6 +98,25 @@ func GetManifestsForDataset(client core.DynamoDBAPI, manifestTableName string, d
 	}
 
 	return items, nil
+}
+
+// UpdateManifestStatus updates the status of the manifest in dynamodb
+func UpdateManifestStatus(client core.DynamoDBAPI, tableName string, manifestId string, status manifest.Status) error {
+
+	_, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"ManifestId": &types.AttributeValueMemberS{Value: manifestId},
+		},
+		UpdateExpression: aws.String("set #status = :statusValue"),
+		ExpressionAttributeNames: map[string]string{
+			"#status": "Status",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":statusValue": &types.AttributeValueMemberS{Value: status.String()},
+		},
+	})
+	return err
 }
 
 // UpdateFileTableStatus updates the status of the file in the file-table dynamodb

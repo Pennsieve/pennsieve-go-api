@@ -274,6 +274,7 @@ func (s ManifestSession) createOrUpdateFile(workerId int32, files fileWalk, mani
 			response.NrFilesUpdated += stats.NrFilesUpdated
 			response.NrFilesRemoved += stats.NrFilesRemoved
 			response.FailedFiles = append(response.FailedFiles, stats.FailedFiles...)
+			response.FileStatus = append(response.FileStatus, stats.FileStatus...)
 		}
 	}
 

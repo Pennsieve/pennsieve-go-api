@@ -2,6 +2,12 @@ package manifestFile
 
 type Status int64
 
+// Upload pipeline status flows:
+// Initialized --> Synced --> Uploaded --> Imported --> Finalized --> Verified
+// Initialized --> Synced --> Removed -->  <Deleted>
+// Initialized --> Synced --> Changed --> Synced --> Uploaded --> Imported ....
+// Initialized --> Synced --> Uploaded --> Failed
+
 const (
 	Initiated Status = iota // set when client creates manifest (local only)
 	Synced                  // set when client syncs with server (local, server)
@@ -11,6 +17,8 @@ const (
 	Failed                  // set when importer fails to import (local, server)
 	Removed                 // set when client removes file locally (local only)
 	Unknown                 // set when sync failed (local only)
+	Changed                 // set when synced file is updated locally (local only)
+	Uploaded                // set when file has successfully been uploaded to server (local only)
 )
 
 // String returns string version of FileStatus object.
@@ -32,6 +40,10 @@ func (s Status) String() string {
 		return "Removed"
 	case Unknown:
 		return "Unknown"
+	case Changed:
+		return "Changed"
+	case Uploaded:
+		return "Uploaded"
 	default:
 		return "Initiated"
 	}
@@ -62,6 +74,10 @@ func (s Status) ManifestFileStatusMap(value string) Status {
 		return Removed
 	case "Failed":
 		return Failed
+	case "Changed":
+		return Changed
+	case "Uploaded":
+		return Uploaded
 	case "Unknown":
 		return Unknown
 	}
