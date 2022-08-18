@@ -3,31 +3,31 @@ package manifestFile
 type Status int64
 
 // Upload pipeline status flows:
-// Initialized --> Synced --> Uploaded --> Imported --> Finalized --> Verified
-// Initialized --> Synced --> Removed -->  <Deleted>
-// Initialized --> Synced --> Changed --> Synced --> Uploaded --> Imported ....
-// Initialized --> Synced --> Uploaded --> Failed
+// Local --> Registered --> Uploaded --> Imported --> Finalized --> Verified
+// Local --> Registered --> Removed -->  <Deleted>
+// Local --> Registered --> Changed --> Synced --> Uploaded --> Imported ....
+// Local --> Registered --> Uploaded --> Failed
 
 const (
-	Initiated Status = iota // set when client creates manifest (local only)
-	Synced                  // set when client syncs with server (local, server)
-	Imported                // set when uploader imported file (local, server)
-	Finalized               // set when importer moves file to final destination (local, server)
-	Verified                // set when client is informed of finalized status (local, server)
-	Failed                  // set when importer fails to import (local, server)
-	Removed                 // set when client removes file locally (local only)
-	Unknown                 // set when sync failed (local only)
-	Changed                 // set when synced file is updated locally (local only)
-	Uploaded                // set when file has successfully been uploaded to server (local only)
+	Local      Status = iota // set when client creates manifest (local only)
+	Registered               // set when client syncs with server (local, server)
+	Imported                 // set when uploader imported file (local, server)
+	Finalized                // set when importer moves file to final destination (local, server)
+	Verified                 // set when client is informed of finalized status (local, server)
+	Failed                   // set when importer fails to import (local, server)
+	Removed                  // set when client removes file locally (local only)
+	Unknown                  // set when sync failed (local only)
+	Changed                  // set when synced file is updated locally (local only)
+	Uploaded                 // set when file has successfully been uploaded to server (local only)
 )
 
 // String returns string version of FileStatus object.
 func (s Status) String() string {
 	switch s {
-	case Initiated:
-		return "Initiated"
-	case Synced:
-		return "Synced"
+	case Local:
+		return "Local"
+	case Registered:
+		return "Registered"
 	case Imported:
 		return "Imported"
 	case Finalized:
@@ -60,10 +60,10 @@ func (s Status) IsInProgress() string {
 // ManifestFileStatusMap maps string values to FileStatus objects.
 func (s Status) ManifestFileStatusMap(value string) Status {
 	switch value {
-	case "Initiated":
-		return Initiated
-	case "Synced":
-		return Synced
+	case "Local":
+		return Local
+	case "Registered":
+		return Registered
 	case "Imported":
 		return Imported
 	case "Finalized":
@@ -81,7 +81,7 @@ func (s Status) ManifestFileStatusMap(value string) Status {
 	case "Unknown":
 		return Unknown
 	}
-	return Initiated
+	return Local
 }
 
 // FileDTO used to transfer file object in API requests.

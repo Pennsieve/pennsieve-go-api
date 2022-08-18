@@ -84,6 +84,10 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 		go func() {
 			stats, _ := s.createOrUpdateFile(w2, walker, manifestId, forceStatus)
 			result <- *stats
+			defer func() {
+				log.Println("Closing Worker: ", w2)
+				syncWG.Done()
+			}()
 		}()
 	}
 
@@ -234,7 +238,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 			switch fileEntry.Status {
 			case manifestFile.Removed.String():
 				nrFilesRemoved--
-			case manifestFile.Initiated.String(), manifestFile.Failed.String():
+			case manifestFile.Local.String(), manifestFile.Failed.String():
 				nrFilesUpdated--
 			default:
 				log.Fatalln("NO match")
@@ -254,10 +258,6 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 
 // createOrUpdateFile is run in a goroutine and grabs set of files from channel and calls updateDynamoDb.
 func (s ManifestSession) createOrUpdateFile(workerId int32, files fileWalk, manifestId string, forceStatus *manifestFile.Status) (*manifest.AddFilesStats, error) {
-	defer func() {
-		log.Println("Closing Worker: ", workerId)
-		syncWG.Done()
-	}()
 
 	response := manifest.AddFilesStats{}
 
@@ -331,7 +331,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 		UploadId:       file.UploadID,
 		FilePath:       file.TargetPath,
 		FileName:       file.TargetName,
-		Status:         manifestFile.Synced.String(),
+		Status:         manifestFile.Registered.String(),
 		MergePackageId: file.MergePackageId,
 		FileType:       file.FileType,
 	}
@@ -386,7 +386,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			return &request, manifestFile.Removed, nil
 		}
-	case manifestFile.Initiated, manifestFile.Failed:
+	case manifestFile.Local, manifestFile.Failed:
 		// File is newly created or we are trying to re-upload
 
 		switch curStatus {
@@ -409,9 +409,9 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			}
 
 			return &request, manifestFile.Verified, nil
-		case manifestFile.Synced, manifestFile.Failed, manifestFile.Unknown:
+		case manifestFile.Registered, manifestFile.Failed, manifestFile.Unknown:
 			// server is synced, failed, unknown --> add/update the entry in dynamodb
-			item.Status = manifestFile.Synced.String()
+			item.Status = manifestFile.Registered.String()
 			item.InProgress = "x"
 
 			data, err := attributevalue.MarshalMap(item)
@@ -424,7 +424,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 				},
 			}
 
-			return &request, manifestFile.Synced, nil
+			return &request, manifestFile.Registered, nil
 		default:
 			return nil, curStatus, nil
 		}
@@ -453,13 +453,13 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 			return nil, curStatus, nil
 
 		}
-	case manifestFile.Synced, manifestFile.Unknown:
+	case manifestFile.Registered, manifestFile.Unknown:
 
 		switch curStatus {
-		case manifestFile.Synced:
+		case manifestFile.Registered:
 			// server is synced --> update dynamobd in case target path has changed
 
-			item.Status = manifestFile.Synced.String()
+			item.Status = manifestFile.Registered.String()
 			item.InProgress = "x"
 
 			data, err := attributevalue.MarshalMap(item)
@@ -473,7 +473,7 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 				},
 			}
 
-			return &request, manifestFile.Synced, nil
+			return &request, manifestFile.Registered, nil
 		case manifestFile.Finalized, manifestFile.Imported, manifestFile.Verified:
 			// If client is synced and server is Finalized --> respond with verified
 

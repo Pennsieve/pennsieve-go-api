@@ -67,6 +67,7 @@ type GetStatusEndpointResponse struct {
 	Status            string   `json:"status"`
 	Files             []string `json:"files"`
 	ContinuationToken string   `json:"continuation_token"`
+	Verified          bool     `json:"verified"`
 }
 
 type PostResponse struct {

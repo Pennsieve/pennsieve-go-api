@@ -354,7 +354,7 @@ paths:
     get:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: getFileStatus
+      operationId: verifyFileStatus
       summary: Verify status for manifest files.
       security:
         - token_manifest_auth: [ ]
