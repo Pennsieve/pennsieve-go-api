@@ -150,6 +150,15 @@ components:
           targetName:
             type: string
             description: Name of the uploaded file as it should appear on the platform. This includes the extension of the file.
+    bookyperRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the repository.
+        tag:
+          type: string
+          description: Tag of the release.
 paths:
   /manifest:
     get:
@@ -396,6 +405,61 @@ paths:
           schema:
             type: boolean
           description: Update status to verified for returned files. If checked, this will always check for Finalized status.
+      responses:
+        '200':
+          description: The requested files for a manifest.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Successfull returned list of files with requested status.
+                properties:
+                  id:
+                    type: string
+                    description: UUID of the manifest.
+                  status:
+                    type: string
+                    description: The current status of the returned files.
+                  files:
+                    type: array
+                    description: List of upload ids for files with requested status.
+                    items:
+                      type: string
+                  continuation_token:
+                    type: string
+                    description: ID of the last returned item.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /bookyper:
+    post:
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: verifyFileStatus
+      summary: Verify status for manifest files.
+      security:
+      tags:
+        - Bookyper Service
+      description: |
+        This does some sort of action in response to releasing a github repository .\
+        \
+        It will look at Jupyter notebook files in the repository and assign them to a DOI.
+      parameters:
+        - in: query
+          name: repositoryName
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The name of the repository.
+      requestBody:
+        description: Information about the release of the repository
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/bookyperRequest'
       responses:
         '200':
           description: The requested files for a manifest.
