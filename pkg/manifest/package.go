@@ -19,6 +19,7 @@ func (s ManifestSession) PackageTypeResolver(items []manifestFile.FileDTO) []man
 		if len(items[i].FileType) == 0 {
 			// 1. Find FileType
 
+			// Split on the first '.' and consider everything after the extension.
 			r := regexp.MustCompile(`(?P<FileName>[^\.]*)?\.?(?P<Extension>.*)`)
 			pathParts := r.FindStringSubmatch(f.TargetName)
 			if pathParts == nil {
@@ -28,7 +29,12 @@ func (s ManifestSession) PackageTypeResolver(items []manifestFile.FileDTO) []man
 
 			fileName = pathParts[r.SubexpIndex("FileName")]
 			fileExtension = pathParts[r.SubexpIndex("Extension")]
-			fType = fileType.ExtensionToTypeDict[fileExtension]
+
+			var exists bool
+			fType, exists = fileType.ExtensionToTypeDict[fileExtension]
+			if !exists {
+				fType = fileType.GenericData
+			}
 
 			// Set the type if not previously set.
 			items[i].FileType = fType.String()
@@ -61,8 +67,8 @@ func persystMerger(fileName string, layFile *manifestFile.FileDTO, items []manif
 				layFile.MergePackageId = layFile.UploadID
 				items[i].FileType = fileType.Persyst.String()
 				log.Println("Found match in: ", f.TargetName)
+				break
 			}
-			break
 		}
 	}
 }

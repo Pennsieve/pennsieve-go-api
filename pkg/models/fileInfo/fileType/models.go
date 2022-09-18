@@ -4,7 +4,8 @@ package fileType
 type Type int64
 
 const (
-	PDF Type = iota
+	GenericData Type = iota
+	PDF
 	MEF
 	EDF
 	TDMS
@@ -48,7 +49,6 @@ const (
 	NeuroExplorer
 	MINC
 	MobergSeries
-	GenericData
 	BFANNOT
 	BFTS
 	Nicolet
@@ -540,13 +540,16 @@ var ExtensionToTypeDict = map[string]Type{
 	"rdata":         RData,
 	"zip":           ZIP,
 	"tar":           ZIP,
-	".tar.gz":       ZIP,
+	"tar.gz":        ZIP,
+	"gz":            ZIP,
 	"fcs":           FCS,
 	"bam":           BAM,
 	"bcl":           BAM,
 	"bcl.gz":        BAM,
 	"fasta":         FASTA,
+	"fasta.gz":      FASTA,
 	"fastq":         FASTQ,
+	"fastq.gz":      FASTQ,
 	"vcf":           VariantData,
 	"cram":          CRAM,
 	"cs":            CSharp,

@@ -35,6 +35,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    model-service:
+      type: aws_proxy
+      uri: ${model_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -423,6 +430,129 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /metadata/models:
+    get:
+      summary: Return metadatamodels for a specific dataset.
+      description: |
+        This method returns a list of models that are defined in a dataset.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
+      operationId: graphGetModels
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Metadata Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where file will be uploaded.
+      responses:
+        '200':
+          description: The returned models.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Response for getModels endpoint.
+                  properties:
+                    Count:
+                      description: Number of added files to the manifest.
+                      type: integer
+                    CreatedAt:
+                      description: Array of uploadIds that were not added to manifest.
+                      type: string
+                    CreatedBy:
+                      description: Array of uploadIds that were not added to manifest.
+                      type: string
+                    Description:
+                      description: Array of uploadIds that were not added to manifest.
+                      type: string
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /metadata/query:
+    post:
+      summary: Query the Pennsieve metadata graph
+      description: |
+        Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
+      operationId: queryGraph
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+#        - Metadata Servi44
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset for which we want to retrieve datasets.
+      requestBody:
+        description: Query Filters
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for metadata querying.
+              properties:
+                model:
+                  type: string
+                  description: Requested type of returned objects.
+                datasets:
+                  type: array
+                  description: Array of dataset node ids to search over.
+                  items:
+                    type: string
+                filters:
+                  type: array
+                  description: Array of filters for the query
+                  items:
+                    type: object
+                    description: Filter object for query.
+                    properties:
+                      model:
+                        type: string
+                        description: The name of the model.
+                      property:
+                        type: string
+                        description: The name of a property in the model.
+                      operator:
+                        type: string
+                        enum:
+                          - IS
+                          - IS_NOT
+                          - EQUALS
+                          - NOT_EQUALS
+                          - LESS_THAN
+                          - LESS_THAN_EQUALS
+                          - GREATER_THAN
+                          - GREATER_THAN_EQUALS
+                          - STARTS_WITH
+                          - CONTAINS
+                      value:
+                        type: string
+                        description: The value of the predicate
+      responses:
+        '200':
+          description: The returned results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/addFilesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
 
 
 
