@@ -593,16 +593,18 @@ paths:
                       type: string
                       description: Model slug for the targeted model
                 records:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      from:
+                  type: object
+                  properties:
+                    from:
+                      type: array
+                      items:
                         type: string
-                        description: ID of the originating record
-                      to:
+                        description: List of object IDs of records of type from_model
+                    to:
+                      type: array
+                      items:
                         type: string
-                        description: ID of the targeted record
+                        description: List of object IDs of records of type to_model
       responses:
         '200':
           description: The returned results.
