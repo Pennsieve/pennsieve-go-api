@@ -487,7 +487,7 @@ paths:
       security:
         - token_dataset_auth: [ ]
       tags:
-#        - Metadata Servi44
+        - Metadata Service
       parameters:
         - in: query
           name: dataset_id
@@ -548,6 +548,93 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/addFilesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /metadata/records/relationships/:
+    post:
+      summary: Create relationships on existing records
+      description: |
+        Allows the user to create relationships in bulk between existing records for a specific dataset.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
+      operationId: batchCreateRelationships
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Metadata Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset associated with the metadata that is edited
+      requestBody:
+        description: definition of the relationship and records to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for metadata querying.
+              properties:
+                relationship:
+                  type: object
+                  properties:
+                    from_model:
+                      type: string
+                      description: Model slug for the originating model
+                    relationship_name:
+                      type: string
+                      description: Relationship slug; direction is automatically inferred
+                    to_model:
+                      type: string
+                      description: Model slug for the targeted model
+                records:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      from:
+                        type: string
+                        description: ID of the originating record
+                      to:
+                        type: string
+                        description: ID of the targeted record
+      responses:
+        '200':
+          description: The returned results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    from:
+                      type: string
+                    to:
+                      type: string
+                    type:
+                      type: string
+                    model_relationship_id:
+                      type: string
+                    name:
+                      type: string
+                    one_to_many:
+                      type: boolean
+                    created_at:
+                      type: string
+                    updated_at:
+                      type: string
+                    created_by:
+                      type: string
+                    updated_by:
+                      type: string
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
