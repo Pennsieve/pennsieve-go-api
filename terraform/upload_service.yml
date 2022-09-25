@@ -552,7 +552,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /metadata/records/relationships/:
+
+  /metadata/records/relationships:
     post:
       summary: Create relationships on existing records
       description: |

@@ -13,6 +13,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/user"
 	"log"
 	"os"
 	"regexp"
@@ -83,7 +84,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Get Dataset associated with the requested manifest
 	if hasManifestId {
-		fmt.Println("Getting Manifest from DYNAMODB")
 		cfg, err := config.LoadDefaultConfig(context.Background())
 		if err != nil {
 			panic("unable to load SDK config, " + err.Error())
@@ -98,10 +98,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 			log.Fatalln("Manifest could not be found: ", err)
 		}
 
-		fmt.Println(manifest)
-
 		datasetNodeId = manifest.DatasetNodeId
-		fmt.Println(datasetNodeId)
 		hasDatasetId = true
 	}
 
@@ -172,11 +169,16 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		datasetClaim = nil
 	}
 
+	userClaim := user.Claim{
+		Id:           int(currentUser.Id),
+		NodeId:       currentUser.NodeId,
+		IsSuperAdmin: currentUser.IsSuperAdmin,
+	}
+
 	// Bundle Claims
 	claims := map[string]interface{}{
 		"organization_id": orgInt,
-		"user_id":         currentUser.Id,
-		"is_super_admin":  currentUser.IsSuperAdmin,
+		"user_claim":      userClaim,
 		"org_claim":       orgClaim,
 		"dataset_claim":   datasetClaim,
 	}

@@ -34,6 +34,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.6 h1:JGrc3
 github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.7.6/go.mod h1:zwvTysbXES8GDwFcwCPB8NkC+bCdio1abH+E+BRe/xg=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5 h1:gRW1ZisKc93EWEORNJRvy/ZydF3o6xLSveJHdi1Oa0U=
 github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.5/go.mod h1:ZbkttHXaVn3bBo/wpJbQGiiIWR90eTBUVBrEHUEQlho=
+github.com/aws/aws-sdk-go-v2/service/sns v1.17.8 h1:Z0LBaDH89pfyBOCZzLCi8tmie3hJyLDV2NDjBWVvPzw=
+github.com/aws/aws-sdk-go-v2/service/sns v1.17.8/go.mod h1:Em/qKcKnYe5Y2+xcJ+XI/01K/JtOy7andGwQByLYFXc=
 github.com/aws/aws-sdk-go-v2/service/sso v1.11.5 h1:TfJ/zuOYvHnxkvohSwAF3Ppn9KT/SrGZuOZHTPy8Guw=
 github.com/aws/aws-sdk-go-v2/service/sso v1.11.5/go.mod h1:TFVe6Rr2joVLsYQ1ABACXgOC6lXip/qpX2x5jWg/A9w=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.6 h1:aYToU0/iazkMY67/BYLt3r6/LT/mUtarLAF5mGof1Kg=
