@@ -146,7 +146,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get DATASET Claim
 	var datasetClaim *dataset.Claim
 	if hasDatasetId {
-		fmt.Println("HASDATASETID")
 		datasetClaim, err = authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
 		if err != nil {
 			log.Println("Unable to get Dataset Role")
@@ -177,10 +176,9 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Bundle Claims
 	claims := map[string]interface{}{
-		"organization_id": orgInt,
-		"user_claim":      userClaim,
-		"org_claim":       orgClaim,
-		"dataset_claim":   datasetClaim,
+		"user_claim":    userClaim,
+		"org_claim":     orgClaim,
+		"dataset_claim": datasetClaim,
 	}
 
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
