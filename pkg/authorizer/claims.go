@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/pennsieve/pennsieve-go-api/pkg/core"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
 	dbTable2 "github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/organization"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/permissions"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/user"
 	"log"
 	"sort"
@@ -14,10 +16,9 @@ import (
 
 // Claims is an object containing claims and user info
 type Claims struct {
-	OrgClaim       organization.Claim
-	DatasetClaim   dataset.Claim
-	UserClaim      user.Claim
-	OrganizationId int64
+	OrgClaim     organization.Claim
+	DatasetClaim dataset.Claim
+	UserClaim    user.Claim
 }
 
 // GetDatasetClaim returns the highest role that the user has for a given dataset.
@@ -145,5 +146,65 @@ func GetOrganizationClaim(db core.PostgresAPI, userId int64, organizationId int6
 	}
 
 	return &orgRole, nil
+
+}
+
+// ParseClaims creates a Claims object from a string map which is returned by the authorizer.
+func ParseClaims(claims map[string]interface{}) *Claims {
+
+	var orgClaim organization.Claim
+	if val, ok := claims["org_claim"]; ok {
+		orgClaims := val.(map[string]interface{})
+		orgRole := int64(orgClaims["Role"].(float64))
+		orgClaim = organization.Claim{
+			Role:            dbTable.DbPermission(orgRole),
+			IntId:           int64(orgClaims["IntId"].(float64)),
+			EnabledFeatures: nil,
+		}
+	}
+
+	var datasetClaim dataset.Claim
+	if val, ok := claims["dataset_claim"]; ok {
+		if val != nil {
+			datasetClaims := val.(map[string]interface{})
+			datasetRole := int64(datasetClaims["Role"].(float64))
+			datasetClaim = dataset.Claim{
+				Role:   dataset.Role(datasetRole),
+				NodeId: datasetClaims["NodeId"].(string),
+				IntId:  int64(datasetClaims["IntId"].(float64)),
+			}
+		}
+	}
+
+	var userClaim user.Claim
+	if val, ok := claims["user_claim"]; ok {
+		if val != nil {
+			userClaims := val.(map[string]interface{})
+			userClaim = user.Claim{
+				Id:           userClaims["Id"].(int),
+				NodeId:       userClaims["NodeId"].(string),
+				IsSuperAdmin: userClaims["IsSuperAdmin"].(bool),
+			}
+		}
+	}
+
+	returnedClaims := Claims{
+		OrgClaim:     orgClaim,
+		DatasetClaim: datasetClaim,
+		UserClaim:    userClaim,
+	}
+
+	return &returnedClaims
+
+}
+
+// HasRole returns a boolean indicating whether the user has the correct permissions.
+func HasRole(claims Claims, permission permissions.DatasetPermission) bool {
+
+	//hasOrgRole := claims.orgClaim.Role >= dbTable.Delete
+
+	hasValidPermissions := permissions.HasDatasetPermission(claims.DatasetClaim.Role, permission)
+
+	return hasValidPermissions
 
 }
