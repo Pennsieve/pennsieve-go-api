@@ -7,9 +7,18 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
 	dbTable2 "github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/organization"
+	"github.com/pennsieve/pennsieve-go-api/pkg/models/user"
 	"log"
 	"sort"
 )
+
+// Claims is an object containing claims and user info
+type Claims struct {
+	OrgClaim       organization.Claim
+	DatasetClaim   dataset.Claim
+	UserClaim      user.Claim
+	OrganizationId int64
+}
 
 // GetDatasetClaim returns the highest role that the user has for a given dataset.
 // This method checks the roles of the dataset, the teams, and the specific user roles.
