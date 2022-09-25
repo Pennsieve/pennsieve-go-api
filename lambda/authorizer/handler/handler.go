@@ -169,7 +169,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	userClaim := user.Claim{
-		Id:           int(currentUser.Id),
+		Id:           currentUser.Id,
 		NodeId:       currentUser.NodeId,
 		IsSuperAdmin: currentUser.IsSuperAdmin,
 	}

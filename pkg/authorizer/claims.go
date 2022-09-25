@@ -181,7 +181,7 @@ func ParseClaims(claims map[string]interface{}) *Claims {
 		if val != nil {
 			userClaims := val.(map[string]interface{})
 			userClaim = user.Claim{
-				Id:           userClaims["Id"].(int),
+				Id:           int64(userClaims["Id"].(float64)),
 				NodeId:       userClaims["NodeId"].(string),
 				IsSuperAdmin: userClaims["IsSuperAdmin"].(bool),
 			}

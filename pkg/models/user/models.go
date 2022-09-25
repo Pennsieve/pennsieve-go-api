@@ -6,7 +6,7 @@ import (
 
 // Claim combines the role of the user in the org, and the features in the organization.
 type Claim struct {
-	Id           int
+	Id           int64
 	NodeId       string
 	IsSuperAdmin bool
 }
