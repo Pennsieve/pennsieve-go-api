@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -48,8 +48,6 @@ func ConnectRDS() (*sql.DB, error) {
 		dbHost, dbPort, dbUser, authenticationToken, dbName,
 	)
 
-	log.Println("DEBUG: ", dsn)
-
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		panic(err)
@@ -72,7 +70,7 @@ func ConnectRDSWithOrg(orgId int) (*sql.DB, error) {
 	// Set Search Path to organization
 	_, err = db.Exec(fmt.Sprintf("SET search_path = \"%d\";", orgId))
 	if err != nil {
-		log.Println(fmt.Sprintf("Unable to set search_path to %d.", orgId))
+		log.Error(fmt.Sprintf("Unable to set search_path to %d.", orgId))
 		err := db.Close()
 		if err != nil {
 			return nil, err

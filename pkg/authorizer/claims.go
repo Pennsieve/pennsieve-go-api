@@ -10,7 +10,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/organization"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/permissions"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/user"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sort"
 )
 
@@ -30,7 +30,7 @@ func GetDatasetClaim(db core.PostgresAPI, user *dbTable2.User, datasetNodeId str
 		// USER IS A SUPER-ADMIN
 
 		//TODO: HANDLE SPECIAL CASE
-		fmt.Println("Not handling super-user authorization at this point.")
+		log.Warn("Not handling super-user authorization at this point.")
 
 	}
 
@@ -48,10 +48,10 @@ func GetDatasetClaim(db core.PostgresAPI, user *dbTable2.User, datasetNodeId str
 	if err != nil {
 		switch err {
 		case sql.ErrNoRows:
-			log.Println("No rows were returned!")
+			log.Error("No rows were returned!")
 			return nil, err
 		default:
-			log.Println("Uknown Error while scanning dataset table: ", err)
+			log.Error("Uknown Error while scanning dataset table: ", err)
 			panic(err)
 		}
 	}
@@ -96,7 +96,7 @@ func GetDatasetClaim(db core.PostgresAPI, user *dbTable2.User, datasetNodeId str
 			&roleString)
 
 		if err != nil {
-			log.Println("ERROR: ", err)
+			log.Error("ERROR: ", err)
 		}
 
 		role, ok := dataset.RoleFromString(roleString)
@@ -128,14 +128,14 @@ func GetOrganizationClaim(db core.PostgresAPI, userId int64, organizationId int6
 	var orgUser dbTable2.OrganizationUser
 	currentOrgUser, err := orgUser.GetByUserId(db, userId)
 	if err != nil {
-		log.Println("Unable to check Org User: ", err)
+		log.Error("Unable to check Org User: ", err)
 		return nil, err
 	}
 
 	var orgFeat dbTable2.FeatureFlags
 	allFeatures, err := orgFeat.GetAll(db, organizationId)
 	if err != nil {
-		log.Println("Unable to check Feature Flags: ", err)
+		log.Error("Unable to check Feature Flags: ", err)
 		return nil, err
 	}
 

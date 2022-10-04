@@ -3,7 +3,7 @@ package handler
 import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/fileInfo/fileType"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest/manifestFile"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"regexp"
 	"strings"
 )
@@ -23,7 +23,11 @@ func (s ManifestSession) PackageTypeResolver(items []manifestFile.FileDTO) []man
 			r := regexp.MustCompile(`(?P<FileName>[^\.]*)?\.?(?P<Extension>.*)`)
 			pathParts := r.FindStringSubmatch(f.TargetName)
 			if pathParts == nil {
-				log.Println("Unable to parse filename:", f.TargetName)
+				log.WithFields(
+					log.Fields{
+						"upload_id": items[i].UploadID,
+					},
+				).Error("Unable to parse filename:", f.TargetName)
 				continue
 			}
 
@@ -66,7 +70,7 @@ func persystMerger(fileName string, layFile *manifestFile.FileDTO, items []manif
 				items[i].MergePackageId = layFile.UploadID
 				layFile.MergePackageId = layFile.UploadID
 				items[i].FileType = fileType.Persyst.String()
-				log.Println("Found match in: ", f.TargetName)
+				log.Debug("Found match in: ", f.TargetName)
 				break
 			}
 		}

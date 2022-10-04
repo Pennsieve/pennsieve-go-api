@@ -14,7 +14,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dataset"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/user"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"time"
@@ -36,19 +36,27 @@ func init() {
 	tokenPoolID = os.Getenv("TOKEN_POOL")
 	tokenClientID = os.Getenv("TOKEN_CLIENT")
 
+	log.SetFormatter(&log.JSONFormatter{})
+	ll, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
+	if err != nil {
+		log.SetLevel(log.InfoLevel)
+	} else {
+		log.SetLevel(ll)
+	}
+
 	// Get UserPool keyset
 	// https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
 	userJwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, userPoolID)
 	keySet, err = jwk.Fetch(context.Background(), userJwksURL)
 	if err != nil {
-		fmt.Println("Unable to fetch Key Set")
+		log.Error("Unable to fetch Key Set")
 	}
 
 	// Get TokenPool keyset
 	tokenJwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, tokenPoolID)
 	tokenKeySet, err := jwk.Fetch(context.Background(), tokenJwksURL)
 	if err != nil {
-		fmt.Println("Unable to fetch Key Set")
+		log.Error("Unable to fetch Key Set")
 	}
 
 	// Add tokenKeySet keys to keySet, so we can decode from both user and token pool
@@ -139,7 +147,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get ORG Claim
 	orgClaim, err := authorizer.GetOrganizationClaim(db, currentUser.Id, orgInt)
 	if err != nil {
-		log.Println("Unable to get Organization Role")
+		log.Error("Unable to get Organization Role")
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized") // Return 401: Unauthenticated
 	}
 
@@ -148,7 +156,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	if hasDatasetId {
 		datasetClaim, err = authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
 		if err != nil {
-			log.Println("Unable to get Dataset Role")
+			log.Error("Unable to get Dataset Role")
 			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 				IsAuthorized: false,
 				Context:      nil,
@@ -157,7 +165,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 		// If user has no role on provided dataset --> return
 		if datasetClaim.Role == dataset.None {
-			log.Println("User has no access to dataset")
+			log.Error("User has no access to dataset")
 			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 				IsAuthorized: false,
 				Context:      nil,
@@ -216,31 +224,31 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwt.WithKeySet(keySet))
 	if err != nil {
-		log.Printf("Failed to parse the JWT.\nError:%s\n\n", err.Error())
+		log.Debug("Failed to parse the JWT.\nError:%s\n\n", err.Error())
 		return nil, errors.New("unauthorized")
 	}
 
 	issuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
 	tokenIssuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, tokenPoolID)
 	if token.Issuer() != issuer && token.Issuer() != tokenIssuer {
-		log.Println("Issuer in token does not match.")
+		log.Debug("Issuer in token does not match.")
 		return nil, errors.New("AUTHORIZER_FAILURE: Issuer in token does not match Pennsieve token issuers")
 	}
 
 	clientIdClaim, hasKey := token.Get("client_id")
 	if hasKey != true || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
-		log.Println("Audience in token does not match.")
+		log.Debug("Audience in token does not match.")
 		return nil, errors.New("unauthorized")
 	}
 
 	if token.Expiration().Unix() < time.Now().Unix() {
-		log.Println("Token expired.")
+		log.Debug("Token expired.")
 		return nil, errors.New("unauthorized")
 	}
 
 	tokenUseClaim, hasKey := token.Get("token_use")
 	if hasKey != true || tokenUseClaim != "access" {
-		log.Println("Incorrect TokenUse Claim")
+		log.Debug("Incorrect TokenUse Claim")
 		return nil, errors.New("unauthorized")
 	}
 

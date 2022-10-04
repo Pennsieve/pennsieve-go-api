@@ -12,7 +12,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/dbTable"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/manifest/manifestFile"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -38,7 +38,14 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 
 	data, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		log.Printf("MarshalMap: %v\n", err)
+		log.WithFields(
+			log.Fields{
+				"organization_id": item.OrganizationId,
+				"dataset_id":      item.DatasetId,
+				"manifest_id":     item.ManifestId,
+				"user_id":         item.UserId,
+			},
+		).Error("MarshalMap: %v\n", err)
 		return fmt.Errorf("MarshalMap: %v\n", err)
 	}
 
@@ -48,8 +55,15 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 	})
 
 	if err != nil {
-		log.Printf("PutItem: %v\n", err)
-		return fmt.Errorf("PutItem: %v\n", err)
+		log.WithFields(
+			log.Fields{
+				"organization_id": item.OrganizationId,
+				"dataset_id":      item.DatasetId,
+				"manifest_id":     item.ManifestId,
+				"user_id":         item.UserId,
+			},
+		).Error("Error creating manifest: %v\n", err)
+		return errors.New("Error creating Manifest")
 	}
 
 	return nil
@@ -68,7 +82,11 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 		defer func() {
 			close(walker)
 		}()
-		fmt.Println("NUMBER OF ITEMS:", len(items))
+		log.WithFields(
+			log.Fields{
+				"manifest_id": manifestId,
+			},
+		).Debug("Adding %d number of items from manifest.", len(items))
 
 		for _, f := range items {
 			walker <- f
@@ -79,13 +97,13 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 	for w := 1; w <= nrWorkers; w++ {
 		w2 := int32(w)
 		syncWG.Add(1)
-		log.Println("starting worker:", w2)
+		log.Debug("starting worker:", w2)
 
 		go func() {
 			stats, _ := s.createOrUpdateFile(w2, walker, manifestId, forceStatus)
 			result <- *stats
 			defer func() {
-				log.Println("Closing Worker: ", w2)
+				log.Debug("Closing Worker: ", w2)
 				syncWG.Done()
 			}()
 		}()
@@ -93,7 +111,6 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 
 	syncWG.Wait()
 	close(result)
-	fmt.Println("WAIT GROUP DONE")
 
 	resp := manifest.AddFilesStats{}
 	for r := range result {
@@ -124,13 +141,23 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 		if forceStatus == nil {
 			curStatus, err := s.statusForFileItem(manifestId, &file)
 			if err != nil {
-				log.Fatalf("Unable to check status of existing manifest file.")
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("Unable to check status of existing manifest file.")
 			}
 
 			// Determine the sync action based on provided status and current status.
 			request, setStatus, err = s.getAction(manifestId, file, curStatus)
 			if err != nil {
-				log.Fatalf("Unable to get action for manifest file.")
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("Unable to get action for manifest file.")
 			}
 		} else {
 
@@ -151,7 +178,12 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			if len(isInProgress) == 0 {
 				delete(data, "InProgress")
@@ -196,7 +228,11 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 		// Write files to manifest file dynamobd table
 		data, err := s.Client.BatchWriteItem(context.Background(), &params)
 		if err != nil {
-			log.Fatalln("Unable to Batch Write: ", err)
+			log.WithFields(
+				log.Fields{
+					"manifest_id": manifestId,
+				},
+			).Fatalln("Unable to Batch Write: ", err)
 		}
 
 		// Handle potential failed files:
@@ -205,7 +241,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 		retryIndex := 0
 		unProcessedItems := data.UnprocessedItems
 		for len(unProcessedItems) > 0 {
-			log.Println("CONTAINS UNPROCESSED DATA", unProcessedItems)
+			log.Debug("CONTAINS UNPROCESSED DATA", unProcessedItems)
 			params = dynamodb.BatchWriteItemInput{
 				RequestItems:                unProcessedItems,
 				ReturnConsumedCapacity:      "NONE",
@@ -217,7 +253,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 
 			retryIndex++
 			if retryIndex == nrRetries {
-				fmt.Printf("Dynamodb did not ingest all the file records.")
+				log.Warn("Dynamodb did not ingest all the file records.")
 				break
 			}
 			time.Sleep(time.Duration(100*retryIndex) * time.Millisecond)
@@ -230,7 +266,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 			fileEntry := dbTable.ManifestFileTable{}
 			err = attributevalue.UnmarshalMap(item, &fileEntry)
 			if err != nil {
-				fmt.Println("Unable to UnMarshall unprocessed items. ", err)
+				log.Error("Unable to UnMarshall unprocessed items. ", err)
 				return nil, err
 			}
 			failedFiles = append(failedFiles, fileEntry.UploadId)
@@ -241,7 +277,12 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 			case manifestFile.Local.String(), manifestFile.Failed.String():
 				nrFilesUpdated--
 			default:
-				log.Fatalln("NO match")
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   fileEntry.UploadId,
+					},
+				).Fatalln("Unable to find status match.")
 			}
 		}
 	}
@@ -302,14 +343,14 @@ func (s ManifestSession) statusForFileItem(manifestId string, file *manifestFile
 
 	result, err := s.Client.GetItem(context.Background(), getItemInput)
 	if err != nil {
-		log.Println("Error getting item from dynamodb")
+		log.Error("Error getting item from dynamodb")
 	}
 
 	var pItem dbTable.ManifestFileTable
 	if len(result.Item) > 0 {
 		err = attributevalue.UnmarshalMap(result.Item, &pItem)
 		if err != nil {
-			panic(err)
+			log.Fatalf(err.Error())
 		}
 
 		var m manifestFile.Status
@@ -353,7 +394,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			delete(data, "InProgress")
 
@@ -376,7 +422,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 				UploadId:   file.UploadID,
 			})
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			request := types.WriteRequest{
 				DeleteRequest: &types.DeleteRequest{
@@ -398,7 +449,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			delete(data, "InProgress")
 
@@ -416,7 +472,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			request := types.WriteRequest{
 				PutRequest: &types.PutRequest{
@@ -438,7 +499,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			delete(data, "InProgress")
 
@@ -464,7 +530,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 
 			request := types.WriteRequest{
@@ -481,7 +552,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 
 			data, err := attributevalue.MarshalMap(item)
 			if err != nil {
-				log.Fatalf("MarshalMap: %v\n", err)
+				log.WithFields(
+					log.Fields{
+						"manifest_id": manifestId,
+						"upload_id":   file.UploadID,
+					},
+				).Fatalf("MarshalMap: %v\n", err)
 			}
 			delete(data, "InProgress")
 
@@ -502,6 +578,12 @@ func (s ManifestSession) getAction(manifestId string, file manifestFile.FileDTO,
 		return nil, curStatus, nil
 	}
 
+	log.WithFields(
+		log.Fields{
+			"manifest_id": manifestId,
+			"upload_id":   file.UploadID,
+		},
+	).Error("Unhandled case in getAction for file.")
 	return nil, manifestFile.Unknown, errors.New("unhandled case in getAction")
 
 }
