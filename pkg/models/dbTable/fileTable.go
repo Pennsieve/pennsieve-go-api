@@ -67,7 +67,7 @@ func (p *File) Add(db core.PostgresAPI, files []FileParams) ([]File, error) {
 			index*13+13,
 		))
 
-		etag := fmt.Sprintf("{\"checksum\": \"%s\", \"chunkSize\": \"%s\"}", "1234z", "5242880")
+		etag := fmt.Sprintf("{\"checksum\": \"%s\", \"chunkSize\": \"%s\"}", row.CheckSum, "32")
 
 		vals = append(vals, row.PackageId, row.Name, row.FileType.String(), row.S3Bucket, row.S3Key,
 			row.ObjectType.String(), row.Size, etag, row.UUID.String(), processingState.Unprocessed.String(),
