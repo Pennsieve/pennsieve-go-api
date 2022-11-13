@@ -1,7 +1,6 @@
 package dbTable
 
 import (
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -41,7 +40,20 @@ type FileParams struct {
 	ObjectType objectType.ObjectType `json:"object_type"`
 	Size       int64                 `json:"size"`
 	CheckSum   string                `json:"checksum"`
+	Sha256     string                `json:"sha256"`
 	UUID       uuid.UUID             `json:"uuid"`
+}
+
+type ErrFileNotFound struct{}
+
+func (m *ErrFileNotFound) Error() string {
+	return "File does not exist in postgres"
+}
+
+type ErrMultipleRowsAffected struct{}
+
+func (m *ErrMultipleRowsAffected) Error() string {
+	return "Multiple files in files table were updated"
 }
 
 func (p *File) Add(db core.PostgresAPI, files []FileParams) ([]File, error) {
@@ -67,7 +79,7 @@ func (p *File) Add(db core.PostgresAPI, files []FileParams) ([]File, error) {
 			index*13+13,
 		))
 
-		etag := fmt.Sprintf("{\"checksum\": \"%s\", \"chunkSize\": \"%s\"}", row.CheckSum, "32")
+		etag := fmt.Sprintf("{\"checksum\": \"%s\", \"chunkSize\": \"%s\", \"sha256\": \"%s\"}", row.CheckSum, "32", row.Sha256)
 
 		vals = append(vals, row.PackageId, row.Name, row.FileType.String(), row.S3Bucket, row.S3Key,
 			row.ObjectType.String(), row.Size, etag, row.UUID.String(), processingState.Unprocessed.String(),
@@ -146,22 +158,32 @@ func (p *File) Add(db core.PostgresAPI, files []FileParams) ([]File, error) {
 }
 
 // UpdateBucket updates the storage bucket as part of upload process and sets Status
-func (p *File) UpdateBucket(db core.PostgresAPI, uploadId string, bucket string, organizationId int64) error {
+func (p *File) UpdateBucket(db core.PostgresAPI, uploadId string, bucket string, s3Key string, organizationId int64) error {
 
-	queryStr := fmt.Sprintf("UPDATE \"%d\".files SET s3_bucket=$1 WHERE UUID=$2;", organizationId)
+	queryStr := fmt.Sprintf("UPDATE \"%d\".files SET s3_bucket=$1, s3_key=$2 WHERE UUID=$3;", organizationId)
+	result, err := db.Exec(queryStr, bucket, s3Key, uploadId)
 
-	result, err := db.Exec(queryStr, bucket, uploadId)
+	msg := ""
 	if err != nil {
-		log.Println("Error updating the bucket location: ", err)
+		msg = fmt.Sprintf("Error updating the bucket location: %v", err)
+		log.Println(msg)
 		return err
 	}
 
 	affectedRows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
 	if affectedRows != 1 {
-		log.Println("UpdateBucket: Unexpected number of updated rows!", affectedRows)
 		if affectedRows == 0 {
-			return errors.New("zero rows updated when 1 expected``")
+			nofFoundError := &ErrFileNotFound{}
+			log.Println(nofFoundError.Error())
+			return nofFoundError
 		}
+
+		multipleRowError := &ErrMultipleRowsAffected{}
+		log.Println(multipleRowError.Error())
+		return multipleRowError
 	}
 
 	return nil

@@ -28,6 +28,7 @@ type ManifestSession struct {
 	Client        core.DynamoDBAPI
 	SNSClient     core.SnsAPI
 	SNSTopic      string
+	S3Client      core.S3API
 }
 
 // fileWalk channel used to distribute FileDTOs to the workers importing the files in DynamoDB

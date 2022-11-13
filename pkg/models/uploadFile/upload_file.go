@@ -28,6 +28,7 @@ type UploadFile struct {
 	Size           int64            // Size of file
 	ETag           string           // ETag provided by S3
 	MergePackageId string           // MergePackageId is packageID leveraged instead of upload id in case of package merging
+	Sha256         string           // Sha256 checksum of the file
 }
 
 // String returns a json representation of the UploadFile object

@@ -120,7 +120,7 @@ func UpdateManifestStatus(client core.DynamoDBAPI, tableName string, manifestId 
 }
 
 // UpdateFileTableStatus updates the status of the file in the file-table dynamodb
-func UpdateFileTableStatus(client core.DynamoDBAPI, tableName string, manifestId string, uploadId string, status manifestFile.Status) error {
+func UpdateFileTableStatus(client core.DynamoDBAPI, tableName string, manifestId string, uploadId string, status manifestFile.Status, msg string) error {
 
 	_, err := client.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(tableName),
@@ -128,12 +128,14 @@ func UpdateFileTableStatus(client core.DynamoDBAPI, tableName string, manifestId
 			"ManifestId": &types.AttributeValueMemberS{Value: manifestId},
 			"UploadId":   &types.AttributeValueMemberS{Value: uploadId},
 		},
-		UpdateExpression: aws.String("set #status = :statusValue"),
+		UpdateExpression: aws.String("set #status = :statusValue, #msg = :msgValue"),
 		ExpressionAttributeNames: map[string]string{
 			"#status": "Status",
+			"#msg":    "Message",
 		},
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":statusValue": &types.AttributeValueMemberS{Value: status.String()},
+			":msgValue":    &types.AttributeValueMemberS{Value: msg},
 		},
 	})
 	return err
