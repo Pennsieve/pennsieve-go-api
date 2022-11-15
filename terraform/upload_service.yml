@@ -140,6 +140,15 @@ components:
           type: array
           items:
             type: string
+    autocompleteResponse:
+      type: object
+      description: Response for autocomplet endpoint.
+      properties:
+        values:
+          description: Array of values.
+          type: array
+          items:
+            type: string
     manifestFiles:
       type: array
       items:
@@ -514,6 +523,84 @@ paths:
                     type: string
                 filters:
                   type: array
+                  description: Array of filters for the query.
+                  items:
+                    type: object
+                    description: Filter object for query.
+                    properties:
+                      model:
+                        type: string
+                        description: The name of the model.
+                      property:
+                        type: string
+                        description: The name of a property in the model.
+                      operator:
+                        type: string
+                        enum:
+                          - IS
+                          - IS NOT
+                          - EQUALS
+                          - NOT EQUALS
+                          - LESS THAN
+                          - LESS THAN EQUALS
+                          - GREATER THAN
+                          - GREATER THAN EQUALS
+                          - STARTS WITH
+                          - CONTAINS
+                      value:
+                        type: string
+                        description: The value of the predicate
+                order_by:
+                  type: string
+                  description: Name of property that should be used to order the results.
+      responses:
+        '200':
+          description: The returned results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/addFilesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /metadata/query/autocomplete:
+    post:
+      summary: Returns list of valid values for given property in query
+      description: |
+        This endpoint returns a list of values that will return in valid query responses that include a minimum of 1 search result.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
+      operationId: autoComplete
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Metadata Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset for which we want to retrieve datasets.
+      requestBody:
+        description: Query Filters
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Request body for metadata querying.
+              properties:
+                text:
+                  type: string
+                  description: Value input for autocomplete.
+                model:
+                  type: string
+                  description: Requested type of returned objects.
+                filters:
+                  type: array
                   description: Array of filters for the query
                   items:
                     type: object
@@ -547,7 +634,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/addFilesResponse'
+                $ref: '#/components/schemas/autocompleteResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
