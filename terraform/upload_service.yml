@@ -172,7 +172,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestList
-      summary: Get a list of manifest for a dataset.
+      summary: List manifests for dataset
       description: |
         Returns a list of manifests that are defined for a dataset.
       parameters:
@@ -219,7 +219,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
     post:
-      summary: Synchronize manifest with server.
+      summary: Synchronize manifest
       description: |
         Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
       x-amazon-apigateway-integration:
@@ -259,7 +259,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestFiles
-      summary: Get files for a manifest
+      summary: Get files for manifest
       security:
         - token_manifest_auth: [ ]
       tags:
@@ -340,7 +340,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: deleteManifest
-      summary: Delete a previously created manifest.
+      summary: Delete manifest
       security:
         - token_auth: [ ]
       tags:
@@ -371,7 +371,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: verifyFileStatus
-      summary: Verify status for manifest files.
+      summary: Verify status for manifest files
       security:
         - token_manifest_auth: [ ]
       tags:
@@ -441,7 +441,7 @@ paths:
           $ref: '#/components/responses/Error'
   /metadata/models:
     get:
-      summary: Return metadatamodels for a specific dataset.
+      summary: Get models for dataset
       description: |
         This method returns a list of models that are defined in a dataset.
       x-amazon-apigateway-integration:
@@ -487,7 +487,7 @@ paths:
           $ref: '#/components/responses/Error'
   /metadata/query:
     post:
-      summary: Query the Pennsieve metadata graph
+      summary: Search metadata graph
       description: |
         Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
       x-amazon-apigateway-integration:
@@ -642,7 +642,7 @@ paths:
 
   /metadata/records/relationships:
     post:
-      summary: Create relationships on existing records
+      summary: Create record relationships
       description: |
         Allows the user to create relationships in bulk between existing records for a specific dataset.
       x-amazon-apigateway-integration:
