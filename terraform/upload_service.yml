@@ -593,12 +593,15 @@ paths:
               type: object
               description: Request body for metadata querying.
               properties:
+                model:
+                  type: string
+                  description: Model for autocomplete
+                property:
+                  type: string
+                  description: Property for autocomplete
                 text:
                   type: string
                   description: Value input for autocomplete.
-                model:
-                  type: string
-                  description: Requested type of returned objects.
                 filters:
                   type: array
                   description: Array of filters for the query
