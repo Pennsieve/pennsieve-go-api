@@ -567,7 +567,7 @@ paths:
 
   /metadata/query/autocomplete:
     post:
-      summary: Returns list of valid values for given property in query
+      summary: Autocomplete for search
       description: |
         This endpoint returns a list of values that will return in valid query responses that include a minimum of 1 search result.
       x-amazon-apigateway-integration:
