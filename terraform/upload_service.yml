@@ -496,7 +496,7 @@ paths:
       security:
         - token_dataset_auth: [ ]
       tags:
-        - Metadata Service
+        - Metadata Service|Search
       parameters:
         - in: query
           name: dataset_id
@@ -576,7 +576,7 @@ paths:
       security:
         - token_dataset_auth: [ ]
       tags:
-        - Metadata Service
+        - Metadata Service|Search
       parameters:
         - in: query
           name: dataset_id
@@ -651,7 +651,7 @@ paths:
       security:
         - token_dataset_auth: [ ]
       tags:
-        - Metadata Service
+        - Metadata Service|Records
       parameters:
         - in: query
           name: dataset_id
