@@ -8,6 +8,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/iconInfo"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/packageInfo/packageType"
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/uploadFolder"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -65,6 +66,13 @@ func (f *UploadFile) GetUploadFolderMap(sortedFiles []UploadFile, targetFolder s
 					targetFolder, p,
 				}, "/")
 		}
+
+		// Remove leading and trailing "/"
+		leadingSlashes := regexp.MustCompile(`^\/+`)
+		p = leadingSlashes.ReplaceAllString(p, "")
+
+		trailingSlashes := regexp.MustCompile(`\/+$`)
+		p = trailingSlashes.ReplaceAllString(p, "")
 
 		// Iterate over path segments in a single file and identify folders.
 		pathSegments := strings.Split(p, "/")
