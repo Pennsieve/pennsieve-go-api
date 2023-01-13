@@ -1,5 +1,6 @@
 .PHONY: help clean test
 
+LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
 WORKING_DIR   ?= "$(shell pwd)"
 PACKAGE_NAME  ?= "api-v2-authorizer-${VERSION}.zip"
