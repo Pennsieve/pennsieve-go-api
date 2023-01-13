@@ -224,7 +224,7 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwt.WithKeySet(keySet))
 	if err != nil {
-		log.Debug("Failed to parse the JWT.\nError:%s\n\n", err.Error())
+		log.Debug(fmt.Sprintf("Failed to parse the JWT.\nError:%s\n\n", err.Error()))
 		return nil, errors.New("unauthorized")
 	}
 
