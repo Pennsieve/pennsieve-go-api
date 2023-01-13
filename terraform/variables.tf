@@ -28,8 +28,11 @@ variable "token_pool_client_id" {
   default = "p18fdvhilhj2tg5sahtcsh6m6"
 }
 
-variable "authorizer_version" {
-  default = 1
+variable "image_tag" {
+}
+
+variable "lambda_bucket" {
+  default = "pennsieve-cc-lambda-functions-use1"
 }
 
 locals {

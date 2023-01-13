@@ -46,7 +46,7 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 				"manifest_id":     item.ManifestId,
 				"user_id":         item.UserId,
 			},
-		).Error("MarshalMap: %v\n", err)
+		).Error(fmt.Sprintf("MarshalMap: %v\n", err))
 		return fmt.Errorf("MarshalMap: %v\n", err)
 	}
 
@@ -63,7 +63,7 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 				"manifest_id":     item.ManifestId,
 				"user_id":         item.UserId,
 			},
-		).Error("Error creating manifest: %v\n", err)
+		).Error(fmt.Sprintf("Error creating manifest: %v\n", err))
 		return errors.New("Error creating Manifest")
 	}
 
@@ -87,7 +87,7 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 			log.Fields{
 				"manifest_id": manifestId,
 			},
-		).Debug("Adding %d number of items from manifest.", len(items))
+		).Debug(fmt.Sprintf("Adding %d number of items from manifest.", len(items)))
 
 		for _, f := range items {
 			walker <- f
