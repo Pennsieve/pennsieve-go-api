@@ -7,7 +7,6 @@ resource "aws_lambda_function" "authorizer_lambda" {
   role             = aws_iam_role.authorizer_lambda_role.arn
   timeout          = 300
   memory_size      = 128
-  source_code_hash = data.archive_file.authorizer_lambda_archive.output_base64sha256
   s3_bucket        = var.lambda_bucket
   s3_key           = "${var.service_name}/autorizer/api-v2-authorizer-${var.image_tag}.zip"
   publish          = false
@@ -39,11 +38,11 @@ resource "aws_lambda_function" "authorizer_lambda" {
 #  qualifier                         = aws_lambda_function.authorizer_lambda.version
 #}
 
-data "archive_file" "authorizer_lambda_archive" {
-  type        = "zip"
-  source_dir  = "${path.module}/../lambda/bin/authorizer"
-  output_path = "${path.module}/../lambda/bin/authorizer_lambda.zip"
-}
+#data "archive_file" "authorizer_lambda_archive" {
+#  type        = "zip"
+#  source_dir  = "${path.module}/../lambda/bin/authorizer"
+#  output_path = "${path.module}/../lambda/bin/authorizer_lambda.zip"
+#}
 
 #resource "aws_lambda_alias" "authorizer_lambda_live" {
 #  name             = "live"
