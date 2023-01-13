@@ -38,7 +38,7 @@ package:
 	@echo "**********************************"
 	@echo ""
 	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=amd64 go build -o $(WORKING_DIR)/lambda/bin/authorizer/$(SERVICE_NAME)-$(VERSION); \
+  		env GOOS=linux GOARCH=amd64 go build -o $(WORKING_DIR)/lambda/bin/authorizer/authorizer_lambda; \
 		cd $(WORKING_DIR)/lambda/bin/authorizer/ ; \
 			zip -r $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) .
 
