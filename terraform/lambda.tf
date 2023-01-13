@@ -8,7 +8,7 @@ resource "aws_lambda_function" "authorizer_lambda" {
   timeout          = 300
   memory_size      = 128
   s3_bucket        = var.lambda_bucket
-  s3_key           = "${var.service_name}/autorizer/api-v2-authorizer-${var.image_tag}.zip"
+  s3_key           = "${var.service_name}/api-v2-authorizer-${var.image_tag}.zip"
   publish          = false
 
   vpc_config {
