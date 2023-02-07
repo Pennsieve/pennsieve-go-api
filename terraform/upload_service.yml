@@ -42,6 +42,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    publishing-service:
+      type: aws_proxy
+      uri: ${publishing_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -732,12 +739,33 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-
-
-
-
-
-
-
-
-
+  /publishing:
+    get:
+      summary: Get Publishing Repositories
+      description: |
+        This method returns a list of Publishing Repositories.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: getPublishingRepositories
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      responses:
+        '200':
+          description: The returned Publishing Repositories.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Response for getPublishingRepositories endpoint.
+                  properties:
+                    Count:
+                      description: Number of Publishing Repositories.
+                      type: integer
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
