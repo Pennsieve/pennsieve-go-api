@@ -106,3 +106,15 @@ data "terraform_remote_state" "model_service" {
     profile = var.aws_account
   }
 }
+
+# Import Publishing Service
+data "terraform_remote_state" "publishing_service" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.aws_account}-terraform-state"
+    key     = "aws/${data.aws_region.current_region.name}/${var.vpc_name}/${var.environment_name}/publishing-service/terraform.tfstate"
+    region  = "us-east-1"
+    profile = var.aws_account
+  }
+}
