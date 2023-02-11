@@ -20,6 +20,8 @@ test:
 	docker-compose -f docker-compose.test.yml up --exit-code-from local_tests local_tests
 
 test-ci:
+	mkdir -p test-dynamodb-data
+	chmod -R 777 test-dynamodb-data
 	docker-compose -f docker-compose.test.yml down --remove-orphans
 	docker-compose -f docker-compose.test.yml up --exit-code-from ci_tests ci_tests
 
