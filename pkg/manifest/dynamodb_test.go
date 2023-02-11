@@ -45,7 +45,7 @@ func TestMain(m *testing.M) {
 
 	// If testing on Jenkins (-> NEO4J_BOLT_URL is set) then wait for db to be active.
 	if _, ok := os.LookupEnv("DYNAMODB_URL"); ok {
-		time.Sleep(20 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 
 	svc := getClient()
