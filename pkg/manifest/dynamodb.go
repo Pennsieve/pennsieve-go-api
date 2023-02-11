@@ -238,7 +238,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 
 		// Handle potential failed files:
 		// Step 1: Retry if there are unprocessed files.
-		nrRetries := 3
+		nrRetries := 5
 		retryIndex := 0
 		unProcessedItems := data.UnprocessedItems
 		for len(unProcessedItems) > 0 {
@@ -257,7 +257,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 				log.Warn("Dynamodb did not ingest all the file records.")
 				break
 			}
-			time.Sleep(time.Duration(100*retryIndex) * time.Millisecond)
+			time.Sleep(time.Duration(200*(1+retryIndex)) * time.Millisecond)
 		}
 
 		// Step 2: Set the failedFiles array to return failed update to client.
