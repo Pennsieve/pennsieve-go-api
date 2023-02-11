@@ -3,19 +3,44 @@
 LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
 WORKING_DIR   ?= "$(shell pwd)"
-PACKAGE_NAME  ?= "api-v2-authorizer-${VERSION}.zip"
+PACKAGE_NAME  ?= "api-v2-authorizer-${IMAGE_TAG}.zip"
 
 .DEFAULT: help
 
 help:
 	@echo "Make Help for $(SERVICE_NAME)"
 	@echo ""
-	@echo "make clean   - removes node_modules directory"
-	@echo "make test    - run tests"
-	@echo "make package - create venv and package lambda functions"
-	@echo "make publish - package and publish lambda function"
+	@echo "make clean   	- removes dynamodb data directory"
+	@echo "make test    	- run tests locally using docker containers"
+	@echo "make test-ci 	- used by Jenkins to run tests without exposing ports"
+	@echo "start-dynamodb 	- Start local DynamoDB container for testing"
+	@echo "make package 	- create venv and package lambda functions"
+	@echo "make publish 	- package and publish lambda function"
 
 test:
+	docker-compose -f docker-compose.test.yml down --remove-orphans
+	docker-compose -f docker-compose.test.yml up --exit-code-from local_tests local_tests
+
+test-ci:
+	mkdir -p test-dynamodb-data
+	chmod -R 777 test-dynamodb-data
+	docker-compose -f docker-compose.test.yml down --remove-orphans
+	docker-compose -f docker-compose.test.yml up --exit-code-from ci_tests ci_tests
+
+# Start a clean DynamoDB container for local testing
+start-dynamodb: docker-clean
+	docker-compose -f docker-compose.test.yml up dynamodb
+
+
+# Spin down active docker containers.
+docker-clean:
+	docker-compose -f docker-compose.test.yml down
+
+# Remove dynamodb database
+clean: docker-clean
+	rm -rf test-dynamodb-data
+
+test2:
 	@echo ""
 	@echo "********************"
 	@echo "*   Testing API    *"

@@ -9,22 +9,26 @@ ansiColor('xterm') {
     def serviceName = env.JOB_NAME.tokenize("/")[1]
 
     def commitHash  = sh(returnStdout: true, script: 'git rev-parse HEAD | cut -c-7').trim()
-    def version     = "${env.BUILD_NUMBER}-${commitHash}"
+    def imageTag     = "${env.BUILD_NUMBER}-${commitHash}"
 
     try {
       stage("Run Tests") {
-        sh "make test"
+        try {
+          sh "IMAGE_TAG=${imageTag} make test-ci"
+        } finally {
+          sh "make clean"
+        }
       }
 
       if(isMain) {
         stage ('Build and Push') {
-          sh "VERSION=${version} make publish"
+          sh "IMAGE_TAG=${imageTag} make publish"
         }
 
         stage("Deploy") {
           build job: "service-deploy/pennsieve-non-prod/us-east-1/dev-vpc-use1/dev/${serviceName}",
           parameters: [
-            string(name: 'IMAGE_TAG', value: version),
+            string(name: 'IMAGE_TAG', value: imageTag),
             string(name: 'TERRAFORM_ACTION', value: 'apply')
           ]
         }

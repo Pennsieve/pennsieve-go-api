@@ -71,7 +71,7 @@ func (s ManifestSession) CreateManifest(item dbTable.ManifestTable) error {
 }
 
 // AddFiles manages the workers and defines the go routines to add files to manifest db.
-func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDTO, forceStatus *manifestFile.Status) (*manifest.AddFilesStats, error) {
+func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDTO, forceStatus *manifestFile.Status) *manifest.AddFilesStats {
 
 	// Populate DynamoDB with concurrent workers.
 	walker := make(fileWalk, batchSize)
@@ -121,7 +121,7 @@ func (s ManifestSession) AddFiles(manifestId string, items []manifestFile.FileDT
 		resp.FailedFiles = append(resp.FailedFiles, r.FailedFiles...)
 	}
 
-	return &resp, nil
+	return &resp
 
 }
 
@@ -147,7 +147,8 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 						"manifest_id": manifestId,
 						"upload_id":   file.UploadID,
 					},
-				).Fatalf("Unable to check status of existing manifest file.")
+				).Error("Unable to check status of existing manifest file.")
+				return nil, errors.New("unable to check status of existing manifest file")
 			}
 
 			// Determine the sync action based on provided status and current status.
@@ -158,7 +159,8 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 						"manifest_id": manifestId,
 						"upload_id":   file.UploadID,
 					},
-				).Fatalf("Unable to get action for manifest file.")
+				).Error("Unable to get action for manifest file.")
+				return nil, errors.New("unable to get action for manifest file")
 			}
 		} else {
 
@@ -283,7 +285,7 @@ func (s ManifestSession) updateDynamoDb(manifestId string, fileSlice []manifestF
 						"manifest_id": manifestId,
 						"upload_id":   fileEntry.UploadId,
 					},
-				).Fatalln("Unable to find status match.")
+				).Warn(fmt.Sprintf("Unable to find status match: %s", fileEntry.Status))
 			}
 		}
 	}
