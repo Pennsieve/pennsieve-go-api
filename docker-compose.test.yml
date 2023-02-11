@@ -27,7 +27,7 @@ services:
     depends_on:
       - dynamodb-ci
     environment:
-      - DYNAMODB_URL=http://dynamodb:8000
+      - DYNAMODB_URL=http://dynamodb-ci:8000
     volumes:
       - $PWD:/go/src/github.com/pennsieve/pennsieve-go-api
     networks:
