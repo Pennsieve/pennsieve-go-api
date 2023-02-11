@@ -3,7 +3,7 @@
 LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
 WORKING_DIR   ?= "$(shell pwd)"
-PACKAGE_NAME  ?= "api-v2-authorizer-${VERSION}.zip"
+PACKAGE_NAME  ?= "api-v2-authorizer-${IMAGE_TAG}.zip"
 
 .DEFAULT: help
 
