@@ -23,3 +23,6 @@ lambda/bin/authorizer_lambda.zip
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Test folders
+test-dynamodb-data
