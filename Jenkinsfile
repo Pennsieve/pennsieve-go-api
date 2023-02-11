@@ -13,7 +13,11 @@ ansiColor('xterm') {
 
     try {
       stage("Run Tests") {
-        sh "make test-ci"
+        try {
+          sh "IMAGE_TAG=${imageTag} make test-ci"
+        } finally {
+          sh "make clean"
+        }
       }
 
       if(isMain) {
