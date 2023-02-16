@@ -71,7 +71,6 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 	var vals []interface{}
 	var valsWithParentId []interface{}
 	var valsWithoutParentId []interface{}
-	var inserts []string
 
 	// All records have the same datasetID
 	datasetId := records[0].DatasetId
@@ -145,22 +144,7 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 
 	}
 
-	for index, row := range records {
-		inserts = append(inserts, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
-			index*12+1,
-			index*12+2,
-			index*12+3,
-			index*12+4,
-			index*12+5,
-			index*12+6,
-			index*12+7,
-			index*12+8,
-			index*12+9,
-			index*12+10,
-			index*12+11,
-			index*12+12,
-		))
-
+	for _, row := range records {
 		attributeJson, err := json.Marshal(row.Attributes)
 		if err != nil {
 			log.Println(err)
@@ -176,6 +160,7 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 			}
 		}
 
+		// Split out the values based on if parent_id is null
 		if sqlParentId.Valid {
 			valsWithParentId = append(valsWithParentId, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, sqlParentId, row.DatasetId,
 				row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)
@@ -186,40 +171,61 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 	}
 
 	queryWithParentId := QueryBuilderPayload{
-		Query:  queryBuilder(inserts, true),
+		Query:  queryBuilder(valsWithParentId, false),
 		Values: valsWithParentId,
 	}
 	queryWithoutParentId := QueryBuilderPayload{
-		Query:  queryBuilder(inserts, true),
-		Values: valsWithParentId,
+		Query:  queryBuilder(valsWithoutParentId, true),
+		Values: valsWithoutParentId,
 	}
 
-	insertedPackages, err := insertPackages(db, queryWithParentId)
-	insertedPackagesForNullParentId, err := insertPackages(db, queryWithoutParentId)
+	insertedPackagesWithParentId, err := insertPackages(db, queryWithParentId)
+	insertedPackagesWithoutParentId, err := insertPackages(db, queryWithoutParentId)
 
-	insertedPackages = append(insertedPackages, insertedPackagesForNullParentId...)
+	allInsertedPackages := append(insertedPackagesWithParentId, insertedPackagesWithoutParentId...)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return insertedPackages, err
+	return allInsertedPackages, err
 }
 
-func queryBuilder(inserts []string, parentIdIsNull bool) string {
+// Constructs INSERT query with appropriate ON CONFLICT condition
+func queryBuilder(values []interface{}, parentIdIsNull bool) string {
+	var inserts []string
+
+	for index, _ := range values {
+		inserts = append(inserts, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
+			index*12+1,
+			index*12+2,
+			index*12+3,
+			index*12+4,
+			index*12+5,
+			index*12+6,
+			index*12+7,
+			index*12+8,
+			index*12+9,
+			index*12+10,
+			index*12+11,
+			index*12+12,
+		))
+	}
+
 	sqlInsert := "INSERT INTO packages(name, type, state, node_id, parent_id, " +
 		"dataset_id, owner_id, size, import_id, attributes, created_at, updated_at) VALUES "
 
+	query := sqlInsert + strings.Join(inserts, ",")
+
 	returnRows := "id, name, type, state, node_id, parent_id, " +
 		"dataset_id, owner_id, size, import_id, created_at, updated_at"
-	var query = ""
+
 	if parentIdIsNull {
-		query = sqlInsert + strings.Join(inserts, ",") +
-			fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\",parent_id) WHERE parent_id IS NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
+		query = query + fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\",parent_id) WHERE parent_id IS NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
 	} else {
-		query = sqlInsert + strings.Join(inserts, ",") +
-			fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\") WHERE parent_id IS NOT NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
+		query = query + fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\") WHERE parent_id IS NOT NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
 	}
+
 	query = query + fmt.Sprintf(" RETURNING %s;", returnRows)
 
 	return query
@@ -234,7 +240,7 @@ func insertPackages(db core.PostgresAPI, qb QueryBuilderPayload) ([]Package, err
 	}
 	defer stmt.Close()
 
-	// format all vals at once
+	// format all values at once
 	var insertedPackages []Package
 	rows, err := stmt.Query(qb.Values...)
 	if err != nil {
