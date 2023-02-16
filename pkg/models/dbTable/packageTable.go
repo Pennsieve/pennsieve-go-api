@@ -46,6 +46,11 @@ type PackageParams struct {
 	Attributes   []packageInfo.PackageAttribute `json:"attributes"`
 }
 
+type QueryBuilderPayload struct {
+	Query  string
+	Values []interface{}
+}
+
 // PackageMap maps path to models.Package
 type PackageMap = map[string]Package
 
@@ -64,6 +69,8 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 
 	currentTime := time.Now()
 	var vals []interface{}
+	var valsWithParentId []interface{}
+	var valsWithoutParentId []interface{}
 	var inserts []string
 
 	// All records have the same datasetID
@@ -138,9 +145,6 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 
 	}
 
-	sqlInsert := "INSERT INTO packages(name, type, state, node_id, parent_id, " +
-		"dataset_id, owner_id, size, import_id, attributes, created_at, updated_at) VALUES "
-
 	for index, row := range records {
 		inserts = append(inserts, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 			index*12+1,
@@ -172,32 +176,71 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 			}
 		}
 
-		vals = append(vals, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, sqlParentId, row.DatasetId,
-			row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)
+		if sqlParentId.Valid {
+			valsWithParentId = append(valsWithParentId, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, sqlParentId, row.DatasetId,
+				row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)
+		} else {
+			valsWithoutParentId = append(valsWithoutParentId, row.Name, row.PackageType.String(), row.PackageState.String(), row.NodeId, sqlParentId, row.DatasetId,
+				row.OwnerId, row.Size, row.ImportId, string(attributeJson), currentTime, currentTime)
+		}
 	}
+
+	queryWithParentId := QueryBuilderPayload{
+		Query:  queryBuilder(inserts, true),
+		Values: valsWithParentId,
+	}
+	queryWithoutParentId := QueryBuilderPayload{
+		Query:  queryBuilder(inserts, true),
+		Values: valsWithParentId,
+	}
+
+	insertedPackages, err := insertPackages(db, queryWithParentId)
+	insertedPackagesForNullParentId, err := insertPackages(db, queryWithoutParentId)
+
+	insertedPackages = append(insertedPackages, insertedPackagesForNullParentId...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return insertedPackages, err
+}
+
+func queryBuilder(inserts []string, parentIdIsNull bool) string {
+	sqlInsert := "INSERT INTO packages(name, type, state, node_id, parent_id, " +
+		"dataset_id, owner_id, size, import_id, attributes, created_at, updated_at) VALUES "
 
 	returnRows := "id, name, type, state, node_id, parent_id, " +
 		"dataset_id, owner_id, size, import_id, created_at, updated_at"
+	var query = ""
+	if parentIdIsNull {
+		query = sqlInsert + strings.Join(inserts, ",") +
+			fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\",parent_id) WHERE parent_id IS NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
+	} else {
+		query = sqlInsert + strings.Join(inserts, ",") +
+			fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\") WHERE parent_id IS NOT NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
+	}
+	query = query + fmt.Sprintf(" RETURNING %s;", returnRows)
 
-	sqlInsert = sqlInsert + strings.Join(inserts, ",") +
-		fmt.Sprintf("ON CONFLICT(node_id) DO UPDATE SET updated_at=EXCLUDED.updated_at") +
-		fmt.Sprintf(" RETURNING %s;", returnRows)
+	return query
 
+}
+
+func insertPackages(db core.PostgresAPI, qb QueryBuilderPayload) ([]Package, error) {
 	//prepare the statement
-	stmt, err := db.Prepare(sqlInsert)
+	stmt, err := db.Prepare(qb.Query)
 	if err != nil {
 		log.Fatalln("ERROR: ", err)
 	}
 	defer stmt.Close()
 
 	// format all vals at once
-	var allInsertedPackages []Package
-	rows, err := stmt.Query(vals...)
+	var insertedPackages []Package
+	rows, err := stmt.Query(qb.Values...)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			log.Println(pqErr)
 		}
-		return nil, err
 	}
 
 	for rows.Next() {
@@ -221,15 +264,14 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 			log.Println("ERROR: ", err)
 		}
 
-		allInsertedPackages = append(allInsertedPackages, currentRecord)
+		insertedPackages = append(insertedPackages, currentRecord)
 
 	}
 
 	if err != nil {
 		log.Println(err)
 	}
-
-	return allInsertedPackages, err
+	return insertedPackages, err
 }
 
 // Children returns an array of Packages that have a specific parent package or root.
