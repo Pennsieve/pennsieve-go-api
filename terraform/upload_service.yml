@@ -809,6 +809,23 @@ paths:
             type: string
           required: true
           description: dataset node id
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+            default: 10
+          required: false
+          description: the maximum number of trashcan items to return
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          required: false
+          description: offset used for pagination of results
       responses:
         '200':
           description: The contents of the dataset's trashcan.
@@ -817,6 +834,12 @@ paths:
               schema:
                 type: object
                 properties:
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  totalCount:
+                    type: integer
                   packages:
                     type: array
                     items:
