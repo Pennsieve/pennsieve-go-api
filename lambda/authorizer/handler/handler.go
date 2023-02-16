@@ -76,9 +76,12 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	tokenParts := r.FindStringSubmatch(event.Headers["authorization"])
 	jwtB64 := []byte(tokenParts[r.SubexpIndex("token")])
 
-	datasetNodeId, hasDatasetId := event.QueryStringParameters["dataset_id"]
+	datasetNodeId, hasDatasetId := event.PathParameters["dataset_id"]
+	if !hasDatasetId {
+		datasetNodeId, hasDatasetId = event.QueryStringParameters["dataset_id"]
+	}
 	if hasDatasetId && len(event.IdentitySource) < 2 {
-		log.Fatalln("Request cannot have dataset_id as query-param with the used authorizer.")
+		log.Fatalln("Request cannot have dataset_id as query-param or path-param with the used authorizer.")
 	}
 
 	manifestId, hasManifestId := event.QueryStringParameters["manifest_id"]
