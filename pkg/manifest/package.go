@@ -1,4 +1,4 @@
-package handler
+package manifest
 
 import (
 	"github.com/pennsieve/pennsieve-go-api/pkg/models/fileInfo/fileType"
