@@ -746,7 +746,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /publishing:
+  /publishing/repositories:
     get:
       summary: Get Publishing Repositories
       description: |
@@ -771,6 +771,36 @@ paths:
                   properties:
                     Count:
                       description: Number of Publishing Repositories.
+                      type: integer
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /publishing/questions:
+    get:
+      summary: Get Proposal Questions
+      description: |
+        This method returns a list of intake questions that may be included in Dataset Proposals
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: getProposalQuestions
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      responses:
+        '200':
+          description: The returned intake questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Response for getProposalQuestions endpoint.
+                  properties:
+                    Count:
+                      description: Number of intake questions
                       type: integer
         '4XX':
           $ref: '#/components/responses/Unauthorized'
