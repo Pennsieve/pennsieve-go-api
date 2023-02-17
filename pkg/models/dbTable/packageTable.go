@@ -49,6 +49,7 @@ type PackageParams struct {
 type QueryBuilderPayload struct {
 	Query  string
 	Values []interface{}
+	Skip   bool
 }
 
 // PackageMap maps path to models.Package
@@ -173,10 +174,12 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 	queryWithParentId := QueryBuilderPayload{
 		Query:  queryBuilder(valsWithParentId, false),
 		Values: valsWithParentId,
+		Skip:   len(valsWithParentId) < 1,
 	}
 	queryWithoutParentId := QueryBuilderPayload{
 		Query:  queryBuilder(valsWithoutParentId, true),
 		Values: valsWithoutParentId,
+		Skip:   len(valsWithoutParentId) < 1,
 	}
 
 	insertedPackagesWithParentId, err := insertPackages(db, queryWithParentId)
@@ -194,21 +197,22 @@ func (p *Package) Add(db core.PostgresAPI, records []PackageParams) ([]Package, 
 // Constructs INSERT query with appropriate ON CONFLICT condition
 func queryBuilder(values []interface{}, parentIdIsNull bool) string {
 	var inserts []string
+	const paramsLength int = 12
 
-	for index, _ := range values {
+	for index := 0; index < len(values)/paramsLength; index++ {
 		inserts = append(inserts, fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d)",
 			index*12+1,
-			index*12+2,
-			index*12+3,
-			index*12+4,
-			index*12+5,
-			index*12+6,
-			index*12+7,
-			index*12+8,
-			index*12+9,
-			index*12+10,
-			index*12+11,
-			index*12+12,
+			index*paramsLength+2,
+			index*paramsLength+3,
+			index*paramsLength+4,
+			index*paramsLength+5,
+			index*paramsLength+6,
+			index*paramsLength+7,
+			index*paramsLength+8,
+			index*paramsLength+9,
+			index*paramsLength+10,
+			index*paramsLength+11,
+			index*paramsLength+12,
 		))
 	}
 
@@ -221,9 +225,9 @@ func queryBuilder(values []interface{}, parentIdIsNull bool) string {
 		"dataset_id, owner_id, size, import_id, created_at, updated_at"
 
 	if parentIdIsNull {
-		query = query + fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\",parent_id) WHERE parent_id IS NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
+		query = query + fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\") WHERE parent_id IS NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
 	} else {
-		query = query + fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\") WHERE parent_id IS NOT NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
+		query = query + fmt.Sprintf("ON CONFLICT(name,dataset_id,\"type\",parent_id) WHERE parent_id IS NOT NULL DO UPDATE SET updated_at=EXCLUDED.updated_at")
 	}
 
 	query = query + fmt.Sprintf(" RETURNING %s;", returnRows)
@@ -233,6 +237,9 @@ func queryBuilder(values []interface{}, parentIdIsNull bool) string {
 }
 
 func insertPackages(db core.PostgresAPI, qb QueryBuilderPayload) ([]Package, error) {
+	if qb.Skip {
+		return []Package{}, nil
+	}
 	//prepare the statement
 	stmt, err := db.Prepare(qb.Query)
 	if err != nil {
@@ -249,29 +256,29 @@ func insertPackages(db core.PostgresAPI, qb QueryBuilderPayload) ([]Package, err
 		}
 	}
 
-	for rows.Next() {
-		var currentRecord Package
-		err = rows.Scan(
-			&currentRecord.Id,
-			&currentRecord.Name,
-			&currentRecord.PackageType,
-			&currentRecord.PackageState,
-			&currentRecord.NodeId,
-			&currentRecord.ParentId,
-			&currentRecord.DatasetId,
-			&currentRecord.OwnerId,
-			&currentRecord.Size,
-			&currentRecord.ImportId,
-			&currentRecord.CreatedAt,
-			&currentRecord.UpdatedAt,
-		)
+	if rows != nil {
+		for rows.Next() {
+			var currentRecord Package
+			err = rows.Scan(
+				&currentRecord.Id,
+				&currentRecord.Name,
+				&currentRecord.PackageType,
+				&currentRecord.PackageState,
+				&currentRecord.NodeId,
+				&currentRecord.ParentId,
+				&currentRecord.DatasetId,
+				&currentRecord.OwnerId,
+				&currentRecord.Size,
+				&currentRecord.ImportId,
+				&currentRecord.CreatedAt,
+				&currentRecord.UpdatedAt,
+			)
 
-		if err != nil {
-			log.Println("ERROR: ", err)
+			if err != nil {
+				log.Println("ERROR: ", err)
+			}
+			insertedPackages = append(insertedPackages, currentRecord)
 		}
-
-		insertedPackages = append(insertedPackages, currentRecord)
-
 	}
 
 	if err != nil {
