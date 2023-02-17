@@ -49,6 +49,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    datasets-service:
+      type: aws_proxy
+      uri: ${datasets_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -795,6 +802,75 @@ paths:
                     Count:
                       description: Number of intake questions
                       type: integer
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /datasets/trashcan:
+    get:
+      summary: List trashcan contents for a dataset
+      description: |
+        Returns a list of items in a dataset's trashcan
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
+      operationId: getTrashcan
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Datasets Service|Trashcan
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: dataset node id
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+            default: 10
+          required: false
+          description: the maximum number of trashcan items to return
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          required: false
+          description: offset used for pagination of results
+      responses:
+        '200':
+          description: The contents of the dataset's trashcan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  totalCount:
+                    type: integer
+                  packages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        path:
+                          type: string
+                  messages:
+                    type: array
+                    items:
+                      type: string
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
