@@ -127,8 +127,9 @@ func TestPackage(t *testing.T) {
 		},
 	}
 
+	host := getEnv("POSTGRES_HOST", "pennsieve-go-api-postgres-1")
 	const (
-		host     = "pennsieve-go-api-postgres-1"
+		//host     = "pennsieve-go-api-postgres-1"
 		port     = 5432
 		user     = "postgres"
 		password = "password"

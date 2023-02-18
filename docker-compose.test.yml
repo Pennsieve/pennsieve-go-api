@@ -15,7 +15,7 @@ services:
       - postgres
     environment:
       - DYNAMODB_URL=http://dynamodb:8000
-      - POSTGRES_URL=http://postgres:5432
+      - POSTGRES_HOST=pennsieve-go-api-postgres-1
     volumes:
       - $PWD:/go/src/github.com/pennsieve/pennsieve-go-api
     networks:
@@ -28,9 +28,10 @@ services:
       dockerfile: Dockerfile.test
     depends_on:
       - dynamodb-ci
+      - postgres-ci
     environment:
       - DYNAMODB_URL=http://dynamodb-ci:8000
-      - POSTGRES_URL=http://postgres-ci:5432
+      - POSTGRES_HOST=pennsieve-go-api-postgres-ci-1
     volumes:
       - $PWD:/go/src/github.com/pennsieve/pennsieve-go-api
     networks:
