@@ -31,7 +31,7 @@ services:
       - postgres-ci
     environment:
       - DYNAMODB_URL=http://dynamodb-ci:8000
-      - POSTGRES_HOST=pennsieve-go-api-postgres-ci-1
+      - POSTGRES_HOST=pennsieve_pennsieve-go-api_pr-9_postgres-ci_1
     volumes:
       - $PWD:/go/src/github.com/pennsieve/pennsieve-go-api
     networks:
