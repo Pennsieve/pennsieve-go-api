@@ -142,6 +142,9 @@ func TestPackage(t *testing.T) {
 
 	fmt.Println("Connect to Postgres")
 	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		fmt.Println("Connect to Postgres error: " + err.Error())
+	}
 
 	nullParentStmt, err := db.Prepare("create unique index packages_name_dataset_id__parent_id_null_idx on \"1\".packages (name,dataset_id,\"type\") where parent_id is null;")
 	defer nullParentStmt.Close()
