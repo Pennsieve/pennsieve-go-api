@@ -12,8 +12,10 @@ services:
       dockerfile: Dockerfile.test
     depends_on:
       - dynamodb
+      - postgres
     environment:
       - DYNAMODB_URL=http://dynamodb:8000
+      - POSTGRES_HOST=pennsieve-go-api-postgres-1
     volumes:
       - $PWD:/go/src/github.com/pennsieve/pennsieve-go-api
     networks:
@@ -26,8 +28,10 @@ services:
       dockerfile: Dockerfile.test
     depends_on:
       - dynamodb-ci
+      - postgres-ci
     environment:
       - DYNAMODB_URL=http://dynamodb-ci:8000
+      - POSTGRES_HOST=pennsieve_pennsieve-go-api_pr-9_postgres-ci_1
     volumes:
       - $PWD:/go/src/github.com/pennsieve/pennsieve-go-api
     networks:
@@ -50,6 +54,33 @@ services:
     volumes:
       - ./test-dynamodb-data:/home/dynamodblocal/data
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data/"
+    networks:
+      - api-tests
+
+  postgres-ci:
+    image: pennsieve/pennsievedb-seed:latest
+    restart: always
+    volumes:
+      - ./test-postgres-data:/home/postgres/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
+    networks:
+      - api-tests
+  postgres:
+    image: pennsieve/pennsievedb-seed:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./test-postgres-data:/home/postgres/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+
     networks:
       - api-tests
 
