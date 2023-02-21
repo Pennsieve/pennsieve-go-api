@@ -1,4 +1,4 @@
-.PHONY: help clean test
+.PHONY: help clean test test-ci start-dynamodb docker-clean package publish
 
 LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
@@ -39,22 +39,6 @@ docker-clean:
 # Remove dynamodb database
 clean: docker-clean
 	rm -rf test-dynamodb-data
-
-test2:
-	@echo ""
-	@echo "********************"
-	@echo "*   Testing API    *"
-	@echo "********************"
-	@echo ""
-	@cd $(WORKING_DIR)/pkg; \
-		go test ./... ;
-	@echo ""
-	@echo "***************************"
-	@echo "*   Testing Authorizer    *"
-	@echo "***************************"
-	@echo ""
-	@cd $(WORKING_DIR)/lambda/authorizer; \
-		go test ./... ;
 
 package:
 	@echo ""
