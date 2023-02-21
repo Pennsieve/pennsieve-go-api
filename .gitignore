@@ -23,3 +23,6 @@ lambda/bin/authorizer_lambda.zip
 
 # Test folders
 test-dynamodb-data
+
+# Intellij
+.idea/
