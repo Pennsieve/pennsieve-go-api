@@ -900,6 +900,61 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+    put:
+      summary: Update a Dataset Proposal
+      description: |
+        This method will update a Dataset Proposal for the User
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: updateDatasetProposal
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      requestBody:
+        description: the Dataset Proposal to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/proposalCreateRequest'
+      responses:
+        '200':
+          description: The updated Dataset Proposal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/datasetProposalsList'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete a Dataset Proposal
+      description: |
+        This method will delete a Dataset Proposal for the User
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: deleteDatasetProposal
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      parameters:
+        - in: query
+          name: ProposalNodeId
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The Node Id of the Dataset Proposal to be deleted.
+      responses:
+        '200':
+          description: Successfully deleted the Dataset Proposal.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /publishing/submission:
     get:
       summary: Get Dataset Proposals submitted to the Repository
