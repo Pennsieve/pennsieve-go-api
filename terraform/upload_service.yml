@@ -942,7 +942,7 @@ paths:
         - Publishing Service
       parameters:
         - in: query
-          name: ProposalNodeId
+          name: proposal_node_id
           required: true
           schema:
             type: string
