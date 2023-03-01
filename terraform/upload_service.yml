@@ -980,9 +980,9 @@ paths:
           $ref: '#/components/responses/Error'
   /datasets/trashcan:
     get:
-      summary: List trashcan contents for a dataset
+      summary: List trashcan contents for a dataset by folder
       description: |
-        Returns a list of items in a dataset's trashcan
+        Returns a list of deleted items from a dataset folder
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
       operationId: getTrashcan
@@ -997,6 +997,12 @@ paths:
             type: string
           required: true
           description: dataset node id
+        - in: query
+          name: root_node_id
+          schema:
+            type: string
+          required: false
+          description: folder node id limits returned trashcan items to that folder
         - in: query
           name: limit
           schema:
@@ -1034,10 +1040,14 @@ paths:
                       type: object
                       properties:
                         id:
-                          type: string
+                          type: integer
                         name:
                           type: string
-                        path:
+                        node_id:
+                          type: string
+                        type:
+                          type: string
+                        state:
                           type: string
                   messages:
                     type: array
