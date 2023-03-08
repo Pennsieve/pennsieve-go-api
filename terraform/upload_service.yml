@@ -1113,31 +1113,21 @@ paths:
               schema:
                 type: object
                 properties:
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-                  totalCount:
-                    type: integer
-                  packages:
+                  success:
+                    type: array
+                    items:
+                      type: string
+                    description: the node ids for which restore has started
+                  failures:
                     type: array
                     items:
                       type: object
                       properties:
                         id:
-                          type: integer
-                        name:
                           type: string
-                        node_id:
+                        error:
                           type: string
-                        type:
-                          type: string
-                        state:
-                          type: string
-                  messages:
-                    type: array
-                    items:
-                      type: string
+                    description: any restore failures grouped by node id
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
