@@ -189,21 +189,21 @@ components:
             description: Name of the uploaded file as it should appear on the platform. This includes the extension of the file.
     surveyResponse:
       type: object
-      items:
+      properties:
         questionId:
-          type: int
+          type: integer
           description: the intake question number
         response:
           type: string
           description: the user response to the intake question
     datasetProposal:
       type: object
-      items:
+      properties:
         userId:
-          type: int
+          type: integer
           description: the user id number
         proposalId:
-          type: int
+          type: integer
           description: the proposal id number
         proposalNodeId:
           type: string
@@ -215,20 +215,23 @@ components:
           type: string
           description: the dataset proposal short description
         repositoryId:
-          type: int
+          type: integer
           description: the repository id
         status:
           type: string
           description: the dataset proposal status
         survey:
           type: array
-          $ref: "#/components/schemas/surveyResponse"
+          items:
+            $ref: "#/components/schemas/surveyResponse"
     datasetProposalsList:
       type: array
-      $ref: "#/components/schemas/datasetProposal"
+      items:
+        $ref: "#/components/schemas/datasetProposal"
     proposalCreateRequest:
       type: object
-      $ref: "#/components/schemas/datasetProposal"
+      items:
+        $ref: "#/components/schemas/datasetProposal"
     restoreRequest:
       type: object
       properties:
