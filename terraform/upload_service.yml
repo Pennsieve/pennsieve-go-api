@@ -244,6 +244,17 @@ components:
           type: array
           items:
             type: string
+          description: the node ids for which restore has started
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              error:
+                type: string
+          description: any restore failures grouped by node id
 paths:
   /manifest:
     get:
@@ -1111,23 +1122,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: array
-                    items:
-                      type: string
-                    description: the node ids for which restore has started
-                  failures:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        error:
-                          type: string
-                    description: any restore failures grouped by node id
+                $ref: '#/components/schemas/restoreResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
