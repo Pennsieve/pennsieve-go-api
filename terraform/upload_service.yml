@@ -56,6 +56,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    packages-service:
+      type: aws_proxy
+      uri: ${packages_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -222,6 +229,32 @@ components:
     proposalCreateRequest:
       type: object
       $ref: "#/components/schemas/datasetProposal"
+    restoreRequest:
+      type: object
+      properties:
+        nodeIds:
+          type: array
+          items:
+            type: string
+          description: the node ids of the items to restore
+    restoreResponse:
+      type: object
+      properties:
+        success:
+          type: array
+          items:
+            type: string
+          description: the node ids for which restore has started
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              error:
+                type: string
+          description: any restore failures grouped by node id
 paths:
   /manifest:
     get:
@@ -1053,6 +1086,43 @@ paths:
                     type: array
                     items:
                       type: string
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /packages/restore:
+    post:
+      summary: Restore deleted items
+      description: |
+        Starts restore process for the given deleted items
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/packages-service'
+      operationId: restoreItems
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Packages Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: dataset node id
+      requestBody:
+        description: node ids of the items to restore
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/restoreRequest'
+      responses:
+        '200':
+          description: The result of starting the restore process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/restoreResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
