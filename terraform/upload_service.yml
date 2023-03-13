@@ -991,6 +991,60 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /publishing/proposal/submit:
+    post:
+      summary: Submit a Dataset Proposal to a Repository for review
+      description: |
+        This method will submit a Dataset Proposal to a Repository for review.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: submitDatasetProposal
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      parameters:
+        - in: query
+          name: node_id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The Node Id of the Dataset Proposal to be submitted.
+      responses:
+        '200':
+          description: Successfully submitted the Dataset Proposal.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /publishing/proposal/withdraw:
+    post:
+      summary: Withdraw the request to review a Dataset Proposal from a Repository
+      description: |
+        This method will withdraw the request to review a Dataset Proposal from a Repository.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: withdrawDatasetProposal
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      parameters:
+        - in: query
+          name: node_id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The Node Id of the Dataset Proposal to be withdrawn.
+      responses:
+        '200':
+          description: Successfully withdrew the Dataset Proposal.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /publishing/submission:
     get:
       summary: Get Dataset Proposals submitted to the Repository
@@ -1010,6 +1064,60 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/datasetProposalsList"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /publishing/submission/accept:
+    post:
+      summary: Accept the submitted Dataset Proposal
+      description: |
+        This method will accept the Dataset Proposal that was submitted to a Repository.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: acceptDatasetProposal
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      parameters:
+        - in: query
+          name: node_id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The Node Id of the Dataset Proposal to be accepted.
+      responses:
+        '200':
+          description: Successfully accepted the Dataset Proposal.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /publishing/submission/reject:
+    post:
+      summary: Reject the submitted Dataset Proposal
+      description: |
+        This method will reject the Dataset Proposal that was submitted to a Repository.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: rejectDatasetProposal
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service
+      parameters:
+        - in: query
+          name: node_id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The Node Id of the Dataset Proposal to be rejected.
+      responses:
+        '200':
+          description: Successfully rejected the Dataset Proposal.
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
