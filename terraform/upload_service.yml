@@ -1057,6 +1057,14 @@ paths:
         - token_auth: [ ]
       tags:
         - Publishing Service
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            minimum: 1
+          description: The Dataset Proposal Status
       responses:
         '200':
           description: The returned Dataset Proposals
