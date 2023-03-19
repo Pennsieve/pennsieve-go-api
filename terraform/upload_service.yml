@@ -428,36 +428,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-    delete:
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: deleteManifest
-      summary: Delete manifest
-      security:
-        - token_auth: [ ]
-      tags:
-        - Upload Service
-      description: |
-        Deleting a manifest can be useful when a manifest was created but is no longer expected to be uploaded.\
-        \
-        If a manifest is deleted which already was deleted due to completion of the upload, this method returns success.
-      parameters:
-        - in: query
-          name: manifestId
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The UUID of the Upload Manifest.
-      responses:
-        '200':
-          description: Successfully deleted the manifest.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-        default:
-          description: Success
   /manifest/status:
     get:
       x-amazon-apigateway-integration:
@@ -531,6 +501,44 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /manifest/archive:
+    post:
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+        operationId: archiveManifest
+        summary: Archive manifest to disk
+        security:
+          - token_manifest_auth: [ ]
+        tags:
+          - Upload Service
+        description: |
+          Archives a manifest by storing the manifest as a CSV file on disk.\
+          \
+          Manifests can be manually archived, and are archived automatically a month after creation.
+        parameters:
+          - in: query
+            name: manifest_id
+            required: true
+            schema:
+              type: string
+              minimum: 1
+            description: UUID of the manifest to be archived.
+        responses:
+          '200':
+            description: Successfully submitted archive task.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  description: Successfull submitted archive task.
+                  properties:
+                    manifest_id:
+                      type: string
+                      description: UUID of the manifest.
+          '4XX':
+            $ref: '#/components/responses/Unauthorized'
+          '5XX':
+            $ref: '#/components/responses/Error'
   /metadata/models:
     get:
       summary: Get models for dataset
