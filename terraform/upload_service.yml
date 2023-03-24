@@ -535,6 +535,84 @@ paths:
                   manifest_id:
                     type: string
                     description: UUID of the manifest.
+                  message:
+                    type: string
+                    description: Message indicating action.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: getManifestArchiveURL
+      summary: Get Presigned URL to Manifest archive
+      security:
+        - token_manifest_auth: [ ]
+      tags:
+        - Upload Service
+      description: |
+        Returns a pre-signed URL to fetch the Manifest Archive CVS file.
+      parameters:
+        - in: query
+          name: manifest_id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: UUID of the manifest archive to be returned.
+      responses:
+        '200':
+          description: Successfully submitted archive task.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Successfull submitted archive task.
+                properties:
+                  url:
+                    type: string
+                    description: Presigned url to fetch the manifest archive.
+                  message:
+                    type: string
+                    description: Message indicating action.
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete an upload manifest
+      description: |
+        This method will permanently delete an upload manifest. \
+        \
+        The manifest needs to be in 'archived' state before delete is allowed.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
+      operationId: deleteManifestArchive
+      security:
+        - token_manifest_auth: [ ]
+      tags:
+        - Upload Service
+      parameters:
+        - in: query
+          name: manifest_id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: UUID of the manifest to be deleted.
+      responses:
+        '200':
+          description: Successfully deleted the Dataset Proposal.
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Successfull submitted archive task.
+                properties:
+                  message:
+                    type: string
+                    description: Message indicating action.
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
