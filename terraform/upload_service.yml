@@ -523,6 +523,13 @@ paths:
             type: string
             minimum: 1
           description: UUID of the manifest to be archived.
+        - in: query
+          name: remove
+          required: true
+          schema:
+            type: boolean
+            minimum: 1
+          description: true if files should be removed from manifest table
       responses:
         '200':
           description: Successfully submitted archive task.
