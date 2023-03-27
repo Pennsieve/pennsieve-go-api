@@ -528,7 +528,7 @@ paths:
           required: true
           schema:
             type: boolean
-            minimum: 1
+            default: false
           description: true if files should be removed from manifest table
       responses:
         '200':
