@@ -65,9 +65,9 @@ components:
       payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+      type: "apiKey"
+      name: "Unused"
+      in: "header"
       x-amazon-apigateway-authorizer:
         identitySource: "$request.header.Authorization,$request.querystring.manifest_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
@@ -77,9 +77,9 @@ components:
         enableSimpleResponses: true
         authorizerCredentials: ${gateway_authorizer_role}
     token_dataset_auth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+      type: "apiKey"
+      name: "Unused"
+      in: "header"
       x-amazon-apigateway-authorizer:
         identitySource: "$request.header.Authorization,$request.querystring.dataset_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
@@ -89,9 +89,9 @@ components:
         enableSimpleResponses: true
         authorizerCredentials: ${gateway_authorizer_role}
     token_auth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+      type: "apiKey"
+      name: "Authorization"
+      in: "header"
       x-amazon-apigateway-authorizer:
         identitySource: "$request.header.Authorization"
         authorizerUri: ${authorize_lambda_invoke_uri}
