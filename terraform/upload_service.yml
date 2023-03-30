@@ -753,12 +753,11 @@ paths:
     get:
       summary: Get package metadata
       description: |
-        This method returns all metadata records associated with the package |
-        |
+        This method returns all metadata records associated with the package.
+        
         It includes the record that associated with the package, and all metadata records that are hierarchically parents of the associated record.
-        For example, consider three models (Patient, Visit, Sample) where Patient has a relationship to Visit and Visit has a relationship to Sample. 
-        If a file is associated with a Sample record, this methods returns the sample, visit and patient metadata. 
-        |
+        For example, consider three models (Patient, Visit, Sample) where Patient has a relationship to Visit and Visit has a relationship to Sample. If a file is associated with a Sample record, this methods returns the sample, visit and patient metadata. 
+        
         Note that the direction of the relationship is important and only relationships "upstream" are returned. This includes records that have a property that points to another record.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/model-service'
