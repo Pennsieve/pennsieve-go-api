@@ -749,7 +749,96 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-
+  /metadata/package:
+    get:
+      summary: Get package metadata
+      description: |
+        This method returns all metadata records associated with the package |
+        |
+        It includes the record that associated with the package, and all metadata records that are hierarchically parents of the associated record.
+        For example, consider three models (Patient, Visit, Sample) where Patient has a relationship to Visit and Visit has a relationship to Sample. 
+        If a file is associated with a Sample record, this methods returns the sample, visit and patient metadata. 
+        |
+        Note that the direction of the relationship is important and only relationships "upstream" are returned. This includes records that have a property that points to another record.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
+      operationId: graphGetPackageMetadata
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Metadata Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where file will be uploaded.
+        - in: query
+          name: package_id
+          schema:
+            type: string
+          required: true
+          description: The requested package node id.
+      responses:
+        '200':
+          description: The returned records.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Response for  endpoint.
+                  properties:
+                    id:
+                      description: Id of the metadata record.
+                      type: string
+                    createdAt:
+                      description: Date that metadata record was created.
+                      type: string
+                    createdBy:
+                      description: Id of user who created the record.
+                      type: string
+                    updatedAt:
+                      description: Date when record was last updated.
+                      type: string
+                    updatedBy:
+                      description: Id of user who last updated record.
+                      type: string
+                    type:
+                      description: Name of the metadata record model.
+                      type: string
+                    values:
+                      type: array
+                      items:
+                        type: object
+                        description: properties of the metadata record
+                        properties:
+                          name:
+                            description: value for name of the property
+                            type: string
+                          displayName:
+                            description: value of how name should be displayed
+                            type: string
+                          dataType:
+                            description: data type of the value
+                            type: string
+                          value:
+                            description: value of the property
+                          locked:
+                            description: Boolean indicating whether property is locked
+                            type: boolean
+                          required:
+                            description: Boolean indicating whether property is required
+                            type: boolean
+                          conceptTitle:
+                            description: Boolean indicating that property is used to identify record
+                            type: boolean
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /metadata/query/autocomplete:
     post:
       summary: Autocomplete for search
