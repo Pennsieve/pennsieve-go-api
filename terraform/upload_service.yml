@@ -772,7 +772,7 @@ paths:
           schema:
             type: string
           required: true
-          description: The dataset where file will be uploaded.
+          description: The dataset which contains the package.
         - in: query
           name: package_id
           schema:
@@ -793,47 +793,11 @@ paths:
                     id:
                       description: Id of the metadata record.
                       type: string
-                    createdAt:
-                      description: Date that metadata record was created.
-                      type: string
-                    createdBy:
-                      description: Id of user who created the record.
-                      type: string
-                    updatedAt:
-                      description: Date when record was last updated.
-                      type: string
-                    updatedBy:
-                      description: Id of user who last updated record.
-                      type: string
-                    type:
+                    model:
                       description: Name of the metadata record model.
                       type: string
-                    values:
-                      type: array
-                      items:
-                        type: object
-                        description: properties of the metadata record
-                        properties:
-                          name:
-                            description: value for name of the property
-                            type: string
-                          displayName:
-                            description: value of how name should be displayed
-                            type: string
-                          dataType:
-                            description: data type of the value
-                            type: string
-                          value:
-                            description: value of the property
-                          locked:
-                            description: Boolean indicating whether property is locked
-                            type: boolean
-                          required:
-                            description: Boolean indicating whether property is required
-                            type: boolean
-                          conceptTitle:
-                            description: Boolean indicating that property is used to identify record
-                            type: boolean
+                    props:
+                      type: object
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
