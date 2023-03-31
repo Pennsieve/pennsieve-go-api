@@ -9,11 +9,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/pennsieve/pennsieve-go-core/authorizer"
-	"github.com/pennsieve/pennsieve-go-core/core"
-	"github.com/pennsieve/pennsieve-go-core/models/dataset"
-	"github.com/pennsieve/pennsieve-go-core/models/dbTable"
-	"github.com/pennsieve/pennsieve-go-core/models/user"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
+	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
+	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
+	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
@@ -100,8 +100,9 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		// Create an Amazon DynamoDB client.
 		client := dynamodb.NewFromConfig(cfg)
 		table := os.Getenv("MANIFEST_TABLE")
+		qDyDb := dydb.New(client)
 
-		manifest, err := dbTable.GetFromManifest(client, table, manifestId)
+		manifest, err := qDyDb.GetManifestById(context.TODO(), table, manifestId)
 		if err != nil {
 			log.Fatalln("Manifest could not be found: ", err)
 		}
@@ -117,7 +118,10 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Open Pennsieve DB Connection
-	db, err := core.ConnectRDS()
+	db, err := pgdb.ConnectRDS()
+	dbTx, err := db.BeginTx(context.TODO(), nil)
+	qPgDb := pgdb.New(dbTx)
+
 	if err != nil {
 		log.Fatalln("Unable to connect to RDS instance.")
 	}
@@ -132,7 +136,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get Pennsieve User from User Table, or Token Table
 	clientIdClaim, _ := token.Get("client_id") // Key is present or method would have returned before.
 	isFromTokenPool := clientIdClaim == tokenClientID
-	currentUser, err := getUser(db, cognitoUserName.(string), isFromTokenPool)
+	currentUser, err := getUser(context.TODO(), qPgDb, cognitoUserName.(string), isFromTokenPool)
 	if err != nil {
 		log.Fatalln("Unable to get User from Cognito Username")
 	}
@@ -145,7 +149,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Get ORG Claim
-	orgClaim, err := authorizer.GetOrganizationClaim(db, currentUser.Id, orgInt)
+	orgClaim, err := qPgDb.GetOrganizationClaim(context.TODO(), currentUser.Id, orgInt)
 	if err != nil {
 		log.Error("Unable to get Organization Role")
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized") // Return 401: Unauthenticated
@@ -154,7 +158,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get DATASET Claim
 	var datasetClaim *dataset.Claim
 	if hasDatasetId {
-		datasetClaim, err = authorizer.GetDatasetClaim(db, currentUser, datasetNodeId, orgInt)
+		datasetClaim, err = qPgDb.GetDatasetClaim(context.TODO(), currentUser, datasetNodeId, orgInt)
 		if err != nil {
 			log.Error("Unable to get Dataset Role")
 			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
@@ -197,19 +201,19 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 }
 
 // getUser returns a Pennsieve user from a cognito ID.
-func getUser(db core.PostgresAPI, cognitoId string, isFromTokenPool bool) (*dbTable.User, error) {
+func getUser(ctx context.Context, q *pgdb.Queries, cognitoId string, isFromTokenPool bool) (*pgdbModels.User, error) {
 
 	if isFromTokenPool {
-		var token dbTable.Token
-		currentUser, err := token.GetUserByCognitoId(db, cognitoId)
+		//var token pgdbModels.Token
+		currentUser, err := q.GetUserByCognitoId(ctx, cognitoId)
 		if err != nil {
 			log.Fatalln("Unable to get user:", err)
 		}
 		return currentUser, nil
 
 	} else {
-		var user dbTable.User
-		currentUser, err := user.GetByCognitoId(db, cognitoId)
+		//var user pgdbModels.User
+		currentUser, err := q.GetByCognitoId(ctx, cognitoId)
 		if err != nil {
 			log.Fatalln("Unable to get user:", err)
 		}
