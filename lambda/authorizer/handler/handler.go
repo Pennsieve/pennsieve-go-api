@@ -92,7 +92,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Get Dataset associated with the requested manifest
 	if hasManifestId {
-		cfg, err := config.LoadDefaultConfig(context.Background())
+		cfg, err := config.LoadDefaultConfig(ctx)
 		if err != nil {
 			panic("unable to load SDK config, " + err.Error())
 		}
@@ -102,7 +102,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		table := os.Getenv("MANIFEST_TABLE")
 		qDyDb := dydb.New(client)
 
-		manifest, err := qDyDb.GetManifestById(context.TODO(), table, manifestId)
+		manifest, err := qDyDb.GetManifestById(ctx, table, manifestId)
 		if err != nil {
 			log.Fatalln("Manifest could not be found: ", err)
 		}
@@ -119,8 +119,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Open Pennsieve DB Connection
 	db, err := pgdb.ConnectRDS()
-	dbTx, err := db.BeginTx(context.TODO(), nil)
-	qPgDb := pgdb.New(dbTx)
+	qPgDb := pgdb.New(db)
 
 	if err != nil {
 		log.Fatalln("Unable to connect to RDS instance.")
@@ -136,7 +135,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get Pennsieve User from User Table, or Token Table
 	clientIdClaim, _ := token.Get("client_id") // Key is present or method would have returned before.
 	isFromTokenPool := clientIdClaim == tokenClientID
-	currentUser, err := getUser(context.TODO(), qPgDb, cognitoUserName.(string), isFromTokenPool)
+	currentUser, err := getUser(ctx, qPgDb, cognitoUserName.(string), isFromTokenPool)
 	if err != nil {
 		log.Fatalln("Unable to get User from Cognito Username")
 	}
@@ -149,7 +148,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Get ORG Claim
-	orgClaim, err := qPgDb.GetOrganizationClaim(context.TODO(), currentUser.Id, orgInt)
+	orgClaim, err := qPgDb.GetOrganizationClaim(ctx, currentUser.Id, orgInt)
 	if err != nil {
 		log.Error("Unable to get Organization Role")
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized") // Return 401: Unauthenticated
@@ -158,7 +157,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Get DATASET Claim
 	var datasetClaim *dataset.Claim
 	if hasDatasetId {
-		datasetClaim, err = qPgDb.GetDatasetClaim(context.TODO(), currentUser, datasetNodeId, orgInt)
+		datasetClaim, err = qPgDb.GetDatasetClaim(ctx, currentUser, datasetNodeId, orgInt)
 		if err != nil {
 			log.Error("Unable to get Dataset Role")
 			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
