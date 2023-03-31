@@ -6,6 +6,7 @@
 
 # Build files
 bin/*
+lambda/bin/*
 lambda/bin/authorizer_lambda.zip
 
 # Binaries for programs and plugins
