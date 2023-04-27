@@ -58,7 +58,7 @@ resource "aws_apigatewayv2_integration" "int" {
 }
 
 resource "aws_cloudwatch_log_group" "upload-service-log-group" {
-  name =  "${var.environment_name}/${var.service_name}/${aws_apigatewayv2_api.upload-service-gateway.name}"
+  name =  "${var.environment_name}/${var.service_name}/serverless_api_gateway"
 
   retention_in_days = 30
 }
