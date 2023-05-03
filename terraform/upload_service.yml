@@ -969,6 +969,36 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /publishing/info:
+    get:
+      summary: Get Publishing Service Information
+      description: |
+        This method returns a list of Publishing Service Information and URLs to fetch the associated files.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
+      operationId: getPublishingServiceInformation
+      security:
+        - token_auth: [ ]
+      tags:
+        - Publishing Service Information
+      responses:
+        '200':
+          description: The returned Publishing Service Information.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  description: Response for getPublishingServiceInformation endpoint.
+                  properties:
+                    Count:
+                      description: Number of Publishing Service Information pieces.
+                      type: integer
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /publishing/repositories:
     get:
       summary: Get Publishing Repositories
