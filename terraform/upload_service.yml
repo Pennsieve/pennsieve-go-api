@@ -159,7 +159,9 @@ components:
     ingestResponse:
       type: object
       properties:
-        processId: string
+        processId:
+          type: string
+          description: The assigned ingest job id
     manifestCreateRequest:
       type: object
       properties:
