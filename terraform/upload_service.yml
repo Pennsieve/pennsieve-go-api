@@ -70,7 +70,6 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
-
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -137,13 +136,6 @@ components:
               message:
                 type: string
   schemas:
-    modelPropertyRequest:
-      type: object
-      properties:
-        id:
-          type: string
-          description: UUID of the model property
-        na
     user:
       type: object
       properties:
@@ -693,49 +685,6 @@ paths:
                     Description:
                       description: Array of uploadIds that were not added to manifest.
                       type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /metadata/models/{id}/properties:
-    put:
-      summary: Create or update model properties
-      description: |
-        This methods allows users to create new model properties, or update existing properties for an existing model.
-    x-amazon-apigateway-integration:
-      $ref: '#/components/x-amazon-apigateway-integrations/model-service'
-      operationId: graphUpdateModelProperties
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Metadata Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset which contains the model.
-        - in: path
-          name: id
-          schema:
-            type: string
-          required: true
-          description: The model node id.
-      requestBody:
-        description: List of model properties
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/modelPropertyRequest'
-      responses:
-        '200':
-          description: List of created properties.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/addFilesResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
