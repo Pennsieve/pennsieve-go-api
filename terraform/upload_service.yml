@@ -153,9 +153,9 @@ components:
       properties:
         files:
           type: array
-            items:
-              type: string
-              description: Package ID of the file to be ingested.
+          items:
+            type: string
+            description: Package ID of the file to be ingested.
     ingestResponse:
       type: object
       properties:
