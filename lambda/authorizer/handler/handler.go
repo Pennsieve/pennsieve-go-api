@@ -156,9 +156,9 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Get Publisher's Claim
-	pubClaim, err := qPgDb.GetPublishersClaim(ctx, orgInt, currentUser.Id)
+	teamClaims, err := qPgDb.GetTeamClaims(ctx, currentUser.Id)
 	if err != nil {
-		log.Info(fmt.Sprintf("Unable to get Publisher's claim for user: %d organization: %d", currentUser.Id, orgInt))
+		log.Info(fmt.Sprintf("Unable to get Team Claims for user: %d organization: %d", currentUser.Id, orgInt))
 	}
 
 	// Get DATASET Claim
@@ -194,10 +194,10 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Bundle Claims
 	claims := map[string]interface{}{
-		"user_claim":      userClaim,
-		"org_claim":       orgClaim,
-		"dataset_claim":   datasetClaim,
-		"publisher_claim": pubClaim,
+		"user_claim":    userClaim,
+		"org_claim":     orgClaim,
+		"dataset_claim": datasetClaim,
+		"team_claims":   teamClaims,
 	}
 
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
