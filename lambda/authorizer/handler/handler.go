@@ -10,6 +10,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
 	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
@@ -154,6 +155,12 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized") // Return 401: Unauthenticated
 	}
 
+	// Get Publisher's Claim
+	teamClaims, err := qPgDb.GetTeamClaims(ctx, currentUser.Id)
+	if err != nil {
+		log.Info(fmt.Sprintf("Unable to get Team Claims for user: %d organization: %d", currentUser.Id, orgInt))
+	}
+
 	// Get DATASET Claim
 	var datasetClaim *dataset.Claim
 	if hasDatasetId {
@@ -167,7 +174,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		}
 
 		// If user has no role on provided dataset --> return
-		if datasetClaim.Role == dataset.None {
+		if datasetClaim.Role == role.None {
 			log.Error("User has no access to dataset")
 			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 				IsAuthorized: false,
@@ -190,6 +197,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		"user_claim":    userClaim,
 		"org_claim":     orgClaim,
 		"dataset_claim": datasetClaim,
+		"team_claims":   teamClaims,
 	}
 
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
