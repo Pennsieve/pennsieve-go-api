@@ -63,13 +63,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
-    ingest-service:
-      type: aws_proxy
-      uri: ${ingest_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
+#    ingest-service:
+#      type: aws_proxy
+#      uri: ${ingest_service_lambda_arn}
+#      httpMethod: POST
+#      passthroughBehavior: when_no_match
+#      contentHandling: CONVERT_TO_TEXT
+#      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -1327,43 +1327,43 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /ingest:
-    post:
-      summary: Ingests CSV files
-      description: |
-        (alpha) This endpoint ingests a set of CSV files and creates this into a dataset metadata graph.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/ingest-service'
-      operationId: ingestPackages
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Ingest Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: dataset node id
-      requestBody:
-        description: node ids of the items to restore
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ingestRequest'
-      responses:
-        '200':
-          description: The ID of the process that ingested the CSV files.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ingestResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
+#  /ingest:
+#    post:
+#      summary: Ingests CSV files
+#      description: |
+#        (alpha) This endpoint ingests a set of CSV files and creates this into a dataset metadata graph.
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/ingest-service'
+#      operationId: ingestPackages
+#      security:
+#        - token_dataset_auth: [ ]
+#      tags:
+#        - Ingest Service
+#      parameters:
+#        - in: query
+#          name: dataset_id
+#          schema:
+#            type: string
+#          required: true
+#          description: dataset node id
+#      requestBody:
+#        description: node ids of the items to restore
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/ingestRequest'
+#      responses:
+#        '200':
+#          description: The ID of the process that ingested the CSV files.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/ingestResponse'
+#        '4XX':
+#          $ref: '#/components/responses/Unauthorized'
+#        '5XX':
+#          $ref: '#/components/responses/Error'
 
   /datasets/trashcan:
     get:
