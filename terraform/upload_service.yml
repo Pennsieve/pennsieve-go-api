@@ -63,6 +63,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    integration-service:
+      type: aws_proxy
+      uri: ${integration_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0     
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -258,6 +265,21 @@ components:
               error:
                 type: string
           description: any restore failures grouped by node id
+    integrationRequest:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          description: the identifier of the application
+        payload:
+          type: object
+          description: the payload for the application
+    integrationResponse:
+      type: object
+      properties:
+        integrationId:
+          type: string
+          description: the uuid of the integration execution 
 paths:
   /manifest:
     get:
@@ -1418,6 +1440,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/restoreResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /integrations:
+    post:
+      summary: Execute integration
+      description: |
+        Calls endpoint of application with supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: callIntegration
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/integrationRequest'
+      responses:
+        '200':
+          description: The result of starting the integration process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
