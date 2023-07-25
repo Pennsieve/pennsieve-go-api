@@ -142,3 +142,15 @@ data "terraform_remote_state" "packages_service" {
     profile = var.aws_account
   }
 }
+
+# Import Integration Service
+data "terraform_remote_state" "integration_service" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.aws_account}-terraform-state"
+    key     = "aws/${data.aws_region.current_region.name}/${var.vpc_name}/${var.environment_name}/integration-service/terraform.tfstate"
+    region  = "us-east-1"
+    profile = var.aws_account
+  }
+}
