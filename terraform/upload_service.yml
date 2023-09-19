@@ -69,7 +69,14 @@ components:
       httpMethod: POST
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0     
+      payloadFormatVersion: 2.0
+    rehydration-service:
+      type: aws_proxy
+      uri: ${rehydration_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0          
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -279,7 +286,22 @@ components:
       properties:
         integrationId:
           type: string
-          description: the uuid of the integration execution 
+          description: the uuid of the integration execution
+    rehydrationRequest:
+      type: object
+      properties:
+        datasetId:
+          type: string
+          description: the datasetId
+        datasetVersion:
+          type: string
+          description: the datasetVersion
+    rehydrationResponse:
+      type: object
+      properties:
+        rehydrationId:
+          type: string
+          description: the uuid of the rehydration execution 
 paths:
   /manifest:
     get:
@@ -1475,3 +1497,34 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
+  /rehydrate:
+    post:
+      summary: Execute rehydration
+      description: |
+        Calls endpoint to trigger rehydration process
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/rehydration-service'
+      operationId: rehydrate
+      security:
+        - token_auth: [ ]
+      tags:
+        - Rehydration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rehydrationRequest'
+      responses:
+        '200':
+          description: The result of starting the rehydration process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rehydrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'          
