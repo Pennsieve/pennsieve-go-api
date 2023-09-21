@@ -155,7 +155,7 @@ data "terraform_remote_state" "integration_service" {
   }
 }
 
-# Import Integration Service
+# Import Rehydration Service
 data "terraform_remote_state" "rehydration_service" {
   backend = "s3"
 
