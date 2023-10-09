@@ -291,10 +291,10 @@ components:
       type: object
       properties:
         datasetId:
-          type: string
+          type: integer
           description: the datasetId
-        datasetVersion:
-          type: string
+        datasetVersionId:
+          type: integer
           description: the datasetVersion
     rehydrationResponse:
       type: object
