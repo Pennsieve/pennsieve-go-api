@@ -1512,7 +1512,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-     get:
+    get:
       summary: Get integration
       description: |
         Gets integration by integrationId
