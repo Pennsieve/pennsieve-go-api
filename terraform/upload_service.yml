@@ -1514,7 +1514,7 @@ paths:
           $ref: '#/components/responses/Error'
   /integrations/{integration_id}:          
     get:
-      summary: Get integration
+      summary: Get integration by id
       description: |
         Gets integration by integrationId
       x-amazon-apigateway-integration:
@@ -1531,7 +1531,7 @@ paths:
           schema:
             type: string
             minimum: 1
-          description: The UUID of the integration.
+          description: The integration_id (UUID) of the integration.
       responses:
         '200':
           description: The requested integration
