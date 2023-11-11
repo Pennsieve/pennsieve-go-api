@@ -1512,6 +1512,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /integrations/{integration_id}:          
     get:
       summary: Get integration
       description: |
