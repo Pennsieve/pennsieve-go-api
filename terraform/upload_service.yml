@@ -276,11 +276,16 @@ components:
       type: object
       properties:
         applicationId:
+          type: integer
+          description: the identifier of the application
+        datasetId:
           type: string
           description: the identifier of the application
-        payload:
-          type: object
-          description: the payload for the application
+        packageIds:
+          type: array
+          description: the packageIds
+          items:
+            type: string  
     integrationResponse:
       type: object
       properties:
@@ -294,14 +299,16 @@ components:
           type: string
           description: the uuid of the integration execution
         applicationId:
-          type: string
+          type: integer
           description: the id of the application
         datasetNodeId:
           type: string
           description: the dataset nodeId
         packageIds:
-          type: string
-          description: the packageIds                
+          type: array
+          description: the packageIds
+          items:
+            type: string              
     rehydrationRequest:
       type: object
       properties:
