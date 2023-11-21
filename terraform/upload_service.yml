@@ -291,13 +291,13 @@ components:
       properties:
         integrationId:
           type: string
-          description: the uuid of the integration execution
+          description: the UUID of the integration execution
     integrationGetResponse:
       type: object
       properties:
         uuid:
           type: string
-          description: the uuid of the integration execution
+          description: the UUID of the integration execution
         applicationId:
           type: integer
           description: the id of the application
