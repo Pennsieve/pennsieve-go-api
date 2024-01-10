@@ -76,7 +76,14 @@ components:
       httpMethod: POST
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0          
+      payloadFormatVersion: 2.0
+    readme-service:
+      type: aws_proxy
+      uri: ${readme_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -1580,4 +1587,35 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'          
+          $ref: '#/components/responses/Error'
+
+  /readme/docs/{slug}:
+    get:
+      summary: Get Pennsieve readme.io doc by slug
+      description: |
+        Gets Pennsieve readme.io doc by slug
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/readme-service'
+      operationId: getReadmeDoc
+      security:
+        - token_auth: [ ]
+      tags:
+        - Readme Service
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: The URL-safe slug of the readme.io doc. Slugs must be all lowercase, and replace spaces with hyphens.
+      responses:
+        '200':
+          description: The requested document
+          content:
+            application/json:
+              schema:
+                $ref: 'https://dash.readme.com/api/v1/schema#/components/schemas/docSchemaResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
