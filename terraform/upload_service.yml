@@ -1607,8 +1607,7 @@ paths:
           required: true
           schema:
             type: string
-            minimum: 1
-          description: The slug of the readme.io doc. Slugs must be all lowercase, and replace spaces with hyphens.
+          description: The URL-safe slug of the readme.io doc. Slugs must be all lowercase, and replace spaces with hyphens.
       responses:
         '200':
           description: The requested document
