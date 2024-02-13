@@ -1558,7 +1558,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'         
 
-  /rehydrate:
+  /discover/rehydrate:
     post:
       summary: Execute rehydration
       description: |
@@ -1566,10 +1566,8 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/rehydration-service'
       operationId: rehydrate
-      security:
-        - token_auth: [ ]
       tags:
-        - Rehydration Service
+        - Discover/Rehydration Service
       requestBody:
         description: Payload
         required: true
