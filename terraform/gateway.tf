@@ -18,6 +18,7 @@ resource "aws_apigatewayv2_api" "upload-service-gateway" {
     integration_service_lambda_arn = data.terraform_remote_state.integration_service.outputs.lambda_service_arn,
     rehydration_service_lambda_arn = data.terraform_remote_state.rehydration_service.outputs.rehydration_service_arn,
     readme_service_lambda_arn = data.terraform_remote_state.readme_service.outputs.service_lambda_arn,
+    account_service_lambda_arn = data.terraform_remote_state.account_service.outputs.service_lambda_arn,
     user_pool_2_client_id = data.terraform_remote_state.authentication_service.outputs.user_pool_2_client_id,
     user_pool_endpoint = "https://${var.user_pool_endpoint}"
     token_pool_client_id = data.terraform_remote_state.authentication_service.outputs.token_pool_client_id,
