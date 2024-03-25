@@ -84,6 +84,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    account-service:
+      type: aws_proxy
+      uri: ${account_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
