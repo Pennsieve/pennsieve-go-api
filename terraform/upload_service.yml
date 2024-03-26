@@ -347,6 +347,22 @@ components:
         accountType:
           type: string
           description: the account type of Pennsieve Account
+    accountRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: the registered accountId
+        accountType:
+          type: string
+          description: the type of account
+        roleName:
+          type: string
+          description: the name of the created role
+        externalId:
+          type: string
+          description: a unique identifier for the role
+
 
 paths:
   /manifest:
