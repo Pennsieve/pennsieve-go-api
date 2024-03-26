@@ -1684,7 +1684,7 @@ paths:
 
   /accounts:
     post:
-      summary: Create an account 
+      summary: Creates an account 
       description: |
         Creates a registered account
       x-amazon-apigateway-integration:
