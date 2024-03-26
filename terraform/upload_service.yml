@@ -1684,9 +1684,9 @@ paths:
 
   /accounts:
     post:
-      summary: Creates an account 
+      summary: Creates an external compute resource account
       description: |
-        Creates a registered account
+        Creates an account for an external compute resource. Such as an AWS account.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: postAccounts
