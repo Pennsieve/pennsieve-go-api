@@ -1708,7 +1708,7 @@ paths:
               $ref: '#/components/schemas/accountRequest'
       responses:
         '201':
-          description: The requested account
+          description: Successfully created compute resource account
           content:
             application/json:
               schema:
