@@ -362,7 +362,7 @@ components:
         externalId:
           type: string
           description: a unique identifier for the role
-    postAccountsGetResponse:
+    postAccountsResponse:
       type: object
       properties:
         uuid:
