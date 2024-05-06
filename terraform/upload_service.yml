@@ -423,7 +423,44 @@ components:
       properties:
         uuid:
           type: string
-          description: the uuid of the compute resource account
+          description: the uuid of the compute node
+        computeNodeGatewayUrl:
+          type: string
+          description: the url of the compute node
+        efsId:
+          type: string
+          description: the ID of the EFS storage
+        workflowManagerUrl:
+          type: string
+          description: the workflow manager URL
+        environment:
+          type: string
+          description: the compute node environment
+        account:
+          type: object
+          description: the compute resource account
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        createdAt:
+          type: string
+          description: the UTC timestamp when the compute node was created
+        queueUrl:
+          type: string
+          description: the url of the compute node queue
+        organizationId:
+          type: string
+          description: the organization the compute node was created in
+        userId:
+          type: string
+          description: the user that created the compute node
     postComputeNodesResponse:
       type: object
       properties:
