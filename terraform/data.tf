@@ -191,6 +191,18 @@ data "terraform_remote_state" "account_service" {
   }
 }
 
+# Github  Service
+data "terraform_remote_state" "github_service" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.aws_account}-terraform-state"
+    key     = "aws/${data.aws_region.current_region.name}/${var.vpc_name}/${var.environment_name}/github-service/terraform.tfstate"
+    region  = "us-east-1"
+    profile = var.aws_account
+  }
+}
+
 # Import Compute Node Service
 data "terraform_remote_state" "compute_node_service" {
   backend = "s3"
