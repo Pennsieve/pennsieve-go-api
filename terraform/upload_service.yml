@@ -1896,6 +1896,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
   /accounts/github/register:
     post:
       summary: Register a Github account for a user
@@ -1926,6 +1927,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
   /compute-nodes:
     post:
       summary: Creates a compute node
