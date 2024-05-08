@@ -1915,7 +1915,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/accountRequest'
+              $ref: '#/components/schemas/githubPostRegisterRequest'
       responses:
         '201':
           description: Successfully installed and authorized the Pennsieve GitHub App.
