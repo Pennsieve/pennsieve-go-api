@@ -98,6 +98,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    compute-node-service:
+      type: aws_proxy
+      uri: ${compute_node_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -399,6 +406,80 @@ components:
         userId:
           type: string
           description: the user that created the role for the compute resource account
+    computeNodeRequest:
+      type: object
+      properties:
+        account:
+          type: object
+          description: the registered account
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        environment:
+          type: string
+          description: the compute node environment
+    computeNodesGetResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the uuid of the compute node
+        computeNodeGatewayUrl:
+          type: string
+          description: the url of the compute node
+        efsId:
+          type: string
+          description: the ID of the EFS storage
+        workflowManagerUrl:
+          type: string
+          description: the workflow manager URL
+        environment:
+          type: string
+          description: the compute node environment
+        account:
+          type: object
+          description: the compute resource account
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        createdAt:
+          type: string
+          description: the UTC timestamp when the compute node was created
+        queueUrl:
+          type: string
+          description: the url of the compute node queue
+        organizationId:
+          type: string
+          description: the organization the compute node was created in
+        userId:
+          type: string
+          description: the user that created the compute node
+    postComputeNodesResponse:
+      type: object
+      properties:
+        postResponse:
+          type: string
+          description: the response from initiating creation of a compute node
+    deleteComputeNodesResponse:
+      type: object
+      properties:
+        deleteResponse:
+          type: string
+          description: the response from initiating deletion of a compute node
     githubPostRegisterRequest:
       type: object
       properties:
@@ -1846,3 +1927,118 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
+  /compute-nodes:
+    post:
+      summary: Creates a compute node
+      description: |
+        Creates a compute-node
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: postComputeNodes
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/computeNodeRequest'
+      responses:
+        '202':
+          description: Successfully initiated compute node creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postComputeNodesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get compute nodes
+      description: |
+        Get a list of compute nodes
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: getComputeNodes
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      responses:
+        '200':
+          description: The requested compute nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/computeNodesGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /compute-nodes/{id}:
+    get:
+      summary: Get details for a specific compute node
+      description: |
+        Get details for a specific compute node
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: getComputeNode
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the compute node
+      responses:
+        '200':
+          description: The requested compute node
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/computeNodesGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete a specific compute node
+      description: |
+        Delete a specific compute node
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: deleteComputeNode
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the compute node
+      responses:
+        '202':
+          description: Successfully initiated compute node deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/deleteComputeNodesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'        
