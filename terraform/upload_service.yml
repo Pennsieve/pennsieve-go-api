@@ -485,13 +485,26 @@ components:
       properties:
         code:
           type: string
-          description: OAuth
-    githubRegisterResponse:
+          description: OAuth code returned by Github OAuth authentication
+        installation_id:
+          type: string
+          description: The installation id of the Pennsieve GitHub App
+    githubProfileResponse:
       type: object
       properties:
-        id:
+        username:
           type: string
           description: Github User ID
+        email:
+          type: string
+          description: Email associated with GitHub Account
+        url:
+          type: string
+          description: Url to GitHub profile page
+        avatar_url:
+          type: string
+          description: Url to Github user avatar
+
 
 paths:
   /manifest:
@@ -1897,6 +1910,55 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
+  /accounts/github/user:
+    get:
+      summary: Returns GitHub profile
+      description: |
+        Returns an existing GitHub profile when user has installed the Pennsieve GitHub App.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: getGithubUser
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      responses:
+        '201':
+          description: GitHub profile information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/githubProfileResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Deletes Pennsieve GitHub App
+      description: |
+        Deletes the Pennsieve GitHub App from the user's GitHub Account and removes profile from Pennsieve.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: deleteGithubUser
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      responses:
+        '201':
+          description: Success message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: strings
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
   /accounts/github/register:
     post:
       summary: Register a Github account for a user
@@ -1922,7 +1984,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/githubRegisterResponse'
+                $ref: '#/components/schemas/githubProfileResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
