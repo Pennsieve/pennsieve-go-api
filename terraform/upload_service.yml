@@ -1953,7 +1953,7 @@ paths:
                 type: object
                 properties:
                   message:
-                    type: strings
+                    type: string
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
