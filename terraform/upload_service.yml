@@ -409,6 +409,12 @@ components:
     computeNodeRequest:
       type: object
       properties:
+        name:
+          type: string
+          description: the name of the compute node
+        description:
+          type: string
+          description: the description of the compute node
         account:
           type: object
           description: the registered account
