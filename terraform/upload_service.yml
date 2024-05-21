@@ -105,6 +105,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    app-deploy-service:
+      type: aws_proxy
+      uri: ${app_deploy_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
   securitySchemes:
     token_manifest_auth:
       type: "apiKey"
@@ -510,7 +517,153 @@ components:
         avatar_url:
           type: string
           description: Url to Github user avatar
-
+    applicationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: the name of the application
+        description:
+          type: string
+          description: the description of the application
+        applicationType:
+          type: string
+          description: the type of application
+        resources:
+          type: object
+          description: the resources for the application
+          properties:
+            cpu:
+              type: string
+              description: the memory value for the application
+            memory:
+              type: string
+              description: the cpu value for the application
+        account:
+          type: object
+          description: the registered compute resource
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        computeNode:
+          type: object
+          description: the compute node where the application will be registered
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute node
+            efsId:
+              type: string
+              description: the efsId of the compute node
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+        environment:
+          type: string
+          description: the compute node environment
+    applicationsGetResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: the name of the application
+        description:
+          type: string
+          description: the description of the application
+        applicationType:
+          type: string
+          description: the type of application
+        resources:
+          type: object
+          description: the resources for the application
+          properties:
+            cpu:
+              type: string
+              description: the memory value for the application
+            memory:
+              type: string
+              description: the cpu value for the application
+        account:
+          type: object
+          description: the registered compute resource
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        computeNode:
+          type: object
+          description: the compute node where the application will be registered
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute node
+            efsId:
+              type: string
+              description: the efsId of the compute node
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+        destination:
+          type: object
+          description: the destination repository for the application
+          properties:
+            type:
+              type: string
+              description: the type of destination, for example ecr
+            url:
+              type: string
+              description: the url of the destination
+        environment:
+          type: string
+          description: the compute node environment
+        createdAt:
+          type: string
+          description: the UTC timestamp when the compute node was created
+        organizationId:
+          type: string
+          description: the organization the compute node was created in
+        userId:
+          type: string
+          description: the user that created the compute node
+    postApplicationsResponse:
+      type: object
+      properties:
+        postResponse:
+          type: string
+          description: the response from initiating creation of an application
+    deleteApplicationsResponse:
+      type: object
+      properties:
+        deleteResponse:
+          type: string
+          description: the response from initiating deletion of an application
 
 paths:
   /manifest:
@@ -2109,4 +2262,119 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'        
+          $ref: '#/components/responses/Error'
+
+  /applications:
+    post:
+      summary: Creates an application
+      description: |
+        Creates an application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postApplications
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/applicationRequest'
+      responses:
+        '202':
+          description: Successfully initiated application creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get applications
+      description: |
+        Get a list of applications
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getApplications
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      responses:
+        '200':
+          description: The requested applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/{id}:
+    get:
+      summary: Get details for a specific application
+      description: |
+        Get details for a specific application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getApplication
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the application
+      responses:
+        '200':
+          description: The requested application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete a specific application
+      description: |
+        Delete a specific application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: deleteApplication
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the application
+      responses:
+        '202':
+          description: Successfully initiated application deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/deleteApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
