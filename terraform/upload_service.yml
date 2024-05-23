@@ -664,6 +664,35 @@ components:
         deleteResponse:
           type: string
           description: the response from initiating deletion of an application
+    applicationDeployRequest:
+      type: object
+      properties:
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+        destination:
+          type: object
+          description: the destination repository for the application
+          properties:
+            type:
+              type: string
+              description: the type of destination, for example ecr
+            url:
+              type: string
+              description: the url of the destination
+    postApplicationsDeployResponse:
+        type: object
+        properties:
+          postResponse:
+            type: string
+            description: the response from initiating creation of an application
 
 paths:
   /manifest:
@@ -2378,3 +2407,35 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
+  /applications/deploy:
+    post:
+      summary: Deploys an application from a source to a destination
+      description: |
+        Deployes an application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postApplicationDeploy
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/applicationDeployRequest'
+      responses:
+        '202':
+          description: Successfully initiated application deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postApplicationsDeployResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+ 
