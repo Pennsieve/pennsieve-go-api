@@ -687,12 +687,25 @@ components:
             url:
               type: string
               description: the url of the destination
+        account:
+          type: object
+          description: the registered compute resource
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
     postApplicationsDeployResponse:
         type: object
         properties:
           postResponse:
             type: string
-            description: the response from initiating creation of an application
+            description: the response from initiating deployment of an application
 
 paths:
   /manifest:
