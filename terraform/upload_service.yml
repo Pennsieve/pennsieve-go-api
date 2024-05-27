@@ -706,6 +706,51 @@ components:
           postResponse:
             type: string
             description: the response from initiating deployment of an application
+    workflowRequest:
+      type: object
+      properties:
+        computeNode:
+          type: object
+          description: the compute node
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute node
+            computeNodeGatewayUrl:
+              type: string
+              description: the URL of the compute node
+        datasetId:
+          type: string
+          description: the identifier of the application
+        packageIds:
+          type: array
+          description: the packageIds
+          items:
+            type: string
+        workflow:
+          type: array
+          description: the applications to run in the workflow
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+              applicationId:
+                type: string
+              applicationType:
+                type: string
+              params:
+                type: object
+                description: application specific params
+        params:
+          type: object
+          description: integration params
+    workflowResponse:
+      type: object
+      properties:
+        integrationId:
+          type: string
+          description: the UUID of the integration execution
 
 paths:
   /manifest:
@@ -1932,7 +1977,37 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'         
+          $ref: '#/components/responses/Error'
+  /workflows:
+    post:
+      summary: Execute workflow
+      description: |
+        Calls endpoint of compute node with supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: startWorflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowRequest'
+      responses:
+        '200':
+          description: The result of starting the workflow process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'      
 
   /discover/rehydrate:
     post:
