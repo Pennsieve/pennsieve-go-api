@@ -742,6 +742,11 @@ components:
               params:
                 type: object
                 description: application specific params
+              commandArguments:
+                type: array
+                description: command arguments to pass to the application
+                items:
+                  type: string
         params:
           type: object
           description: integration params
