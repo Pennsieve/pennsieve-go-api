@@ -520,15 +520,18 @@ components:
     githubWebhookEventAccepted:
       type: object
       properties:
-        requestId:
+        request_id:
           type: string
           description: the request id for the webhook event
-        requestType:
+        request_type:
           type: string
-          description: the GitHub event type (release, etc.)
-        requestItem:
+          description: the GitHub event type (release)
+        request_origin:
           type: string
-          description: a string identifier for the GitHub item which the request is being generated (repo url, etc.)
+          description: identifier for the GitHub item from which the request is being generated (repo url)
+        request_target:
+          type: string
+          description: identifier for the Pennsieve item on which the request is being executed (dataset, external repo)
     applicationRequest:
       type: object
       properties:
