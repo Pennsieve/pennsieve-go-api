@@ -517,6 +517,12 @@ components:
         avatar_url:
           type: string
           description: Url to Github user avatar
+    githubWebhookEvent:
+      type: object
+      properties:
+        action:
+          type: string
+          description: the name of the action
     githubWebhookEventAccepted:
       type: object
       properties:
@@ -2810,6 +2816,8 @@ paths:
         required: true
         content:
           application/json:
+            schema:
+              $ref: '#/components/schemas/githubWebhookEvent'
       responses:
         '200':
           description: Received and accepted GitHub webhook event.
