@@ -2007,6 +2007,39 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /datasets/manifest:
+    get:
+      summary: Presigned url to manifest of dataset
+      description: |
+        Returns a presigned URL to a file containing the current manifest of an unpublished dataset.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
+      operationId: getManifest
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Datasets Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: dataset node id
+      responses:
+        '200':
+          description: The contents of the dataset's trashcan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /packages/restore:
     post:
       summary: Restore deleted items
