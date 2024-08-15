@@ -344,6 +344,14 @@ components:
           description: the packageIds
           items:
             type: string              
+    createImportManifestRequest:
+      type: object
+    createImportManifestResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the uuid of the import manifest
     rehydrationRequest:
       type: object
       properties:
@@ -2169,6 +2177,35 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'      
+
+  /import/manifest:
+    post:
+      summary: Create import manifest
+      description: |
+        Calls endpoint on import-service to create an import manifest
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
+      operationId: createImportManifest
+      tags:
+        - Import Service
+      requestBody:
+        description: Import Manifest
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/createImportManifestRequest'
+      responses:
+        '200':
+          description: Created import manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/createImportManifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /discover/rehydrate:
     post:
