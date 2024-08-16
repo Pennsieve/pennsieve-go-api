@@ -70,6 +70,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    import-service:
+      type: aws_proxy
+      uri: ${import_service_api_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
     integration-service:
       type: aws_proxy
       uri: ${integration_service_lambda_arn}
