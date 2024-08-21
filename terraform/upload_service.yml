@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  version: 3.0.0
+  version: "3.0"
   title: Pennsieve API Version 2
   description: |
     Version 3.0.0 of the Pennsieve API.\
