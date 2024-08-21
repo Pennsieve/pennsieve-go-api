@@ -17,4 +17,4 @@ jobs:
       - name: Run `openapi` command 🚀
         uses: readmeio/rdme@v8
         with:
-          rdme: openapi terraform/upload_service.yml --key=${{ secrets.README_OAS_KEY }} --id=66c363bfbc50360019a1fbbf
+          rdme: openapi terraform/upload_service.yml --key=${{ secrets.README_OAS_KEY }} --id=66c5fa89dbe4120025445fd9
