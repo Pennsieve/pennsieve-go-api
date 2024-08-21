@@ -1,9 +1,9 @@
 openapi: 3.0.1
 info:
-  version: 1.0.0
+  version: 3.0.0
   title: Pennsieve API Version 2
   description: |
-    Version 2 of the Pennsieve API.\
+    Version 3 of the Pennsieve API.\
     \
     This is the second iteration of the Pennsieve API and will, over time, replace functionality that is currently included in the first version of the API.
   termsOfService: https://docs.pennsieve.io/page/pennsieve-terms-of-use
