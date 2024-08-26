@@ -2123,9 +2123,34 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /integrations/{integration_id}:          
     get:
-      summary: Get integration by id
+      summary: Get integrations
+      description: |
+        Get a list of integrations
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getIntegrations
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      responses:
+        '200':
+          description: The requested integrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /integrations/{id}:          
+    get:
+      summary: Get integration by uuid
       description: |
         Gets integration by integrationId
       x-amazon-apigateway-integration:
@@ -2137,12 +2162,12 @@ paths:
         - Integration Service
       parameters:
         - in: path
-          name: integration_id
+          name: id
           required: true
           schema:
             type: string
             minimum: 1
-          description: The integration_id (UUID) of the integration.
+          description: The uuid of the integration.
       responses:
         '200':
           description: The requested integration
@@ -2154,9 +2179,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
   /workflows:
     post:
-      summary: Execute workflow
+      summary: Initiate workflow
       description: |
         Calls endpoint of compute node with supplied payload
       x-amazon-apigateway-integration:
