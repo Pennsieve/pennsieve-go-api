@@ -14,6 +14,7 @@ jobs:
           find: "Unused"
           replace: "Authorization"
           include: "terraform/upload_service.yml"
-      - uses: readmeio/rdme@7.3.0
+      - name: Run `openapi` command 🚀
+        uses: readmeio/rdme@v8
         with:
-          rdme: openapi "terraform/upload_service.yml" --key=${{ secrets.README_OAS_KEY }} --id=62fee65f0fde2a00ef3ec784
+          rdme: openapi terraform/upload_service.yml --key=${{ secrets.README_OAS_KEY }} --id=66c5fa89dbe4120025445fd9

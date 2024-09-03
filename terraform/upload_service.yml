@@ -1,9 +1,9 @@
 openapi: 3.0.1
 info:
-  version: 1.0.0
+  version: "3.0"
   title: Pennsieve API Version 2
   description: |
-    Version 2 of the Pennsieve API.\
+    Version 3.0.0 of the Pennsieve API.\
     \
     This is the second iteration of the Pennsieve API and will, over time, replace functionality that is currently included in the first version of the API.
   termsOfService: https://docs.pennsieve.io/page/pennsieve-terms-of-use
@@ -28,6 +28,13 @@ tags:
       url: https://docs.pennsieve.io/reference
 components:
   x-amazon-apigateway-integrations:
+    github-service:
+      type: aws_proxy
+      uri: ${github_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
     manifest-service:
       type: aws_proxy
       uri: ${upload_service_lambda_arn}
@@ -59,6 +66,55 @@ components:
     packages-service:
       type: aws_proxy
       uri: ${packages_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    import-service:
+      type: aws_proxy
+      uri: ${import_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    integration-service:
+      type: aws_proxy
+      uri: ${integration_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    rehydration-service:
+      type: aws_proxy
+      uri: ${rehydration_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    readme-service:
+      type: aws_proxy
+      uri: ${readme_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    account-service:
+      type: aws_proxy
+      uri: ${account_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    compute-node-service:
+      type: aws_proxy
+      uri: ${compute_node_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
+    app-deploy-service:
+      type: aws_proxy
+      uri: ${app_deploy_service_lambda_arn}
       httpMethod: POST
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
@@ -258,6 +314,587 @@ components:
               error:
                 type: string
           description: any restore failures grouped by node id
+    integrationRequest:
+      type: object
+      properties:
+        applicationId:
+          type: integer
+          description: the identifier of the application
+        datasetId:
+          type: string
+          description: the identifier of the application
+        packageIds:
+          type: array
+          description: the packageIds
+          items:
+            type: string  
+    integrationResponse:
+      type: object
+      properties:
+        integrationId:
+          type: string
+          description: the UUID of the integration execution
+    integrationGetResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the UUID of the integration execution
+        applicationId:
+          type: integer
+          description: the id of the application
+        datasetNodeId:
+          type: string
+          description: the dataset nodeId
+        packageIds:
+          type: array
+          description: the packageIds
+          items:
+            type: string              
+    createImportManifestRequest:
+      type: object
+    createImportManifestResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the uuid of the import manifest
+    rehydrationRequest:
+      type: object
+      properties:
+        datasetId:
+          type: integer
+          description: the datasetId
+        datasetVersionId:
+          type: integer
+          description: the datasetVersion
+    rehydrationResponse:
+      type: object
+      properties:
+        rehydrationId:
+          type: string
+          description: the uuid of the rehydration execution
+    pennsieveAccountsGetResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: the accountId of the Pennsieve Account
+        accountType:
+          type: string
+          description: the account type of Pennsieve Account
+    accountRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+          description: the registered accountId
+        accountType:
+          type: string
+          description: the type of account
+        roleName:
+          type: string
+          description: the name of the created role
+        externalId:
+          type: string
+          description: a unique identifier for the role
+    postAccountsResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the uuid of the created compute resource account
+    accountsGetResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the uuid of the compute resource account
+        accountId:
+          type: string
+          description: the accountId of the compute resource account
+        accountType:
+          type: string
+          description: the account type of compute resource account
+        roleName:
+          type: string
+          description: the name of the role in the compute resource account
+        externalId:
+          type: string
+          description: the generated externalId for compute resource account
+        organizationId:
+          type: string
+          description: the organization of the role creator for the compute resource account
+        userId:
+          type: string
+          description: the user that created the role for the compute resource account
+    computeNodeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: the name of the compute node
+        description:
+          type: string
+          description: the description of the compute node
+        account:
+          type: object
+          description: the registered account
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        environment:
+          type: string
+          description: the compute node environment
+    computeNodesGetResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the uuid of the compute node
+        computeNodeGatewayUrl:
+          type: string
+          description: the url of the compute node
+        efsId:
+          type: string
+          description: the ID of the EFS storage
+        workflowManagerUrl:
+          type: string
+          description: the workflow manager URL
+        environment:
+          type: string
+          description: the compute node environment
+        account:
+          type: object
+          description: the compute resource account
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        createdAt:
+          type: string
+          description: the UTC timestamp when the compute node was created
+        queueUrl:
+          type: string
+          description: the url of the compute node queue
+        organizationId:
+          type: string
+          description: the organization the compute node was created in
+        userId:
+          type: string
+          description: the user that created the compute node
+    postComputeNodesResponse:
+      type: object
+      properties:
+        postResponse:
+          type: string
+          description: the response from initiating creation of a compute node
+    deleteComputeNodesResponse:
+      type: object
+      properties:
+        deleteResponse:
+          type: string
+          description: the response from initiating deletion of a compute node
+    githubPostRegisterRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: OAuth code returned by Github OAuth authentication
+        installation_id:
+          type: string
+          description: The installation id of the Pennsieve GitHub App
+    githubProfileResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Github User ID
+        email:
+          type: string
+          description: Email associated with GitHub Account
+        url:
+          type: string
+          description: Url to GitHub profile page
+        avatar_url:
+          type: string
+          description: Url to Github user avatar
+    githubWebhookEvent:
+      type: object
+      properties:
+        action:
+          type: string
+          description: the name of the action
+    githubWebhookEventAccepted:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: the request id for the webhook event
+        request_type:
+          type: string
+          description: the GitHub event type (release)
+        request_origin:
+          type: string
+          description: identifier for the GitHub item from which the request is being generated (repo url)
+        request_target:
+          type: string
+          description: identifier for the Pennsieve item on which the request is being executed (dataset, external repo)
+    applicationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: the name of the application
+        description:
+          type: string
+          description: the description of the application
+        applicationType:
+          type: string
+          description: the type of application
+        resources:
+          type: object
+          description: the resources for the application
+          properties:
+            cpu:
+              type: string
+              description: the memory value for the application
+            memory:
+              type: string
+              description: the cpu value for the application
+        account:
+          type: object
+          description: the registered compute resource
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        computeNode:
+          type: object
+          description: the compute node where the application will be registered
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute node
+            efsId:
+              type: string
+              description: the efsId of the compute node
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+        environment:
+          type: string
+          description: the compute node environment
+    applicationsGetResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: the name of the application
+        description:
+          type: string
+          description: the description of the application
+        applicationType:
+          type: string
+          description: the type of application
+        resources:
+          type: object
+          description: the resources for the application
+          properties:
+            cpu:
+              type: string
+              description: the memory value for the application
+            memory:
+              type: string
+              description: the cpu value for the application
+        account:
+          type: object
+          description: the registered compute resource
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+        computeNode:
+          type: object
+          description: the compute node where the application will be registered
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute node
+            efsId:
+              type: string
+              description: the efsId of the compute node
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+        destination:
+          type: object
+          description: the destination repository for the application
+          properties:
+            type:
+              type: string
+              description: the type of destination, for example ecr
+            url:
+              type: string
+              description: the url of the destination
+        environment:
+          type: string
+          description: the compute node environment
+        createdAt:
+          type: string
+          description: the UTC timestamp when the compute node was created
+        organizationId:
+          type: string
+          description: the organization the compute node was created in
+        userId:
+          type: string
+          description: the user that created the compute node
+    postApplicationsResponse:
+      type: object
+      properties:
+        postResponse:
+          type: string
+          description: the response from initiating creation of an application
+    deleteApplicationsResponse:
+      type: object
+      properties:
+        deleteResponse:
+          type: string
+          description: the response from initiating deletion of an application
+    applicationDeployRequest:
+      type: object
+      properties:
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+        destination:
+          type: object
+          description: the destination repository for the application
+          properties:
+            type:
+              type: string
+              description: the type of destination, for example ecr
+            url:
+              type: string
+              description: the url of the destination
+        account:
+          type: object
+          description: the registered compute resource
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute resource account
+            accountId:
+              type: string
+              description: the accountId of the compute resource account
+            accountType:
+              type: string
+              description: the account type of compute resource account
+    postApplicationsDeployResponse:
+        type: object
+        properties:
+          postResponse:
+            type: string
+            description: the response from initiating deployment of an application
+    workflowRequest:
+      type: object
+      properties:
+        computeNode:
+          type: object
+          description: the compute node
+          properties:
+            uuid:
+              type: string
+              description: the uuid of the compute node
+            computeNodeGatewayUrl:
+              type: string
+              description: the URL of the compute node
+        datasetId:
+          type: string
+          description: the identifier of the application
+        packageIds:
+          type: array
+          description: the packageIds
+          items:
+            type: string
+        workflow:
+          type: array
+          description: the applications to run in the workflow
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+              applicationId:
+                type: string
+              applicationType:
+                type: string
+              params:
+                type: object
+                description: application specific params
+              commandArguments:
+                type: array
+                description: command arguments to pass to the application
+                items:
+                  type: string
+        params:
+          type: object
+          description: integration params
+    workflowResponse:
+      type: object
+      properties:
+        integrationId:
+          type: string
+          description: the UUID of the integration execution
+    trackRepositoryRequest:
+      type: object
+      properties:
+        origin:
+          type: string
+          description: the name of the origin (e.g., GitHub)
+        url:
+          type: string
+          description: the URL of the external repository
+        type:
+          type: string
+          description: the purpose of tracking (publishing or appstore)
+    externalRepository:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: the id number of the external repository
+        origin:
+          type: string
+          description: the name of the origin (e.g., GitHub)
+        url:
+          type: string
+          description: the URL of the external repository
+        type:
+          type: string
+          description: the purpose of tracking (publishing or appstore)
+        status:
+          type: string
+          description: the tracking status (enabled, disabled, suspended)
+        organization_id:
+          type: integer
+          description: the Pennsieve Workspace organization id
+        user_id:
+          type: integer
+          description: the Pennsieve User id
+        dataset_id:
+          type: integer
+          description: the id of the dataset in the Pennsieve Workspace for publishing repos
+        application_id:
+          type: string
+          description: the UUID of the Application in the AppStore
+        created_at:
+          type: string
+          description: the date and time when the external repo was created
+        updated_at:
+          type: string
+          description: the date and time when the external repo was updated
+    externalReposResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        count:
+          type: integer
+        repos:
+          type: array
+          items:
+            $ref: "#/components/schemas/externalRepository"
+    githubRepo:
+      type: object
+      properties:
+        id:
+          type: integer
+        node_id:
+          type: string
+        name:
+          type: string
+        full_name:
+          type: string
+        description:
+          type: string
+        html_url:
+          type: string
+        license:
+          type: object
+          properties:
+            key:
+              type: string
+            name:
+              type: string
+            spdx_id:
+              type: string
+            url:
+              type: string
+            node_id:
+              type: string
+    githubReposResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        count:
+          type: integer
+        repos:
+          type: array
+          items:
+            $ref: "#/components/schemas/githubRepo"
+
 paths:
   /manifest:
     get:
@@ -1385,6 +2022,39 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+  /datasets/manifest:
+    get:
+      summary: Presigned url to manifest of dataset
+      description: |
+        Returns a presigned URL to a file containing the current manifest of an unpublished dataset.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
+      operationId: getManifest
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Datasets Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: dataset node id
+      responses:
+        '200':
+          description: The contents of the dataset's trashcan.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /packages/restore:
     post:
       summary: Restore deleted items
@@ -1418,6 +2088,875 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/restoreResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /integrations:
+    post:
+      summary: Execute integration
+      description: |
+        Calls endpoint of application with supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: callIntegration
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/integrationRequest'
+      responses:
+        '200':
+          description: The result of starting the integration process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get integrations
+      description: |
+        Get a list of integrations
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getIntegrations
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      responses:
+        '200':
+          description: The requested integrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Update integration
+      description: |
+        Updates integration with supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: updateIntegration
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/integrationRequest'
+      responses:
+        '200':
+          description: The result of updating the integration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /integrations/{id}:          
+    get:
+      summary: Get integration by uuid
+      description: |
+        Gets integration by integrationId
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getIntegration
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the integration.
+      responses:
+        '200':
+          description: The requested integration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows:
+    post:
+      summary: Initiate workflow
+      description: |
+        Calls endpoint of compute node with supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: startWorflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowRequest'
+      responses:
+        '200':
+          description: The result of starting the workflow process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'      
+
+  /import/manifest:
+    post:
+      summary: Create import manifest
+      description: |
+        Calls endpoint on import-service to create an import manifest
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
+      operationId: createImportManifest
+      tags:
+        - Import Service
+      requestBody:
+        description: Import Manifest
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/createImportManifestRequest'
+      responses:
+        '200':
+          description: Created import manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/createImportManifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /discover/rehydrate:
+    post:
+      summary: Execute rehydration
+      description: |
+        Calls endpoint to trigger rehydration process
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/rehydration-service'
+      operationId: rehydrate
+      tags:
+        - Discover/Rehydration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rehydrationRequest'
+      responses:
+        '200':
+          description: The result of starting the rehydration process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rehydrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /readme/docs/{slug}:
+    get:
+      summary: Get Pennsieve readme.io doc by slug
+      description: |
+        Gets Pennsieve readme.io doc by slug
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/readme-service'
+      operationId: getReadmeDoc
+      security:
+        - token_auth: [ ]
+      tags:
+        - Readme Service
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+          description: The URL-safe slug of the readme.io doc. Slugs must be all lowercase, and replace spaces with hyphens.
+      responses:
+        '200':
+          description: The requested document
+          content:
+            application/json:
+              schema:
+                $ref: 'https://dash.readme.com/api/v1/schema#/components/schemas/docSchemaResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /pennsieve-accounts/{accountType}:
+    get:
+      summary: Get Pennsieve Accounts
+      description: |
+        Gets Pennsieve Accounts by accountType
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
+      operationId: getPennsieveAccounts
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      parameters:
+        - in: path
+          name: accountType
+          required: true
+          schema:
+            type: string
+          description: The Pennsieve account type.
+      responses:
+        '200':
+          description: The requested account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pennsieveAccountsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /accounts:
+    post:
+      summary: Creates an external compute resource account
+      description: |
+        Creates an account for an external compute resource. Such as an AWS account.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
+      operationId: postAccounts
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/accountRequest'
+      responses:
+        '201':
+          description: Successfully created compute resource account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postAccountsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get account details for compute resources
+      description: |
+        Get account details for compute resources
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
+      operationId: getAccounts
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      responses:
+        '200':
+          description: The requested compute resource accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/accountsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /accounts/{id}:
+    get:
+      summary: Get account details for a specific compute resource
+      description: |
+        Get account details for a specific compute resource
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
+      operationId: getAccount
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the compute resource account
+      responses:
+        '200':
+          description: The requested compute resource account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/accountsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /accounts/github/user:
+    get:
+      summary: Returns GitHub profile
+      description: |
+        Returns an existing GitHub profile when user has installed the Pennsieve GitHub App.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: getGithubUser
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      responses:
+        '201':
+          description: GitHub profile information.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/githubProfileResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Deletes Pennsieve GitHub App
+      description: |
+        Deletes the Pennsieve GitHub App from the user's GitHub Account and removes profile from Pennsieve.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: deleteGithubUser
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      responses:
+        '201':
+          description: Success message.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /accounts/github/register:
+    post:
+      summary: Register a Github account for a user
+      description: |
+        Installs and Authorizes the Pennsieve Github App in the user's Github Account.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: postGithubRegister
+      security:
+        - token_auth: [ ]
+      tags:
+        - Account Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/githubPostRegisterRequest'
+      responses:
+        '201':
+          description: Successfully installed and authorized the Pennsieve GitHub App.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/githubProfileResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /compute-nodes:
+    post:
+      summary: Creates a compute node
+      description: |
+        Creates a compute-node
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: postComputeNodes
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/computeNodeRequest'
+      responses:
+        '202':
+          description: Successfully initiated compute node creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postComputeNodesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get compute nodes
+      description: |
+        Get a list of compute nodes
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: getComputeNodes
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      responses:
+        '200':
+          description: The requested compute nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/computeNodesGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /compute-nodes/{id}:
+    get:
+      summary: Get details for a specific compute node
+      description: |
+        Get details for a specific compute node
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: getComputeNode
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the compute node
+      responses:
+        '200':
+          description: The requested compute node
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/computeNodesGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete a specific compute node
+      description: |
+        Delete a specific compute node
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
+      operationId: deleteComputeNode
+      security:
+        - token_auth: [ ]
+      tags:
+        - Compute Node Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the compute node
+      responses:
+        '202':
+          description: Successfully initiated compute node deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/deleteComputeNodesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications:
+    post:
+      summary: Creates an application
+      description: |
+        Creates an application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postApplications
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/applicationRequest'
+      responses:
+        '202':
+          description: Successfully initiated application creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get applications
+      description: |
+        Get a list of applications
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getApplications
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      responses:
+        '200':
+          description: The requested applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/{id}:
+    get:
+      summary: Get details for a specific application
+      description: |
+        Get details for a specific application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getApplication
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the application
+      responses:
+        '200':
+          description: The requested application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    delete:
+      summary: Delete a specific application
+      description: |
+        Delete a specific application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: deleteApplication
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the application
+      responses:
+        '202':
+          description: Successfully initiated application deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/deleteApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/deploy:
+    post:
+      summary: Deploys an application from a source to a destination
+      description: |
+        Deployes an application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postApplicationDeploy
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/applicationDeployRequest'
+      responses:
+        '202':
+          description: Successfully initiated application deployment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postApplicationsDeployResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/enable:
+    post:
+      summary: Enable tracking of an external repository
+      description: |
+        Begins tracking of an external repository for publishing or the AppStore.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: postEnableTrackingExternalRepo
+      security:
+        - token_auth: [ ]
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/trackRepositoryRequest'
+      responses:
+        '201':
+          description: Successfully enabled tracking of the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/disable:
+    post:
+      summary: Disable tracking of an external repository
+      description: |
+        Stops tracking of an external repository for publishing or the AppStore.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: postDisableTrackingExternalRepo
+      security:
+        - token_auth: [ ]
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/trackRepositoryRequest'
+      responses:
+        '201':
+          description: Successfully disabled tracking of the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/github:
+    get:
+      summary: Get GitHub Repositories
+      description: |
+        List repositories for the authenticated GitHub user
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: the page number to return
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          description: the number of items to return on each page
+      operationId: getGitHubRepositories
+      tags:
+        - GitHub Service
+      responses:
+        '200':
+          description: List of GitHub repositories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/githubReposResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/external:
+    get:
+      summary: Get External Repositories
+      description: |
+        List registered external repositories for the authenticated user
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: the page number to return
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          description: the number of items to return on each page
+      operationId: getExternalRepositories
+      tags:
+        - GitHub Service
+      responses:
+        '200':
+          description: List of GitHub repositories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalReposResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /webhooks/github:
+    post:
+      summary: GitHub Webhook entrypoint
+      description: |
+        Receives GitHub events
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: webhookEndpointForGitHub
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/githubWebhookEvent'
+      responses:
+        '200':
+          description: Received and accepted GitHub webhook event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/githubWebhookEventAccepted'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
