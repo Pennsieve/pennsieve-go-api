@@ -895,6 +895,49 @@ components:
           items:
             $ref: "#/components/schemas/githubRepo"
 
+    repository:
+      type: object
+      properties:
+        origin:
+          type: string
+        name:
+          type: string
+        full_name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        tracking:
+          type: boolean
+        type:
+          type: string
+        details:
+          type: object
+          properties:
+            organization_id:
+              type: integer
+            user_id:
+              type: integer
+            dataset_id:
+              type: integer
+            application_id:
+              type: string
+
+    repositoriesResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        count:
+          type: integer
+        repos:
+          type: array
+          items:
+            $ref: "#/components/schemas/repository"
+
 paths:
   /manifest:
     get:
@@ -2849,6 +2892,49 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
+  /repositories:
+    get:
+      summary: Get all Repositories that the authenticated user has access to
+      description: |
+        Returns a list of Repositories from all sources (origins) that a user has access to, and indicates whether |
+        a repository is being tracked for publishing, app-store, or other purpose. This endpoint is paginated.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: the page number to return
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          description: the number of items to return on each page
+      operationId: getMyRepositories
+      tags:
+        - Repository Service
+      responses:
+        '200':
+          description: List of Repositories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoriesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
   /repositories/github:
     get:
       summary: Get GitHub Repositories
@@ -2920,7 +3006,7 @@ paths:
           description: the number of items to return on each page
       operationId: getExternalRepositories
       tags:
-        - GitHub Service
+        - Repository Service
       responses:
         '200':
           description: List of GitHub repositories.
