@@ -3260,12 +3260,17 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /objects/{object_id}:
+  /ga4gh/drs/v1/objects/{object_id}:
     get:
+      operationId: getUserById
       summary: "Get info about a DrsObject"
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
         If the `expand` query parameter is set to `true` and the object_id refers to a bundle, the entire set of objects in the bundle is expanded and included in the result.
+      tags:
+        - DRS Service
       parameters:
         - name: object_id
           in: path
@@ -3296,10 +3301,15 @@ paths:
       security: []
 
     post:
+      operationId: postUserById
       summary: "Get info about a DrsObject through POST'ing a Passport"
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
         Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
+      tags:
+        - DRS Service      
       parameters:
         - name: object_id
           in: path
@@ -3327,12 +3337,17 @@ paths:
       security:
         - PassportAuth: []
 
-  /objects:
+  /ga4gh/drs/v1/objects:
     post:
+      operationId: getUserObject
       summary: "Get info about multiple DrsObjects with an optional Passport(s)"
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns an array of object metadata, and a list of access methods that can be used to fetch objects' bytes.
         Currently this is limited to use passports (one or more) or a single bearer token, so make sure your bulk request is for objects that all use the same passports/token.
+      tags:
+        - DRS Service      
       parameters:
         - name: expand
           in: query
@@ -3364,13 +3379,18 @@ paths:
         - PassportAuth: []
 
 
-  /objects/{object_id}/access/{access_id}:
+  /ga4gh/drs/v1/objects/{object_id}/access/{access_id}:
     get:
+      operationId: getUserbyAccessId
       summary: "Get a URL for fetching bytes"
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns a URL that can be used to fetch the bytes of a DrsObject. 
         This method only needs to be called when using an AccessMethod that contains an access_id 
         (e.g., for servers that use signed URLs for fetching object bytes).
+      tags:
+        - DRS Service      
       parameters:
         - name: object_id
           in: path
@@ -3398,12 +3418,17 @@ paths:
       security: []
 
     post:
+      operationId: postUserbyAccessId
       summary: "Get a URL for fetching bytes through POST'ing a Passport"
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns a URL that can be used to fetch the bytes of a DrsObject. 
         This method only needs to be called when using an AccessMethod that contains an access_id 
         (e.g., for servers that use signed URLs for fetching object bytes). 
         Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
+      tags:
+        - DRS Service
       parameters:
         - name: object_id
           in: path
@@ -3436,8 +3461,11 @@ paths:
           description: "Unauthorized"
       security:
         - PassportAuth: []
-  /objects/access:
+  /ga4gh/drs/v1/objects/access:
     post:
+      operationId: postAllObjects
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       summary: "Get URLs for fetching bytes from multiple objects with an optional Passport(s)"
       description: |
         Returns an array of URL objects that can be used to fetch the bytes of multiple DrsObjects. 
@@ -3445,6 +3473,8 @@ paths:
         (e.g., for servers that use signed URLs for fetching object bytes). 
         Currently this is limited to use passports (one or more) or a single bearer token, 
         so make sure your bulk request is for objects that all use the same passports/token.
+      tags:
+        - DRS Service        
       requestBody:
         required: true
         content:

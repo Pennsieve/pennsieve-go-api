@@ -29,6 +29,7 @@ resource "aws_apigatewayv2_api" "upload-service-gateway" {
     token_pool_endpoint = "https://${var.token_pool_endpoint}"
     authorize_lambda_invoke_uri = aws_lambda_function.authorizer_lambda.invoke_arn
     gateway_authorizer_role = aws_iam_role.invocation_role.arn
+    drs_service_lambda_arn = data.terraform_remote_state.drs_service.outputs.service_lambda_arn,
   })
 }
 
