@@ -361,13 +361,10 @@ components:
           description: (unique) S3 key where the file will be uploaded to under the manifest key
         filePath:
           type: string
-          description: relative filepath and full filename (including extension)
-        packageId:
-          type: string
-          description: Pennsieve package the imported file should be associated with
+          description: relative file path and full file name (including extension)
       required:
         - uploadKey
-        - filepath
+        - filePath
     createImportManifestRequest:
       type: object
       description: request to instantiate an import manifest
@@ -376,6 +373,13 @@ components:
           type: string
           format: uuid
           description: (optional) the UUID of the import manifest
+        integrationId:
+          type: string
+          format: uuid
+          description: (optional) the UUID of the integration task associated with the import
+        packageId:
+          type: string
+          description: (optional) Pennsieve package the import should apply to
         importType:
           type: string
           enum:
