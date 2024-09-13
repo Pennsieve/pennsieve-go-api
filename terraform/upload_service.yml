@@ -393,18 +393,29 @@ components:
         - importType
     importManifestResponse:
       type: object
-      description: import manifest properties
+      description: import manifest response object
       properties:
         id:
           type: string
           format: uuid
-          description: the UUID of the import manifest
+          description: the ID of the import manifest
+        integrationId:
+          type: string
+          format: uuid
+          description: (optional) the integration task associated with the import
+        datasetId:
+          type: string
+          description: Pennsieve dataset the import applies to
+        packageId:
+          type: string
+          description: (optional) Pennsieve package the import applies to
         importType:
           type: string
-        files:
-          type: array
-          items:
-            $ref: "#/components/schemas/importFile"
+      required:
+        - id
+        - datasetId
+        - files
+        - importType
 
     rehydrationRequest:
       type: object
