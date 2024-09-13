@@ -350,15 +350,73 @@ components:
           type: array
           description: the packageIds
           items:
-            type: string              
+            type: string
+
+    importFile:
+      type: object
+      description: import file metadata for upload tracking and import processing
+      properties:
+        uploadKey:
+          type: string
+          description: (unique) S3 key where the file will be uploaded to under the manifest key
+        filePath:
+          type: string
+          description: relative file path and full file name (including extension)
+      required:
+        - uploadKey
+        - filePath
     createImportManifestRequest:
       type: object
-    createImportManifestResponse:
-      type: object
+      description: request to instantiate an import manifest
       properties:
-        uuid:
+        id:
           type: string
-          description: the uuid of the import manifest
+          format: uuid
+          description: (optional) the UUID of the import manifest
+        integrationId:
+          type: string
+          format: uuid
+          description: (optional) the UUID of the integration task associated with the import
+        packageId:
+          type: string
+          description: (optional) Pennsieve package the import should apply to
+        importType:
+          type: string
+          enum:
+            - timeseries
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/importFile"
+      required:
+        - files
+        - importType
+    importManifestResponse:
+      type: object
+      description: import manifest response object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: the ID of the import manifest
+        integrationId:
+          type: string
+          format: uuid
+          description: (optional) the integration task associated with the import
+        datasetId:
+          type: string
+          description: Pennsieve dataset the import applies to
+        packageId:
+          type: string
+          description: (optional) Pennsieve package the import applies to
+        importType:
+          type: string
+      required:
+        - id
+        - datasetId
+        - files
+        - importType
+
     rehydrationRequest:
       type: object
       properties:
@@ -2283,7 +2341,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'      
 
-  /import/manifest:
+  /import:
     post:
       summary: Create import manifest
       description: |
@@ -2291,8 +2349,17 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/import-service'
       operationId: createImportManifest
+      security:
+        - token_dataset_auth: [ ]
       tags:
         - Import Service
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where the files will be imported
       requestBody:
         description: Import Manifest
         required: true
@@ -2306,7 +2373,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/createImportManifestResponse'
+                $ref: '#/components/schemas/importManifestResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
