@@ -932,6 +932,46 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/externalRepository"
+
+    updateRepositoryRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        name:
+          type: string
+        subtitle:
+          type: string
+        auto_publish:
+          type: boolean
+        tags:
+          type: array
+        sync:
+          type: object
+          properties:
+            banner:
+              type: boolean
+            readme:
+              type: boolean
+            changelog:
+              type: boolean
+            license:
+              type: boolean
+            contributors:
+              type: boolean
+
+    publishRepositoryRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        type:
+          type: string
+
     githubRepo:
       type: object
       properties:
@@ -3303,6 +3343,68 @@ paths:
       responses:
         '201':
           description: Successfully disabled tracking of the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/external:
+    put:
+      summary: Update the attributes of an external repository
+      description: |
+        Updates the External Repository and the attached Dataset
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: updateExternalRepo
+      security:
+        - token_auth: [ ]
+      tags:
+        - Repository Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updateRepositoryRequest'
+      responses:
+        '200':
+          description: Successfully updated the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/publish:
+    post:
+      summary: request publishing of an external repository
+      description: |
+        Requests that an external repository be published.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      operationId: publishRepository
+      tags:
+        - Repository Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/publishRepositoryRequest'
+      responses:
+        '201':
+          description: Successfully published the external repository.
           content:
             application/json:
               schema:
