@@ -1388,6 +1388,59 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/repository"
+    
+    ServiceInfoResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Unique ID of this service."
+        name:
+          type: string
+          description: "Name of the service."
+        type:
+          type: object
+          properties:
+            group:
+              type: string
+              description: "org.ga4gh"
+            artifact:
+              type: string
+              description: "drs"
+        description:
+          type: string
+          description: "Description of the service."
+        organization:
+          type: object
+          properties:
+            name:
+              type: string
+              description: "Name of the organization providing the service."
+            url:
+              type: string
+              description: "URL of the organization."
+        contactUrl:
+          type: string
+          description: "Contact URL of the service."
+        documentationUrl:
+          type: string
+          description: "Documentation URL for the service."
+        createdAt:
+          type: string
+          description: "Timestamp when the service was created."
+        updatedAt:
+          type: string
+          description: "Timestamp when the service was last updated."
+
+    InternalServerError:
+      type: object
+      properties:
+        msg:
+          type: string
+          description: "A detailed error message."
+        status_code:
+          type: integer
+          description: "The integer representing the HTTP status code (e.g. 200, 404)."
 
 paths:
   /manifest:
@@ -3804,3 +3857,22 @@ paths:
           description: "Unauthorized"
       security:
         - PassportAuth: []
+
+  /ga4gh/drs/v1/service-info:
+    get:
+      summary: "Retrieve information about this service"
+      description: |
+        Returns information about the DRS service based on GA4GH Service Info specification.
+      responses:
+        '200':
+          description: A JSON object with details about the DRS service.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInfoResponse'
+        '500':
+          description: "Internal server error. Something went wrong on the server side."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'        
