@@ -2681,7 +2681,7 @@ paths:
         Initiates workflow with supplied payload
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
-      operationId: InitiateWorkflow
+      operationId: initiateWorkflow
       security:
         - token_auth: [ ]
       tags:
