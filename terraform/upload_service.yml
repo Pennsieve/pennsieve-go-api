@@ -2727,7 +2727,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /workflow/instances:
+  /workflows/instances:
     post:
       summary: Initiate workflow instance
       description: |
