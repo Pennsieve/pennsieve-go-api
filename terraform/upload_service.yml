@@ -2648,6 +2648,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: callIntegration
+      deprecated: true
       security:
         - token_auth: [ ]
       tags:
@@ -2677,6 +2678,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getIntegrations
+      deprecated: true
       security:
         - token_auth: [ ]
       tags:
@@ -2701,6 +2703,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: updateIntegration
+      deprecated: true
       security:
         - token_auth: [ ]
       tags:
@@ -2724,6 +2727,90 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
+  /workflow/instances:
+    post:
+      summary: Initiate workflow instance
+      description: |
+        Initiates workflow with supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: initiateWorkflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/integrationRequest'
+      responses:
+        '200':
+          description: The result of starting the workflow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get workflow instances
+      description: |
+        Get a list of workflow instances
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflowInstances
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      responses:
+        '200':
+          description: The requested workflow instances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Update a workflow instance
+      description: |
+        Updates workflow instance using supplied payload
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: updateWorkflowInstance
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/integrationRequest'
+      responses:
+        '200':
+          description: The result of updating the workflow instance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'          
+
   /integrations/{id}:          
     get:
       summary: Get integration by uuid
@@ -2732,6 +2819,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getIntegration
+      deprecated: true
       security:
         - token_auth: [ ]
       tags:
@@ -2747,6 +2835,38 @@ paths:
       responses:
         '200':
           description: The requested integration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows/instances/{id}:          
+    get:
+      summary: Get workflow instance by uuid
+      description: |
+        Gets workflow instance by uuid
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflowInstance
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance.
+      responses:
+        '200':
+          description: The requested workflow instance
           content:
             application/json:
               schema:
@@ -2785,7 +2905,7 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'      
+          $ref: '#/components/responses/Error'    
 
   /import:
     post:
