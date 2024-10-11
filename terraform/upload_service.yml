@@ -2953,7 +2953,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /import/{import_id}/upload/{upload_key}/presign-upload:
+  /import/{import_id}/upload/{upload_key}/presign:
     get:
       summary: generate upload pre-signed URL
       description: |
