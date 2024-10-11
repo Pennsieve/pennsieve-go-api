@@ -103,7 +103,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 
 	// Get Dataset associated with the requested manifest
-	if hasManifestId {
+	if hasManifestId && manifestId == "" {
 		cfg, err := config.LoadDefaultConfig(ctx)
 		if err != nil {
 			panic("unable to load SDK config, " + err.Error())
@@ -174,7 +174,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Get DATASET Claim
 	var datasetClaim *dataset.Claim
-	if hasDatasetId {
+	if hasDatasetId && datasetNodeId != "" {
 		datasetClaim, err = qPgDb.GetDatasetClaim(ctx, currentUser, datasetNodeId, orgInt)
 		if err != nil {
 			log.Error("Unable to get Dataset Role")
