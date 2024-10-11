@@ -390,10 +390,6 @@ components:
       type: object
       description: request to instantiate an import manifest
       properties:
-        id:
-          type: string
-          format: uuid
-          description: (optional) the UUID of the import manifest
         integrationId:
           type: string
           format: uuid
