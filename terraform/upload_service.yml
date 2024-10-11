@@ -437,6 +437,15 @@ components:
         - datasetId
         - files
         - importType
+    importPresignUploadResponse:
+      type: object
+      description: a pre-signed S3 URL
+      properties:
+        url:
+          type: string
+          description: the pre-signed S3 URL
+      required:
+        - url
 
     rehydrationRequest:
       type: object
@@ -2934,12 +2943,48 @@ paths:
             schema:
               $ref: '#/components/schemas/createImportManifestRequest'
       responses:
-        '200':
+        '201':
           description: Created import manifest.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/importManifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /import/{import_id}/upload/{upload_key}/presign-upload:
+    get:
+      summary: generate upload pre-signed URL
+      description: |
+        Generates an S3 pre-signed URL for uploading an import file to S3
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
+      operationId: importPresignUpload
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Import Service
+      parameters:
+        - in: path
+          name: import_id
+          schema:
+            type: string
+          required: true
+          description: The import manifest ID
+        - in: path
+          name: upload_key
+          schema:
+            type: string
+          required: true
+          description: The upload key associated with the file being uploaded
+      responses:
+        '200':
+          description: the generated pre-signed URL for upload to S3
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/importPresignUploadResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
@@ -3995,4 +4040,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InternalServerError'        
+                $ref: '#/components/schemas/InternalServerError'
