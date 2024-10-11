@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"regexp"
+	"time"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -16,9 +20,6 @@ import (
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
-	"os"
-	"regexp"
-	"time"
 )
 
 var err error
@@ -70,6 +71,16 @@ func init() {
 
 // Handler runs in response to authorization event from the AWS API Gateway.
 func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
+
+	log.Info("request parameters",
+		"Type", event.Type,
+		"IdentitySource", event.IdentitySource,
+		"pathParameters", event.PathParameters,
+		"QueryStringParameters", event.QueryStringParameters,
+		"rawPath", event.RawPath,
+		"Headers", event.Headers,
+		"requestContext.routeKey", event.RequestContext.RouteKey,
+		"event.RequestContext.Authorizer", event.RequestContext.Authorizer)
 
 	// Get Identity Sources
 	// If single identity source, then no dataset claim should be generated.
