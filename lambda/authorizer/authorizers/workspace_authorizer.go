@@ -40,7 +40,8 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context) (map[string]in
 	// Get Publisher's Claim
 	teamClaims, err := w.Queries.GetTeamClaims(ctx, w.CurrentUser.Id)
 	if err != nil {
-		log.Error(fmt.Sprintf("Unable to get Team Claims for user: %d organization: %d", w.CurrentUser.Id, orgInt))
+		log.Error(fmt.Sprintf("Unable to get Team Claims for user: %d organization: %d",
+			w.CurrentUser.Id, orgInt))
 		return nil, err
 
 	}
@@ -52,8 +53,8 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context) (map[string]in
 	}
 
 	return map[string]interface{}{
-		"user_claim":      userClaim,
-		"workspace_claim": orgClaim,
-		"teams_claim":     teamClaims,
+		"user_claim":  userClaim,
+		"org_claim":   orgClaim,
+		"teams_claim": teamClaims,
 	}, nil
 }

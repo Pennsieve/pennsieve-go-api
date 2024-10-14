@@ -53,8 +53,16 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context) (map[string]inte
 		IsSuperAdmin: d.CurrentUser.IsSuperAdmin,
 	}
 
+	// Get ORG Claim
+	orgClaim, err := d.Queries.GetOrganizationClaim(ctx, d.CurrentUser.Id, orgInt)
+	if err != nil {
+		log.Error("unable to get Organization Role")
+		return nil, err
+	}
+
 	return map[string]interface{}{
 		"user_claim":    userClaim,
+		"org_claim":     orgClaim,
 		"dataset_claim": datasetClaim,
 	}, nil
 }
