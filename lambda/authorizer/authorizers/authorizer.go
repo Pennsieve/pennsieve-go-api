@@ -1,5 +1,7 @@
 package authorizers
 
+import "context"
+
 type Authorizer interface {
-	GenerateClaims() map[string]interface{}
+	GenerateClaims(context.Context) (map[string]interface{}, error)
 }
