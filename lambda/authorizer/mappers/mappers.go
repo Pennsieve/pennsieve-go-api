@@ -15,6 +15,8 @@ func IdentitySourceToAuthorizer(IdentitySource []string) authorizers.Authorizer 
 	switch {
 	case len(IdentitySource) > 1 && matches(IdentitySource[1], `N:dataset:`):
 		return authorizers.NewDatasetAuthorizer()
+	case len(IdentitySource) > 1 && matches(IdentitySource[1], `N:manifest:`):
+		return authorizers.NewDatasetAuthorizer()
 	case len(IdentitySource) > 1 && matches(IdentitySource[1], `N:organization:`):
 		return authorizers.NewWorkspaceAuthorizer()
 	default:
