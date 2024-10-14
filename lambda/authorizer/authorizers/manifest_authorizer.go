@@ -26,7 +26,7 @@ type ManifestAuthorizer struct {
 }
 
 func NewManifestAuthorizer(currentUser *pgdbModels.User, pddb *pgdbQueries.Queries, IdentitySource []string, token jwt.Token) Authorizer {
-	return &ManifestAuthorizer{}
+	return &ManifestAuthorizer{currentUser, pddb, IdentitySource, token}
 }
 
 func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context) (map[string]interface{}, error) {

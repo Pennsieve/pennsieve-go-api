@@ -21,7 +21,7 @@ func IdentitySourceToAuthorizer(IdentitySource []string, currentUser *pgdbModels
 	case len(IdentitySource) > 1 && matches(IdentitySource[1], `N:manifest:`):
 		return authorizers.NewManifestAuthorizer(currentUser, pddb, IdentitySource, token) // will be deprecated
 	case len(IdentitySource) > 1 && matches(IdentitySource[1], `N:organization:`):
-		return authorizers.NewWorkspaceAuthorizer()
+		return authorizers.NewWorkspaceAuthorizer(currentUser, pddb, IdentitySource, token)
 	default:
 		return authorizers.NewUserAuthorizer(currentUser)
 	}

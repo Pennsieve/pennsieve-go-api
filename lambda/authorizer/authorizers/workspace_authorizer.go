@@ -18,8 +18,8 @@ type WorkspaceAuthorizer struct {
 	Token          jwt.Token
 }
 
-func NewWorkspaceAuthorizer() Authorizer {
-	return &WorkspaceAuthorizer{}
+func NewWorkspaceAuthorizer(currentUser *pgdbModels.User, pddb *pgdbQueries.Queries, IdentitySource []string, token jwt.Token) Authorizer {
+	return &WorkspaceAuthorizer{currentUser, pddb, IdentitySource, token}
 }
 
 func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context) (map[string]interface{}, error) {
