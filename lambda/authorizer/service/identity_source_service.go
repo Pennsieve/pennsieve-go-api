@@ -48,7 +48,8 @@ func (i *IdentitySourceService) GetClaims(ctx context.Context) (map[string]inter
 		log.Error(err)
 		return nil, err
 	}
-	authorizer, err := mappers.IdentitySourceToAuthorizer(i.IdentitySource, currentUser, i.QueryHandle, i.Token)
+	authFactory := mappers.NewCustomAuthorizerFactory(currentUser, i.QueryHandle, i.Token)
+	authorizer, err := mappers.IdentitySourceToAuthorizer(i.IdentitySource, authFactory)
 	if err != nil {
 		log.Error(err)
 		return nil, err
