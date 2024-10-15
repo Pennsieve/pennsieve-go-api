@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// will be deprecated
 type ManifestAuthorizer struct {
 	CurrentUser    *pgdbModels.User
 	Queries        *pgdbQueries.Queries
