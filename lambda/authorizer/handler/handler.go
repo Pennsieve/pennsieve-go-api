@@ -11,13 +11,11 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
-	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/service"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 )
 
-var err error
 var keySet jwk.Set
 var regionID string
 var userPoolID string
@@ -89,30 +87,16 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Open Pennsieve DB Connection
 	db, err := pgdb.ConnectRDS()
-	postgresDB := pgdb.New(db)
+	queryHandle := pgdb.New(db)
 
 	if err != nil {
 		log.Fatalln("unable to connect to RDS instance.")
 	}
 	defer db.Close()
 
-	// Get Cognito User ID
-	cognitoUserName, hasKey := token.Get("username")
-	if hasKey != true {
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
-	}
-
-	// Get Pennsieve User from User Table, or Token Table
-	clientIdClaim, _ := token.Get("client_id") // Key is present or method would have returned before.
-	isFromTokenPool := clientIdClaim == tokenClientID
-	currentUser, err := getUser(ctx, postgresDB, cognitoUserName.(string), isFromTokenPool)
-	if err != nil {
-		log.Fatalln("unable to get User from Cognito Username")
-	}
-
-	// Get authorizer
-	authorizer := mappers.IdentitySourceToAuthorizer(event.IdentitySource, currentUser, postgresDB, token)
-	claims, err := authorizer.GenerateClaims(ctx)
+	identityService := service.NewIdentitySourceService(event.IdentitySource, token, queryHandle, tokenClientID)
+	// Get claims
+	claims, err := identityService.GetClaims(ctx)
 	if err != nil {
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,
@@ -124,28 +108,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		IsAuthorized: true,
 		Context:      claims,
 	}, nil
-
-}
-
-// getUser returns a Pennsieve user from a cognito ID.
-func getUser(ctx context.Context, q *pgdb.Queries, cognitoId string, isFromTokenPool bool) (*pgdbModels.User, error) {
-
-	if isFromTokenPool {
-		//var token pgdbModels.Token
-		currentUser, err := q.GetUserByCognitoId(ctx, cognitoId)
-		if err != nil {
-			log.Fatalln("Unable to get user:", err)
-		}
-		return currentUser, nil
-
-	} else {
-		//var user pgdbModels.User
-		currentUser, err := q.GetByCognitoId(ctx, cognitoId)
-		if err != nil {
-			log.Fatalln("Unable to get user:", err)
-		}
-		return currentUser, nil
-	}
 
 }
 
