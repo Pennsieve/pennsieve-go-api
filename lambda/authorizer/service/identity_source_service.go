@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
 	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
@@ -15,6 +16,7 @@ import (
 type IdentityService interface {
 	GetCurrentUser(context.Context, string) (*pgdbModels.User, error)
 	GetClaims(context.Context) (map[string]interface{}, error)
+	GetAuthorizer(context.Context, *pgdbModels.User) (authorizers.Authorizer, error)
 }
 
 type IdentitySourceService struct {
@@ -48,14 +50,18 @@ func (i *IdentitySourceService) GetClaims(ctx context.Context) (map[string]inter
 		log.Error(err)
 		return nil, err
 	}
-	authFactory := mappers.NewCustomAuthorizerFactory(currentUser, i.QueryHandle, i.Token)
-	authorizer, err := mappers.IdentitySourceToAuthorizer(i.IdentitySource, authFactory)
+	authorizer, err := i.GetAuthorizer(ctx, currentUser)
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
 
 	return authorizer.GenerateClaims(ctx)
+}
+
+func (i *IdentitySourceService) GetAuthorizer(ctx context.Context, currentUser *pgdbModels.User) (authorizers.Authorizer, error) {
+	authFactory := mappers.NewCustomAuthorizerFactory(currentUser, i.QueryHandle, i.Token)
+	return mappers.IdentitySourceToAuthorizer(i.IdentitySource, authFactory)
 }
 
 // getUser returns a Pennsieve user from a cognito ID.
