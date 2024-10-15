@@ -1,27 +1,30 @@
 package mappers_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMappers(t *testing.T) {
-	UserIdentitySource := []string{"Bearer eyJra.some.random.string"}
 	authFactory := mappers.NewCustomAuthorizerFactory(nil, nil, nil)
-	_, _ = mappers.IdentitySourceToAuthorizer(UserIdentitySource, authFactory)
 
-	// assert.Equal(t, len(result), 1)
+	UserIdentitySource := []string{"Bearer eyJra.some.random.string"}
+	authorizer, _ := mappers.IdentitySourceToAuthorizer(UserIdentitySource, authFactory)
+	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.UserAuthorizer")
 
-	// DatasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N:dataset:some-uuid"}
-	// authorizer = mappers.IdentitySourceToAuthorizer(DatasetIdentitySource)
-	// assert.Equal(t, len(authorizer.GenerateClaims()), 2)
-	// ManifestIdentitySource := []string{"Bearer eyJra.some.random.string", "N:manifest:some-uuid"}
-	// authorizer = mappers.IdentitySourceToAuthorizer(ManifestIdentitySource)
-	// assert.Equal(t, len(authorizer.GenerateClaims()), 2)
+	DatasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N:dataset:some-uuid"}
+	authorizer, _ = mappers.IdentitySourceToAuthorizer(DatasetIdentitySource, authFactory)
+	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.DatasetAuthorizer")
 
-	// WorkspaceIdentitySource := []string{"Bearer eyJra.some.random.string", "N:organization:some-uuid"}
-	// authorizer = mappers.IdentitySourceToAuthorizer(WorkspaceIdentitySource)
-	// assert.Equal(t, len(authorizer.GenerateClaims()), 3)
+	ManifestIdentitySource := []string{"Bearer eyJra.some.random.string", "N:manifest:some-uuid"}
+	authorizer, _ = mappers.IdentitySourceToAuthorizer(ManifestIdentitySource, authFactory)
+	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.ManifestAuthorizer")
+
+	WorkspaceIdentitySource := []string{"Bearer eyJra.some.random.string", "N:organization:some-uuid"}
+	authorizer, _ = mappers.IdentitySourceToAuthorizer(WorkspaceIdentitySource, authFactory)
+	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.WorkspaceAuthorizer")
 
 }

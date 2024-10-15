@@ -11,14 +11,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func IdentitySourceToAuthorizer(identitySource []string, f AuthorizerFactory) (authorizers.Authorizer, error) {
+func IdentitySourceToAuthorizer(identitySource []string, authorizerFactory AuthorizerFactory) (authorizers.Authorizer, error) {
 	if !helpers.Matches(identitySource[0], `Bearer (?P<token>.*)`) {
 		errorString := "token expected to be first identity source"
 		log.Error(errorString)
 		return nil, errors.New(errorString)
 	}
 
-	return f.Build(identitySource)
+	return authorizerFactory.Build(identitySource)
 }
 
 type AuthorizerFactory interface {
