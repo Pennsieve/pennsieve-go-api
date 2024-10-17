@@ -6,7 +6,6 @@ import (
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,13 +24,18 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 		log.Error("unable to get current user")
 		return nil, err
 	}
+
 	// Get Active Org
-	orgInt := currentUser.PreferredOrg
-	jwtOrg, hasKey := claimsManager.GetToken().Get("custom:organization_id")
-	if hasKey {
-		orgInt = jwtOrg.(int64)
+	orgInt := claimsManager.GetActiveOrg(ctx, currentUser)
+
+	// Get Workspace Claim
+	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
+	if err != nil {
+		log.Error("unable to get Organization Role")
+		return nil, err
 	}
 
+	// Get Dataset Claim
 	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, d.DatasetId, orgInt)
 	if err != nil {
 		log.Error("unable to get Dataset Role")
@@ -43,18 +47,8 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 		return nil, errors.New("user has no access to dataset")
 	}
 
-	userClaim := user.Claim{
-		Id:           currentUser.Id,
-		NodeId:       currentUser.NodeId,
-		IsSuperAdmin: currentUser.IsSuperAdmin,
-	}
-
-	// Get ORG Claim
-	orgClaim, err := claimsManager.GetQueryHandle().GetOrganizationClaim(ctx, currentUser.Id, orgInt)
-	if err != nil {
-		log.Error("unable to get Organization Role")
-		return nil, err
-	}
+	// Get User Claim
+	userClaim := claimsManager.GetUserClaim(ctx, currentUser)
 
 	return map[string]interface{}{
 		"user_claim":    userClaim,

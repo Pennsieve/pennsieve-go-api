@@ -1,4 +1,4 @@
-package mappers
+package factory
 
 import (
 	"errors"
@@ -7,16 +7,6 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 	log "github.com/sirupsen/logrus"
 )
-
-func IdentitySourceToAuthorizer(identitySource []string, f AuthorizerFactory) (authorizers.Authorizer, error) {
-	if !helpers.Matches(identitySource[0], `Bearer (?P<token>.*)`) {
-		errorString := "token expected to be first identity source"
-		log.Error(errorString)
-		return nil, errors.New(errorString)
-	}
-
-	return f.Build(identitySource)
-}
 
 type AuthorizerFactory interface {
 	Build([]string) (authorizers.Authorizer, error)
@@ -29,6 +19,12 @@ func NewCustomAuthorizerFactory() AuthorizerFactory {
 }
 
 func (f *CustomAuthorizerFactory) Build(identitySource []string) (authorizers.Authorizer, error) {
+	if !helpers.Matches(identitySource[0], `Bearer (?P<token>.*)`) {
+		errorString := "token expected to be first identity source"
+		log.Error(errorString)
+		return nil, errors.New(errorString)
+	}
+
 	switch {
 	case len(identitySource) > 1 && helpers.Matches(identitySource[1], `N:dataset:`):
 		return authorizers.NewDatasetAuthorizer(identitySource[1]), nil

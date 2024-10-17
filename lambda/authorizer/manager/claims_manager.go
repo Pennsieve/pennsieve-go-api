@@ -6,21 +6,22 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/organization"
 	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/teamUser"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	pgdbQueries "github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 )
 
 type IdentityManager interface {
-	// GetUserClaim(context.Context) user.Claim
-	GetDatasetClaim(context.Context, *pgdbModels.User, string, int64) (*dataset.Claim, error)
 	GetCurrentUser(context.Context) (*pgdbModels.User, error)
-	GetToken() jwt.Token
-	GetQueryHandle() *pgdbQueries.Queries
-	GetTokenClientID() string
-	// GetOrgClaim(context.Context) *organization.Claim
-	// GetTeamsClaim(context.Context) []teamUser.Claim
+	GetActiveOrg(context.Context, *pgdbModels.User) int64
+	GetUserClaim(context.Context, *pgdbModels.User) user.Claim
+	GetDatasetClaim(context.Context, *pgdbModels.User, string, int64) (*dataset.Claim, error)
+	GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error)
+	GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error)
 }
 
 type ClaimsManager struct {
@@ -34,26 +35,47 @@ func NewClaimsManager(queryHandle *pgdbQueries.Queries, token jwt.Token, tokenCl
 }
 
 func (c *ClaimsManager) GetDatasetClaim(ctx context.Context, currentUser *pgdbModels.User, datasetId string, orgInt int64) (*dataset.Claim, error) {
-	var datasetClaim *dataset.Claim
 	datasetClaim, err := c.QueryHandle.GetDatasetClaim(ctx, currentUser, datasetId, orgInt)
 	if err != nil {
-		log.Error("unable to get Dataset Role")
 		return nil, err
 	}
 
 	return datasetClaim, nil
 }
 
-func (c *ClaimsManager) GetToken() jwt.Token {
-	return c.Token
+func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModels.User) user.Claim {
+	return user.Claim{
+		Id:           currentUser.Id,
+		NodeId:       currentUser.NodeId,
+		IsSuperAdmin: currentUser.IsSuperAdmin,
+	}
 }
 
-func (c *ClaimsManager) GetTokenClientID() string {
-	return c.TokenClientID
+func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels.User, orgInt int64) (*organization.Claim, error) {
+	orgClaim, err := c.QueryHandle.GetOrganizationClaim(ctx, currentUser.Id, orgInt)
+	if err != nil {
+		return nil, err
+	}
+
+	return orgClaim, nil
 }
 
-func (c *ClaimsManager) GetQueryHandle() *pgdbQueries.Queries {
-	return c.QueryHandle
+func (c *ClaimsManager) GetTeamClaims(ctx context.Context, currentUser *pgdbModels.User) ([]teamUser.Claim, error) {
+	teamClaims, err := c.QueryHandle.GetTeamClaims(ctx, currentUser.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return teamClaims, nil
+}
+
+func (c *ClaimsManager) GetActiveOrg(ctx context.Context, currentUser *pgdbModels.User) int64 {
+	orgInt := currentUser.PreferredOrg
+	jwtOrg, hasKey := c.Token.Get("custom:organization_id")
+	if hasKey {
+		orgInt = jwtOrg.(int64)
+	}
+	return orgInt
 }
 
 func (c *ClaimsManager) GetCurrentUser(ctx context.Context) (*pgdbModels.User, error) {

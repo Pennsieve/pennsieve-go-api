@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,11 +20,9 @@ func (u *UserAuthorizer) GenerateClaims(ctx context.Context, claimsManager manag
 		log.Error("unable to get current user")
 		return nil, err
 	}
-	userClaim := user.Claim{
-		Id:           currentUser.Id,
-		NodeId:       currentUser.NodeId,
-		IsSuperAdmin: currentUser.IsSuperAdmin,
-	}
+	// Get User Claim
+	userClaim := claimsManager.GetUserClaim(ctx, currentUser)
+
 	return map[string]interface{}{
 		"user_claim": userClaim,
 	}, nil

@@ -1,30 +1,30 @@
-package mappers_test
+package factory_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/factory"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMappers(t *testing.T) {
-	authFactory := mappers.NewCustomAuthorizerFactory(nil, nil, nil)
+func TestFactory(t *testing.T) {
+	authFactory := factory.NewCustomAuthorizerFactory()
 
 	UserIdentitySource := []string{"Bearer eyJra.some.random.string"}
-	authorizer, _ := mappers.IdentitySourceToAuthorizer(UserIdentitySource, authFactory)
+	authorizer, _ := authFactory.Build(UserIdentitySource)
 	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.UserAuthorizer")
 
 	DatasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N:dataset:some-uuid"}
-	authorizer, _ = mappers.IdentitySourceToAuthorizer(DatasetIdentitySource, authFactory)
+	authorizer, _ = authFactory.Build(DatasetIdentitySource)
 	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.DatasetAuthorizer")
 
 	ManifestIdentitySource := []string{"Bearer eyJra.some.random.string", "N:manifest:some-uuid"}
-	authorizer, _ = mappers.IdentitySourceToAuthorizer(ManifestIdentitySource, authFactory)
+	authorizer, _ = authFactory.Build(ManifestIdentitySource)
 	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.ManifestAuthorizer")
 
 	WorkspaceIdentitySource := []string{"Bearer eyJra.some.random.string", "N:organization:some-uuid"}
-	authorizer, _ = mappers.IdentitySourceToAuthorizer(WorkspaceIdentitySource, authFactory)
+	authorizer, _ = authFactory.Build(WorkspaceIdentitySource)
 	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.WorkspaceAuthorizer")
 
 }

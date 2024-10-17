@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
-	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
+	factory "github.com/pennsieve/pennsieve-go-api/authorizer/factory"
 )
 
 type IdentityService interface {
@@ -20,6 +20,6 @@ func NewIdentitySourceService(IdentitySource []string) IdentityService {
 }
 
 func (i *IdentitySourceService) GetAuthorizer(ctx context.Context) (authorizers.Authorizer, error) {
-	authFactory := mappers.NewCustomAuthorizerFactory()
-	return mappers.IdentitySourceToAuthorizer(i.IdentitySource, authFactory)
+	authFactory := factory.NewCustomAuthorizerFactory()
+	return authFactory.Build(i.IdentitySource)
 }
