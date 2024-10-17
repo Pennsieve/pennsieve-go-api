@@ -1,7 +1,11 @@
 package authorizers
 
-import "context"
+import (
+	"context"
+
+	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
+)
 
 type Authorizer interface {
-	GenerateClaims(context.Context) (map[string]interface{}, error)
+	GenerateClaims(context.Context, manager.IdentityManager) (map[string]interface{}, error)
 }
