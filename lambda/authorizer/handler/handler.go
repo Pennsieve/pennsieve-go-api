@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/service"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
@@ -94,9 +95,17 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}
 	defer db.Close()
 
-	identityService := service.NewIdentitySourceService(event.IdentitySource, token, queryHandle, tokenClientID)
 	// Get claims
-	claims, err := identityService.GetClaims(ctx)
+	identityService := service.NewIdentitySourceService(event.IdentitySource)
+	authorizer, err := identityService.GetAuthorizer(ctx)
+	if err != nil {
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil
+	}
+	claimsManager := manager.NewClaimsManager(queryHandle, token, tokenClientID)
+	claims, err := authorizer.GenerateClaims(ctx, claimsManager)
 	if err != nil {
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,

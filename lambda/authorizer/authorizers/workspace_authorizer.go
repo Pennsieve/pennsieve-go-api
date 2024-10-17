@@ -4,52 +4,54 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/lestrrat-go/jwx/v2/jwt"
-	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
-	pgdbQueries "github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 )
 
 type WorkspaceAuthorizer struct {
-	CurrentUser    *pgdbModels.User
-	Queries        *pgdbQueries.Queries
-	IdentitySource []string
-	Token          jwt.Token
+	WorkspaceID string
 }
 
-func NewWorkspaceAuthorizer(currentUser *pgdbModels.User, pddb *pgdbQueries.Queries, IdentitySource []string, token jwt.Token) Authorizer {
-	return &WorkspaceAuthorizer{currentUser, pddb, IdentitySource, token}
+func NewWorkspaceAuthorizer(workspaceID string) Authorizer {
+	return &WorkspaceAuthorizer{workspaceID}
 }
 
-func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context) (map[string]interface{}, error) {
+func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager manager.IdentityManager) (map[string]interface{}, error) {
+	// Get current user
+	currentUser, err := claimsManager.GetCurrentUser(ctx)
+	if err != nil {
+		log.Error("unable to get current user")
+		return nil, err
+	}
+
 	// Get Active Org
-	orgInt := w.CurrentUser.PreferredOrg
-	jwtOrg, hasKey := w.Token.Get("custom:organization_id")
+	orgInt := currentUser.PreferredOrg
+	jwtOrg, hasKey := claimsManager.GetToken().Get("custom:organization_id")
 	if hasKey {
 		orgInt = jwtOrg.(int64)
 	}
 
 	// Get ORG Claim
-	orgClaim, err := w.Queries.GetOrganizationClaim(ctx, w.CurrentUser.Id, orgInt)
+	orgClaim, err := claimsManager.GetQueryHandle().GetOrganizationClaim(ctx, currentUser.Id, orgInt)
 	if err != nil {
 		log.Error("unable to get Organization Role")
 		return nil, err
 	}
 
 	// Get Publisher's Claim
-	teamClaims, err := w.Queries.GetTeamClaims(ctx, w.CurrentUser.Id)
+	teamClaims, err := claimsManager.GetQueryHandle().GetTeamClaims(ctx, currentUser.Id)
 	if err != nil {
 		log.Error(fmt.Sprintf("Unable to get Team Claims for user: %d organization: %d",
-			w.CurrentUser.Id, orgInt))
+			currentUser.Id, orgInt))
 		return nil, err
 
 	}
 
 	userClaim := user.Claim{
-		Id:           w.CurrentUser.Id,
-		NodeId:       w.CurrentUser.NodeId,
-		IsSuperAdmin: w.CurrentUser.IsSuperAdmin,
+		Id:           currentUser.Id,
+		NodeId:       currentUser.NodeId,
+		IsSuperAdmin: currentUser.IsSuperAdmin,
 	}
 
 	return map[string]interface{}{

@@ -7,33 +7,33 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/lestrrat-go/jwx/v2/jwt"
 
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
-	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
-	pgdbQueries "github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 )
 
 // will be deprecated
 type ManifestAuthorizer struct {
-	CurrentUser    *pgdbModels.User
-	Queries        *pgdbQueries.Queries
-	IdentitySource []string
-	Token          jwt.Token
+	ManifestID string
 }
 
-func NewManifestAuthorizer(currentUser *pgdbModels.User, pddb *pgdbQueries.Queries, IdentitySource []string, token jwt.Token) Authorizer {
-	return &ManifestAuthorizer{currentUser, pddb, IdentitySource, token}
+func NewManifestAuthorizer(manifestId string) Authorizer {
+	return &ManifestAuthorizer{manifestId}
 }
 
-func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context) (map[string]interface{}, error) {
+func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager manager.IdentityManager) (map[string]interface{}, error) {
+	// Get current user
+	currentUser, err := claimsManager.GetCurrentUser(ctx)
+	if err != nil {
+		log.Error("unable to get current user")
+		return nil, err
+	}
 	// Get Active Org
-	orgInt := m.CurrentUser.PreferredOrg
-	jwtOrg, hasKey := m.Token.Get("custom:organization_id")
+	orgInt := currentUser.PreferredOrg
+	jwtOrg, hasKey := claimsManager.GetToken().Get("custom:organization_id")
 	if hasKey {
 		orgInt = jwtOrg.(int64)
 	}
@@ -49,7 +49,7 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context) (map[string]int
 	table := os.Getenv("MANIFEST_TABLE")
 	qDyDb := dydb.New(client)
 
-	manifest, err := qDyDb.GetManifestById(ctx, table, m.IdentitySource[1])
+	manifest, err := qDyDb.GetManifestById(ctx, table, m.ManifestID)
 	if err != nil {
 		log.Error("manifest could not be found")
 		return nil, err
@@ -57,13 +57,11 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context) (map[string]int
 
 	datasetNodeId := manifest.DatasetNodeId
 	// Get DATASET Claim
-	var datasetClaim *dataset.Claim
-	datasetClaim, err = m.Queries.GetDatasetClaim(ctx, m.CurrentUser, datasetNodeId, orgInt)
+	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, datasetNodeId, orgInt)
 	if err != nil {
 		log.Error("unable to get Dataset Role")
 		return nil, err
 	}
-
 	// If user has no role on provided dataset --> return
 	if datasetClaim.Role == role.None {
 		log.Error("user has no access to dataset")
@@ -71,13 +69,13 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context) (map[string]int
 	}
 
 	userClaim := user.Claim{
-		Id:           m.CurrentUser.Id,
-		NodeId:       m.CurrentUser.NodeId,
-		IsSuperAdmin: m.CurrentUser.IsSuperAdmin,
+		Id:           currentUser.Id,
+		NodeId:       currentUser.NodeId,
+		IsSuperAdmin: currentUser.IsSuperAdmin,
 	}
 
 	// Get ORG Claim
-	orgClaim, err := m.Queries.GetOrganizationClaim(ctx, m.CurrentUser.Id, orgInt)
+	orgClaim, err := claimsManager.GetQueryHandle().GetOrganizationClaim(ctx, currentUser.Id, orgInt)
 	if err != nil {
 		log.Error("unable to get Organization Role")
 		return nil, err
