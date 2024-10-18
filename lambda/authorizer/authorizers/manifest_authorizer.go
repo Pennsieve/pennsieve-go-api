@@ -3,14 +3,9 @@ package authorizers
 import (
 	"context"
 	"errors"
-	"os"
-
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
-	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -41,26 +36,14 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 		return nil, err
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx)
+	// Get datasetID
+	datasetID, err := claimsManager.GetDatasetID(ctx, m.ManifestID)
 	if err != nil {
-		log.Error("unable to load SDK config")
+		log.Error("datasetId could not be retrieved")
 		return nil, err
 	}
-
-	// Create an Amazon DynamoDB client.
-	client := dynamodb.NewFromConfig(cfg)
-	table := os.Getenv("MANIFEST_TABLE")
-	qDyDb := dydb.New(client)
-
-	manifest, err := qDyDb.GetManifestById(ctx, table, m.ManifestID)
-	if err != nil {
-		log.Error("manifest could not be found")
-		return nil, err
-	}
-
-	datasetNodeId := manifest.DatasetNodeId
 	// Get Dataset Claim
-	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, datasetNodeId, orgInt)
+	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, *datasetID, orgInt)
 	if err != nil {
 		log.Error("unable to get Dataset Role")
 		return nil, err

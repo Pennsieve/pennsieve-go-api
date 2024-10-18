@@ -49,3 +49,8 @@ func (m *MockClaimManager) GetOrgClaim(context.Context, *pgdbModels.User, int64)
 func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error) {
 	return []teamUser.Claim{}, nil
 }
+
+func (m *MockClaimManager) GetDatasetID(context.Context, string) (*string, error) {
+	s := "someDatasetID"
+	return &s, nil
+}

@@ -9,10 +9,13 @@ import (
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/service"
+	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 )
@@ -88,12 +91,21 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Open Pennsieve DB Connection
 	db, err := pgdb.ConnectRDS()
-	queryHandle := pgdb.New(db)
-
+	postgresDB := pgdb.New(db)
 	if err != nil {
 		log.Fatalln("unable to connect to RDS instance.")
 	}
 	defer db.Close()
+
+	// Create a DynamoDB connection
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		log.Fatalln("unable to connect to RDS instance.")
+	}
+
+	// Create an Amazon DynamoDB client.
+	client := dynamodb.NewFromConfig(cfg)
+	dynamoDB := dydb.New(client)
 
 	// Get claims
 	identityService := service.NewIdentitySourceService(event.IdentitySource)
@@ -104,7 +116,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 			Context:      nil,
 		}, nil
 	}
-	claimsManager := manager.NewClaimsManager(queryHandle, token, tokenClientID)
+	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID)
 	claims, err := authorizer.GenerateClaims(ctx, claimsManager)
 	if err != nil {
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{

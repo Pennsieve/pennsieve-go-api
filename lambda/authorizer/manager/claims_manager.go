@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"errors"
+	"os"
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
@@ -10,6 +11,7 @@ import (
 	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/teamUser"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
+	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	pgdbQueries "github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
@@ -22,25 +24,39 @@ type IdentityManager interface {
 	GetDatasetClaim(context.Context, *pgdbModels.User, string, int64) (*dataset.Claim, error)
 	GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error)
 	GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error)
+	GetDatasetID(context.Context, string) (*string, error)
 }
 
 type ClaimsManager struct {
-	QueryHandle   *pgdbQueries.Queries
+	PostgresDB    *pgdbQueries.Queries
+	DynamoDB      *dydb.Queries
 	Token         jwt.Token
 	TokenClientID string
 }
 
-func NewClaimsManager(queryHandle *pgdbQueries.Queries, token jwt.Token, tokenClientID string) IdentityManager {
-	return &ClaimsManager{queryHandle, token, tokenClientID}
+func NewClaimsManager(postgresDB *pgdbQueries.Queries, dynamoDB *dydb.Queries, token jwt.Token, tokenClientID string) IdentityManager {
+	return &ClaimsManager{postgresDB, dynamoDB, token, tokenClientID}
 }
 
 func (c *ClaimsManager) GetDatasetClaim(ctx context.Context, currentUser *pgdbModels.User, datasetId string, orgInt int64) (*dataset.Claim, error) {
-	datasetClaim, err := c.QueryHandle.GetDatasetClaim(ctx, currentUser, datasetId, orgInt)
+	datasetClaim, err := c.PostgresDB.GetDatasetClaim(ctx, currentUser, datasetId, orgInt)
 	if err != nil {
 		return nil, err
 	}
 
 	return datasetClaim, nil
+}
+
+func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (*string, error) {
+	table := os.Getenv("MANIFEST_TABLE")
+
+	manifest, err := c.DynamoDB.GetManifestById(ctx, table, manifestID)
+	if err != nil {
+		// log.Error("manifest could not be found")
+		return nil, err
+	}
+
+	return &manifest.DatasetNodeId, nil
 }
 
 func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModels.User) user.Claim {
@@ -52,7 +68,7 @@ func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModel
 }
 
 func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels.User, orgInt int64) (*organization.Claim, error) {
-	orgClaim, err := c.QueryHandle.GetOrganizationClaim(ctx, currentUser.Id, orgInt)
+	orgClaim, err := c.PostgresDB.GetOrganizationClaim(ctx, currentUser.Id, orgInt)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +77,7 @@ func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels
 }
 
 func (c *ClaimsManager) GetTeamClaims(ctx context.Context, currentUser *pgdbModels.User) ([]teamUser.Claim, error) {
-	teamClaims, err := c.QueryHandle.GetTeamClaims(ctx, currentUser.Id)
+	teamClaims, err := c.PostgresDB.GetTeamClaims(ctx, currentUser.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +104,7 @@ func (c *ClaimsManager) GetCurrentUser(ctx context.Context) (*pgdbModels.User, e
 	// Get Pennsieve User from User Table, or Token Table
 	clientIdClaim, _ := c.Token.Get("client_id") // Key is present or method would have returned before.
 	isFromTokenPool := clientIdClaim == c.TokenClientID
-	return getUser(ctx, c.QueryHandle, cognitoUserName.(string), isFromTokenPool)
+	return getUser(ctx, c.PostgresDB, cognitoUserName.(string), isFromTokenPool)
 }
 
 // getUser returns a Pennsieve user from a cognito ID.
