@@ -28,6 +28,7 @@ resource "aws_lambda_function" "authorizer_lambda" {
       RDS_PROXY_ENDPOINT = data.terraform_remote_state.pennsieve_postgres.outputs.rds_proxy_endpoint,
       MANIFEST_TABLE = data.terraform_remote_state.upload_service_v2.outputs.manifest_table_name,
       LOG_LEVEL = "INFO"
+      AUTHORIZER_MODE = "LEGACY"
     }
   }
 }

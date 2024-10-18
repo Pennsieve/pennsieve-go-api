@@ -13,16 +13,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
-	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/service"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	log "github.com/sirupsen/logrus"
 )
 
-var err error
 var keySet jwk.Set
 var regionID string
 var userPoolID string
@@ -82,46 +79,9 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		"requestContext.routeKey", event.RequestContext.RouteKey,
 		"event.RequestContext.Authorizer", event.RequestContext.Authorizer)
 
-	// Get Identity Sources
-	// If single identity source, then no dataset claim should be generated.
 	r := regexp.MustCompile(`Bearer (?P<token>.*)`)
 	tokenParts := r.FindStringSubmatch(event.Headers["authorization"])
 	jwtB64 := []byte(tokenParts[r.SubexpIndex("token")])
-
-	datasetNodeId, hasDatasetId := event.QueryStringParameters["dataset_id"]
-	if hasDatasetId && len(event.IdentitySource) < 2 {
-		log.Fatalln("Request cannot have dataset_id as query-param with the used authorizer.")
-	}
-
-	manifestId, hasManifestId := event.QueryStringParameters["manifest_id"]
-	if hasManifestId && len(event.IdentitySource) < 2 {
-		log.Fatalln("Request cannot have manifest_id as query-param with the used authorizer.")
-	}
-
-	if hasDatasetId && hasManifestId {
-		log.Fatalln("Request cannot have both manifest_id and dataset_id as query-params with the used authorizer.")
-	}
-
-	// Get Dataset associated with the requested manifest
-	if hasManifestId && manifestId == "" {
-		cfg, err := config.LoadDefaultConfig(ctx)
-		if err != nil {
-			panic("unable to load SDK config, " + err.Error())
-		}
-
-		// Create an Amazon DynamoDB client.
-		client := dynamodb.NewFromConfig(cfg)
-		table := os.Getenv("MANIFEST_TABLE")
-		qDyDb := dydb.New(client)
-
-		manifest, err := qDyDb.GetManifestById(ctx, table, manifestId)
-		if err != nil {
-			log.Fatalln("Manifest could not be found: ", err)
-		}
-
-		datasetNodeId = manifest.DatasetNodeId
-		hasDatasetId = true
-	}
 
 	// Validate and parse token, and return unauthorized if not valid
 	token, err := validateCognitoJWT(jwtB64)
@@ -131,112 +91,43 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	// Open Pennsieve DB Connection
 	db, err := pgdb.ConnectRDS()
-	qPgDb := pgdb.New(db)
-
+	postgresDB := pgdb.New(db)
 	if err != nil {
-		log.Fatalln("Unable to connect to RDS instance.")
+		log.Fatalln("unable to connect to RDS instance.")
 	}
 	defer db.Close()
 
-	// Get Cognito User ID
-	cognitoUserName, hasKey := token.Get("username")
-	if hasKey != true {
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
-	}
-
-	// Get Pennsieve User from User Table, or Token Table
-	clientIdClaim, _ := token.Get("client_id") // Key is present or method would have returned before.
-	isFromTokenPool := clientIdClaim == tokenClientID
-	currentUser, err := getUser(ctx, qPgDb, cognitoUserName.(string), isFromTokenPool)
+	// Create a DynamoDB connection
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Fatalln("Unable to get User from Cognito Username")
+		log.Fatalln("unable to connect to RDS instance.")
 	}
+	client := dynamodb.NewFromConfig(cfg)
+	dynamoDB := dydb.New(client)
 
-	// Get Active Org
-	orgInt := currentUser.PreferredOrg
-	jwtOrg, hasKey := token.Get("custom:organization_id")
-	if hasKey {
-		orgInt = jwtOrg.(int64)
-	}
-
-	// Get ORG Claim
-	orgClaim, err := qPgDb.GetOrganizationClaim(ctx, currentUser.Id, orgInt)
+	// Get claims
+	identityService := service.NewIdentitySourceService(event.IdentitySource)
+	authorizer, err := identityService.GetAuthorizer(ctx)
 	if err != nil {
-		log.Error("Unable to get Organization Role")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized") // Return 401: Unauthenticated
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil
 	}
-
-	// Get Publisher's Claim
-	teamClaims, err := qPgDb.GetTeamClaims(ctx, currentUser.Id)
+	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID)
+	authorizerMode := os.Getenv("AUTHORIZER_MODE")
+	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {
-		log.Info(fmt.Sprintf("Unable to get Team Claims for user: %d organization: %d", currentUser.Id, orgInt))
-	}
-
-	// Get DATASET Claim
-	var datasetClaim *dataset.Claim
-	if hasDatasetId && datasetNodeId != "" {
-		datasetClaim, err = qPgDb.GetDatasetClaim(ctx, currentUser, datasetNodeId, orgInt)
-		if err != nil {
-			log.Error("Unable to get Dataset Role")
-			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
-				IsAuthorized: false,
-				Context:      nil,
-			}, nil // Return 403: Forbidden
-		}
-
-		// If user has no role on provided dataset --> return
-		if datasetClaim.Role == role.None {
-			log.Error("User has no access to dataset")
-			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
-				IsAuthorized: false,
-				Context:      nil,
-			}, nil // Return 403: Forbidden
-		}
-
-	} else {
-		datasetClaim = nil
-	}
-
-	userClaim := user.Claim{
-		Id:           currentUser.Id,
-		NodeId:       currentUser.NodeId,
-		IsSuperAdmin: currentUser.IsSuperAdmin,
-	}
-
-	// Bundle Claims
-	claims := map[string]interface{}{
-		"user_claim":    userClaim,
-		"org_claim":     orgClaim,
-		"dataset_claim": datasetClaim,
-		"team_claims":   teamClaims,
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil
 	}
 
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 		IsAuthorized: true,
 		Context:      claims,
 	}, nil
-
-}
-
-// getUser returns a Pennsieve user from a cognito ID.
-func getUser(ctx context.Context, q *pgdb.Queries, cognitoId string, isFromTokenPool bool) (*pgdbModels.User, error) {
-
-	if isFromTokenPool {
-		//var token pgdbModels.Token
-		currentUser, err := q.GetUserByCognitoId(ctx, cognitoId)
-		if err != nil {
-			log.Fatalln("Unable to get user:", err)
-		}
-		return currentUser, nil
-
-	} else {
-		//var user pgdbModels.User
-		currentUser, err := q.GetByCognitoId(ctx, cognitoId)
-		if err != nil {
-			log.Fatalln("Unable to get user:", err)
-		}
-		return currentUser, nil
-	}
 
 }
 
@@ -258,7 +149,7 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	}
 
 	clientIdClaim, hasKey := token.Get("client_id")
-	if hasKey != true || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
+	if !hasKey || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
 		log.Debug("Audience in token does not match.")
 		return nil, errors.New("unauthorized")
 	}
@@ -269,7 +160,7 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	}
 
 	tokenUseClaim, hasKey := token.Get("token_use")
-	if hasKey != true || tokenUseClaim != "access" {
+	if !hasKey || tokenUseClaim != "access" {
 		log.Debug("Incorrect TokenUse Claim")
 		return nil, errors.New("unauthorized")
 	}
