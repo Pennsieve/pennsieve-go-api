@@ -20,6 +20,5 @@ func NewIdentitySourceService(IdentitySource []string) IdentityService {
 }
 
 func (i *IdentitySourceService) GetAuthorizer(ctx context.Context) (authorizers.Authorizer, error) {
-	authFactory := factory.NewCustomAuthorizerFactory()
-	return authFactory.Build(i.IdentitySource)
+	return factory.NewCustomAuthorizerFactory().Build(i.IdentitySource)
 }

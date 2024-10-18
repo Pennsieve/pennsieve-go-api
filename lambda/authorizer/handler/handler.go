@@ -102,8 +102,6 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	if err != nil {
 		log.Fatalln("unable to connect to RDS instance.")
 	}
-
-	// Create an Amazon DynamoDB client.
 	client := dynamodb.NewFromConfig(cfg)
 	dynamoDB := dydb.New(client)
 
@@ -150,7 +148,7 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	}
 
 	clientIdClaim, hasKey := token.Get("client_id")
-	if hasKey != true || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
+	if !hasKey || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
 		log.Debug("Audience in token does not match.")
 		return nil, errors.New("unauthorized")
 	}
@@ -161,7 +159,7 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	}
 
 	tokenUseClaim, hasKey := token.Get("token_use")
-	if hasKey != true || tokenUseClaim != "access" {
+	if !hasKey || tokenUseClaim != "access" {
 		log.Debug("Incorrect TokenUse Claim")
 		return nil, errors.New("unauthorized")
 	}
