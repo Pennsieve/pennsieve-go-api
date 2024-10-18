@@ -115,7 +115,8 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		}, nil
 	}
 	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID)
-	claims, err := authorizer.GenerateClaims(ctx, claimsManager)
+	authorizerMode := os.Getenv("AUTHORIZER_MODE")
+	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,

@@ -7,5 +7,5 @@ import (
 )
 
 type Authorizer interface {
-	GenerateClaims(context.Context, manager.IdentityManager) (map[string]interface{}, error)
+	GenerateClaims(context.Context, manager.IdentityManager, string) (map[string]interface{}, error)
 }

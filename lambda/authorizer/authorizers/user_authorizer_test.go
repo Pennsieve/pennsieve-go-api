@@ -13,7 +13,7 @@ import (
 func TestUserAuthorizer(t *testing.T) {
 	authorizer := authorizers.NewUserAuthorizer()
 	claimsManager := mocks.NewMockClaimManager()
-	claims, _ := authorizer.GenerateClaims(context.Background(), claimsManager)
+	claims, _ := authorizer.GenerateClaims(context.Background(), claimsManager, "")
 
 	assert.Equal(t, len(claims), 1)
 	assert.Equal(t, fmt.Sprintf("%s", claims["user_claim"]),

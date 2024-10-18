@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDatasetAuthorizer(t *testing.T) {
-	authorizer := authorizers.NewDatasetAuthorizer("someDatasetId")
+func TestWorkspaceAuthorizer(t *testing.T) {
+	authorizer := authorizers.NewWorkspaceAuthorizer("someWorkspaceId")
 	claimsManager := mocks.NewMockClaimManager()
 	claims, _ := authorizer.GenerateClaims(context.Background(), claimsManager, "")
 
@@ -20,6 +20,6 @@ func TestDatasetAuthorizer(t *testing.T) {
 		"User: 1 - N:user:someRandomUuid | isSuperAdmin: true")
 	assert.Equal(t, fmt.Sprintf("%s", claims["org_claim"]),
 		"OrganizationId: 0 - NoPermission")
-	assert.Equal(t, fmt.Sprintf("%s", claims["dataset_claim"]),
-		" (0) - Manager")
+	assert.Equal(t, fmt.Sprintf("%s", claims["teams_claim"]),
+		"[Name: someTeam1 (id: 1 nodeId:  permission: 0)]")
 }

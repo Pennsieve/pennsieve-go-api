@@ -3,6 +3,7 @@ package authorizers
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
@@ -17,7 +18,7 @@ func NewDatasetAuthorizer(datasetId string) Authorizer {
 	return &DatasetAuthorizer{datasetId}
 }
 
-func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager manager.IdentityManager) (map[string]interface{}, error) {
+func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager manager.IdentityManager, authorizerMode string) (map[string]interface{}, error) {
 	// Get current user
 	currentUser, err := claimsManager.GetCurrentUser(ctx)
 	if err != nil {
@@ -49,6 +50,23 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 
 	// Get User Claim
 	userClaim := claimsManager.GetUserClaim(ctx, currentUser)
+
+	if authorizerMode == "LEGACY" {
+		// Get Publisher's Claim
+		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
+		if err != nil {
+			log.Error(fmt.Sprintf("unable to get Team Claims for user: %d organization: %d",
+				currentUser.Id, orgInt))
+			return nil, err
+		}
+
+		return map[string]interface{}{
+			"user_claim":    userClaim,
+			"org_claim":     orgClaim,
+			"dataset_claim": datasetClaim,
+			"teams_claim":   teamClaims,
+		}, nil
+	}
 
 	return map[string]interface{}{
 		"user_claim":    userClaim,

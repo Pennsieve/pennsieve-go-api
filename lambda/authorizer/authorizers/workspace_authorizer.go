@@ -16,7 +16,7 @@ func NewWorkspaceAuthorizer(workspaceID string) Authorizer {
 	return &WorkspaceAuthorizer{workspaceID}
 }
 
-func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager manager.IdentityManager) (map[string]interface{}, error) {
+func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager manager.IdentityManager, authorizerMode string) (map[string]interface{}, error) {
 	// Get current user
 	currentUser, err := claimsManager.GetCurrentUser(ctx)
 	if err != nil {
