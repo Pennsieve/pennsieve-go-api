@@ -32,4 +32,9 @@ func TestFactory(t *testing.T) {
 	authorizer, _ = authFactory.Build(WorkspaceIdentitySource, withWorkspaceId)
 	assert.Equal(t, fmt.Sprintf("%T", authorizer), "*authorizers.WorkspaceAuthorizer")
 
+	WorkspaceIdentitySource2 := []string{"N:organization:some-uuid"}
+	authorizer, err := authFactory.Build(WorkspaceIdentitySource2, withWorkspaceId)
+	assert.Equal(t, authorizer, nil)
+	assert.Equal(t, err.Error(), "token expected to be first identity source")
+
 }
