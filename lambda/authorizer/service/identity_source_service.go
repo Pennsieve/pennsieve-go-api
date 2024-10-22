@@ -12,13 +12,14 @@ type IdentityService interface {
 }
 
 type IdentitySourceService struct {
-	IdentitySource []string
+	IdentitySource        []string
+	QueryStringParameters map[string]string
 }
 
-func NewIdentitySourceService(IdentitySource []string) IdentityService {
-	return &IdentitySourceService{IdentitySource}
+func NewIdentitySourceService(IdentitySource []string, queryStringParameters map[string]string) IdentityService {
+	return &IdentitySourceService{IdentitySource, queryStringParameters}
 }
 
 func (i *IdentitySourceService) GetAuthorizer(ctx context.Context) (authorizers.Authorizer, error) {
-	return factory.NewCustomAuthorizerFactory().Build(i.IdentitySource)
+	return factory.NewCustomAuthorizerFactory().Build(i.IdentitySource, i.QueryStringParameters)
 }
