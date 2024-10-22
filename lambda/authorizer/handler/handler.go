@@ -106,7 +106,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	dynamoDB := dydb.New(client)
 
 	// Get claims
-	identityService := service.NewIdentitySourceService(event.IdentitySource)
+	identityService := service.NewIdentitySourceService(event.IdentitySource, event.QueryStringParameters)
 	authorizer, err := identityService.GetAuthorizer(ctx)
 	if err != nil {
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{

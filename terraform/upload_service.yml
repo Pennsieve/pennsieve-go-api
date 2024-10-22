@@ -146,7 +146,7 @@ components:
       name: "Unused"
       in: "header"
       x-amazon-apigateway-authorizer:
-        identitySource: "'ManifestAuthorizer',$request.header.Authorization,$request.querystring.manifest_id"
+        identitySource: "$request.header.Authorization,$request.querystring.manifest_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
         authorizerPayloadFormatVersion: "2.0"
         authorizerResultTtlInSeconds: 300
@@ -158,7 +158,7 @@ components:
       name: "Unused"
       in: "header"
       x-amazon-apigateway-authorizer:
-        identitySource: "'DatasetAuthorizer',$request.header.Authorization,$request.querystring.dataset_id"
+        identitySource: "$request.header.Authorization,$request.querystring.dataset_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
         authorizerPayloadFormatVersion: "2.0"
         authorizerResultTtlInSeconds: 300
@@ -170,7 +170,7 @@ components:
       name: "Authorization"
       in: "header"
       x-amazon-apigateway-authorizer:
-        identitySource: "'UserAuthorizer',$request.header.Authorization"
+        identitySource: "$request.header.Authorization"
         authorizerUri: ${authorize_lambda_invoke_uri}
         authorizerPayloadFormatVersion: "2.0"
         authorizerResultTtlInSeconds: 300
@@ -182,7 +182,7 @@ components:
       name: "Unused"
       in: "header"
       x-amazon-apigateway-authorizer:
-        identitySource: "'WorkspaceAuthorizer',$request.header.Authorization,$request.querystring.organization_id"
+        identitySource: "$request.header.Authorization,$request.querystring.organization_id"
         authorizerUri: ${authorize_lambda_invoke_uri}
         authorizerPayloadFormatVersion: "2.0"
         authorizerResultTtlInSeconds: 300
