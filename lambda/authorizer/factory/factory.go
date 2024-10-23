@@ -37,7 +37,7 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		hasManifestId = false
 	}
 
-	paramIdentifier, err := helpers.UrlDecode(identitySource[1])
+	paramIdentifier, err := helpers.DecodeIdentifier(identitySource[1])
 	if err != nil {
 		errorString := "could not decode identity source"
 		log.Error(errorString)

@@ -19,11 +19,11 @@ func TestHelpersMatches(t *testing.T) {
 
 func TestHelpersUrlDecode(t *testing.T) {
 	datasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N%3Adataset%3A3c10091e-4ef8-45ac-b3ae-4497eb34c7dc"}
-	result, _ := helpers.UrlDecode(datasetIdentitySource[1])
+	result, _ := helpers.DecodeIdentifier(datasetIdentitySource[1])
 	assert.Equal(t, result, "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc")
 
 	// non-encoded string should be unaffected
 	datasetIdentitySource2 := []string{"Bearer eyJra.some.random.string", "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc"}
-	result, _ = helpers.UrlDecode(datasetIdentitySource2[1])
+	result, _ = helpers.DecodeIdentifier(datasetIdentitySource2[1])
 	assert.Equal(t, result, "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc")
 }

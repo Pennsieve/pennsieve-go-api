@@ -11,6 +11,6 @@ func Matches(stringToMatch string, expression string) bool {
 	return parts != nil
 }
 
-func UrlDecode(identifier string) (string, error) {
+func DecodeIdentifier(identifier string) (string, error) {
 	return url.QueryUnescape(identifier)
 }
