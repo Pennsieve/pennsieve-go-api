@@ -25,21 +25,32 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		return nil, errors.New(errorString)
 	}
 
+	// immediately return the UserAuthorizer
+	if len(identitySource) == 1 {
+		return authorizers.NewUserAuthorizer(), nil
+	}
+
+	// where len(identitySource) > 1
 	var hasManifestId bool
 	manifest_id, hasManifestId := queryStringParameters["manifest_id"]
 	if manifest_id == "" {
 		hasManifestId = false
 	}
 
+	paramIdentifier, err := helpers.UrlDecode(identitySource[1])
+	if err != nil {
+		errorString := "could not decode identity source"
+		log.Error(errorString)
+		return nil, errors.New(errorString)
+	}
+
 	switch {
-	case len(identitySource) == 1:
-		return authorizers.NewUserAuthorizer(), nil
-	case len(identitySource) > 1 && helpers.Matches(identitySource[1], `N:dataset:`):
-		return authorizers.NewDatasetAuthorizer(identitySource[1]), nil
-	case len(identitySource) > 1 && helpers.Matches(identitySource[1], `N:organization:`):
-		return authorizers.NewWorkspaceAuthorizer(identitySource[1]), nil
-	case len(identitySource) > 1 && hasManifestId:
-		return authorizers.NewManifestAuthorizer(identitySource[1]), nil // will be deprecated
+	case helpers.Matches(paramIdentifier, `N:dataset:`):
+		return authorizers.NewDatasetAuthorizer(paramIdentifier), nil
+	case helpers.Matches(paramIdentifier, `N:organization:`):
+		return authorizers.NewWorkspaceAuthorizer(paramIdentifier), nil
+	case hasManifestId:
+		return authorizers.NewManifestAuthorizer(paramIdentifier), nil // will be deprecated
 	default:
 		return nil, errors.New("no suitable authorizer to process request")
 
