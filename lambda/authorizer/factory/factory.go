@@ -2,6 +2,7 @@ package factory
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
@@ -40,7 +41,7 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 	paramIdentitySource, err := helpers.DecodeIdentitySource(identitySource[1])
 	if err != nil {
 		log.Error(err)
-		return nil, errors.New("could not decode identity source")
+		return nil, fmt.Errorf("could not decode identity source: %w", err)
 	}
 
 	switch {
