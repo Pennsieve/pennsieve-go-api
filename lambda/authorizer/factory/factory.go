@@ -2,6 +2,7 @@ package factory
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
@@ -25,21 +26,31 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		return nil, errors.New(errorString)
 	}
 
+	// immediately return the UserAuthorizer
+	if len(identitySource) == 1 {
+		return authorizers.NewUserAuthorizer(), nil
+	}
+
+	// where len(identitySource) > 1
 	var hasManifestId bool
 	manifest_id, hasManifestId := queryStringParameters["manifest_id"]
 	if manifest_id == "" {
 		hasManifestId = false
 	}
 
+	paramIdentitySource, err := helpers.DecodeIdentitySource(identitySource[1])
+	if err != nil {
+		log.Error(err)
+		return nil, fmt.Errorf("could not decode identity source: %w", err)
+	}
+
 	switch {
-	case len(identitySource) == 1:
-		return authorizers.NewUserAuthorizer(), nil
-	case len(identitySource) > 1 && helpers.Matches(identitySource[1], `N:dataset:`):
-		return authorizers.NewDatasetAuthorizer(identitySource[1]), nil
-	case len(identitySource) > 1 && helpers.Matches(identitySource[1], `N:organization:`):
-		return authorizers.NewWorkspaceAuthorizer(identitySource[1]), nil
-	case len(identitySource) > 1 && hasManifestId:
-		return authorizers.NewManifestAuthorizer(identitySource[1]), nil // will be deprecated
+	case helpers.Matches(paramIdentitySource, `N:dataset:`):
+		return authorizers.NewDatasetAuthorizer(paramIdentitySource), nil
+	case helpers.Matches(paramIdentitySource, `N:organization:`):
+		return authorizers.NewWorkspaceAuthorizer(paramIdentitySource), nil
+	case hasManifestId:
+		return authorizers.NewManifestAuthorizer(paramIdentitySource), nil // will be deprecated
 	default:
 		return nil, errors.New("no suitable authorizer to process request")
 
