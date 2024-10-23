@@ -37,7 +37,7 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		hasManifestId = false
 	}
 
-	paramIdentifier, err := helpers.DecodeIdentifier(identitySource[1])
+	paramIdentitySource, err := helpers.DecodeIdentitySource(identitySource[1])
 	if err != nil {
 		errorString := "could not decode identity source"
 		log.Error(errorString)
@@ -45,12 +45,12 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 	}
 
 	switch {
-	case helpers.Matches(paramIdentifier, `N:dataset:`):
-		return authorizers.NewDatasetAuthorizer(paramIdentifier), nil
-	case helpers.Matches(paramIdentifier, `N:organization:`):
-		return authorizers.NewWorkspaceAuthorizer(paramIdentifier), nil
+	case helpers.Matches(paramIdentitySource, `N:dataset:`):
+		return authorizers.NewDatasetAuthorizer(paramIdentitySource), nil
+	case helpers.Matches(paramIdentitySource, `N:organization:`):
+		return authorizers.NewWorkspaceAuthorizer(paramIdentitySource), nil
 	case hasManifestId:
-		return authorizers.NewManifestAuthorizer(paramIdentifier), nil // will be deprecated
+		return authorizers.NewManifestAuthorizer(paramIdentitySource), nil // will be deprecated
 	default:
 		return nil, errors.New("no suitable authorizer to process request")
 
