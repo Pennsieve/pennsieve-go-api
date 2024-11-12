@@ -86,7 +86,11 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Validate and parse token, and return unauthorized if not valid
 	token, err := validateCognitoJWT(jwtB64)
 	if err != nil {
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{}, errors.New("Unauthorized")
+		log.Error(err)
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil
 	}
 
 	// Open Pennsieve DB Connection
