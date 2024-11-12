@@ -26,6 +26,8 @@ var userPoolID string
 var userClientID string
 var tokenPoolID string
 var tokenClientID string
+var issuer string
+var tokenIssuer string
 
 // init runs on cold start of lambda and gets jwt keysets from Cognito user pools.
 func init() {
@@ -34,6 +36,8 @@ func init() {
 	userClientID = os.Getenv("USER_CLIENT")
 	tokenPoolID = os.Getenv("TOKEN_POOL")
 	tokenClientID = os.Getenv("TOKEN_CLIENT")
+	issuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
+	tokenIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, tokenPoolID)
 
 	log.SetFormatter(&log.JSONFormatter{})
 	ll, err := log.ParseLevel(os.Getenv("LOG_LEVEL"))
@@ -141,32 +145,33 @@ func validateCognitoJWT(jwtB64 []byte) (jwt.Token, error) {
 	// Parse the JWT.
 	token, err := jwt.Parse(jwtB64, jwt.WithKeySet(keySet))
 	if err != nil {
-		log.Debug(fmt.Sprintf("Failed to parse the JWT.\nError:%s\n\n", err.Error()))
-		return nil, errors.New("unauthorized")
+		return nil, fmt.Errorf("error parsing JWT: %w", err)
 	}
 
-	issuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
-	tokenIssuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, tokenPoolID)
 	if token.Issuer() != issuer && token.Issuer() != tokenIssuer {
-		log.Debug("Issuer in token does not match.")
-		return nil, errors.New("AUTHORIZER_FAILURE: Issuer in token does not match Pennsieve token issuers")
+		return nil, fmt.Errorf("AUTHORIZER_FAILURE: Issuer in token does not match Pennsieve token issuers: %s", token.Issuer())
 	}
 
 	clientIdClaim, hasKey := token.Get("client_id")
 	if !hasKey || (clientIdClaim != userClientID && clientIdClaim != tokenClientID) {
-		log.Debug("Audience in token does not match.")
-		return nil, errors.New("unauthorized")
+		detail := clientIdClaim
+		if !hasKey {
+			detail = "client_id missing"
+		}
+		return nil, fmt.Errorf("unauthorized: audience in token does not match: %s", detail)
 	}
 
 	if token.Expiration().Unix() < time.Now().Unix() {
-		log.Debug("Token expired.")
-		return nil, errors.New("unauthorized")
+		return nil, errors.New("unauthorized: token expired")
 	}
 
 	tokenUseClaim, hasKey := token.Get("token_use")
 	if !hasKey || tokenUseClaim != "access" {
-		log.Debug("Incorrect TokenUse Claim")
-		return nil, errors.New("unauthorized")
+		detail := tokenUseClaim
+		if !hasKey {
+			detail = "token_use missing"
+		}
+		return nil, fmt.Errorf("unauthorized: Incorrect TokenUse Claim: %s", detail)
 	}
 
 	return token, err
