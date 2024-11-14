@@ -6,6 +6,7 @@ import (
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
+	log "github.com/sirupsen/logrus"
 )
 
 type AuthorizerFactory interface {
