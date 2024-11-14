@@ -72,16 +72,16 @@ func init() {
 
 // Handler runs in response to authorization event from the AWS API Gateway.
 func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
+	logger := log.WithFields(log.Fields{"Type": event.Type,
+		"pathParameters":          event.PathParameters,
+		"QueryStringParameters":   event.QueryStringParameters,
+		"rawPath":                 event.RawPath,
+		"requestContext.routeKey": event.RequestContext.RouteKey})
 
-	log.Info("request parameters",
-		"Type", event.Type,
-		"IdentitySource", event.IdentitySource,
-		"pathParameters", event.PathParameters,
-		"QueryStringParameters", event.QueryStringParameters,
-		"rawPath", event.RawPath,
-		"Headers", event.Headers,
-		"requestContext.routeKey", event.RequestContext.RouteKey,
-		"event.RequestContext.Authorizer", event.RequestContext.Authorizer)
+	// This Info call may be demoted to Debug or removed entirely in future
+	logger.WithFields(log.Fields{
+		"IdentitySource": event.IdentitySource,
+		"Headers":        event.Headers}).Info("request parameters")
 
 	r := regexp.MustCompile(`Bearer (?P<token>.*)`)
 	tokenParts := r.FindStringSubmatch(event.Headers["authorization"])
@@ -90,7 +90,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	// Validate and parse token, and return unauthorized if not valid
 	token, err := validateCognitoJWT(jwtB64)
 	if err != nil {
-		log.Error(err)
+		logger.Error(err)
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,
 			Context:      nil,
@@ -101,14 +101,14 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	db, err := pgdb.ConnectRDS()
 	postgresDB := pgdb.New(db)
 	if err != nil {
-		log.Fatalln("unable to connect to RDS instance.")
+		logger.Fatalln("unable to connect to RDS instance.")
 	}
 	defer db.Close()
 
 	// Create a DynamoDB connection
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Fatalln("unable to connect to RDS instance.")
+		logger.Fatalln("unable to connect to RDS instance.")
 	}
 	client := dynamodb.NewFromConfig(cfg)
 	dynamoDB := dydb.New(client)
@@ -117,6 +117,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	identityService := service.NewIdentitySourceService(event.IdentitySource, event.QueryStringParameters)
 	authorizer, err := identityService.GetAuthorizer(ctx)
 	if err != nil {
+		logger.Error(err)
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,
 			Context:      nil,
@@ -126,6 +127,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	authorizerMode := os.Getenv("AUTHORIZER_MODE")
 	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {
+		logger.Error(err)
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,
 			Context:      nil,

@@ -7,7 +7,6 @@ import (
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
-	log "github.com/sirupsen/logrus"
 )
 
 // will be deprecated
@@ -23,8 +22,7 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 	// Get current user
 	currentUser, err := claimsManager.GetCurrentUser(ctx)
 	if err != nil {
-		log.Error("unable to get current user")
-		return nil, err
+		return nil, fmt.Errorf("unable to get current user: %w", err)
 	}
 
 	// Get Active Org
@@ -33,25 +31,21 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 	// Get Workspace Claim
 	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
 	if err != nil {
-		log.Error("unable to get Organization Role")
-		return nil, err
+		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
 	}
 
 	// Get datasetID
 	datasetID, err := claimsManager.GetDatasetID(ctx, m.ManifestID)
 	if err != nil {
-		log.Error("datasetId could not be retrieved")
-		return nil, err
+		return nil, fmt.Errorf("datasetId could not be retrieved: %w", err)
 	}
 	// Get Dataset Claim
 	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, *datasetID, orgInt)
 	if err != nil {
-		log.Error("unable to get Dataset Role")
-		return nil, err
+		return nil, fmt.Errorf("unable to get Dataset Role: %w", err)
 	}
 	// If user has no role on provided dataset --> return
 	if datasetClaim.Role == role.None {
-		log.Error("user has no access to dataset")
 		return nil, errors.New("user has no access to dataset")
 	}
 
@@ -62,9 +56,8 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 		// Get Publisher's Claim
 		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
 		if err != nil {
-			log.Error(fmt.Sprintf("unable to get Team Claims for user: %d organization: %d",
-				currentUser.Id, orgInt))
-			return nil, err
+			return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
+				currentUser.Id, orgInt, err)
 		}
 
 		return map[string]interface{}{

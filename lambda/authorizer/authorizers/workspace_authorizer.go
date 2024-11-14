@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
-	log "github.com/sirupsen/logrus"
 )
 
 type WorkspaceAuthorizer struct {
@@ -20,8 +19,7 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	// Get current user
 	currentUser, err := claimsManager.GetCurrentUser(ctx)
 	if err != nil {
-		log.Error("unable to get current user")
-		return nil, err
+		return nil, fmt.Errorf("unable to get current user: %w", err)
 	}
 
 	// Get Active Org
@@ -30,16 +28,14 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	// Get Workspace Claim
 	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
 	if err != nil {
-		log.Error("unable to get Organization Role")
-		return nil, err
+		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
 	}
 
 	// Get Publisher's Claim
 	teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
 	if err != nil {
-		log.Error(fmt.Sprintf("unable to get Team Claims for user: %d organization: %d",
-			currentUser.Id, orgInt))
-		return nil, err
+		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
+			currentUser.Id, orgInt, err)
 	}
 
 	// Get User Claim
