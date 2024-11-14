@@ -85,6 +85,13 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 
 	r := regexp.MustCompile(`Bearer (?P<token>.*)`)
 	tokenParts := r.FindStringSubmatch(event.Headers["authorization"])
+	if len(tokenParts) != 2 {
+		log.Error(fmt.Errorf("expected token to be in the format: Bearer <token>"))
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+			Context:      nil,
+		}, nil
+	}
 	jwtB64 := []byte(tokenParts[r.SubexpIndex("token")])
 
 	// Validate and parse token, and return unauthorized if not valid
