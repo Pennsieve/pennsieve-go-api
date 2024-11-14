@@ -6,7 +6,6 @@ import (
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
-	log "github.com/sirupsen/logrus"
 )
 
 type AuthorizerFactory interface {
@@ -22,7 +21,6 @@ func NewCustomAuthorizerFactory() AuthorizerFactory {
 func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringParameters map[string]string) (authorizers.Authorizer, error) {
 	if !helpers.Matches(identitySource[0], `Bearer (?P<token>.*)`) {
 		errorString := "token expected to be first identity source"
-		log.Error(errorString)
 		return nil, errors.New(errorString)
 	}
 
@@ -40,7 +38,6 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 
 	paramIdentitySource, err := helpers.DecodeIdentitySource(identitySource[1])
 	if err != nil {
-		log.Error(err)
 		return nil, fmt.Errorf("could not decode identity source: %w", err)
 	}
 
