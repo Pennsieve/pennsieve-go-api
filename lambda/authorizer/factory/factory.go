@@ -6,6 +6,7 @@ import (
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -26,7 +27,7 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		hasManifestId = false
 	}
 
-	identitySourceMapper := NewIdentitySourceMapper(identitySource, hasManifestId)
+	identitySourceMapper := mappers.NewIdentitySourceMapper(identitySource, hasManifestId)
 	auxiliaryIdentitySource := identitySourceMapper.Create()
 
 	_, tokenPresent := auxiliaryIdentitySource["token"]

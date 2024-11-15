@@ -1,4 +1,4 @@
-package factory
+package mappers
 
 import "github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 
