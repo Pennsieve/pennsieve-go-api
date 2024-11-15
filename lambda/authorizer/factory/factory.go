@@ -29,19 +29,19 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 	identitySourceMapper := NewIdentitySourceMapper(identitySource, hasManifestId)
 	auxiliaryIdentitySource := identitySourceMapper.Create()
 
+	_, tokenPresent := auxiliaryIdentitySource["token"]
 	// immediately return the UserAuthorizer
-	_, ok := auxiliaryIdentitySource["token"]
-	if ok && len(auxiliaryIdentitySource) == 1 {
+	if tokenPresent && len(auxiliaryIdentitySource) == 1 {
 		return authorizers.NewUserAuthorizer(), nil
 	}
 
-	if len(auxiliaryIdentitySource) > 1 {
+	if tokenPresent && len(auxiliaryIdentitySource) > 1 {
 		datasetID, ok := auxiliaryIdentitySource["dataset_id"]
 		if ok {
 			paramIdentitySource, err := helpers.DecodeIdentitySource(datasetID)
 			if err != nil {
 				log.Error(err)
-				return nil, fmt.Errorf("could not decode identity source: %w", err)
+				return nil, fmt.Errorf("could not decode dataset_id identity source: %w", err)
 			}
 			return authorizers.NewDatasetAuthorizer(paramIdentitySource), nil
 		}
@@ -51,7 +51,7 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 			paramIdentitySource, err := helpers.DecodeIdentitySource(workspaceID)
 			if err != nil {
 				log.Error(err)
-				return nil, fmt.Errorf("could not decode identity source: %w", err)
+				return nil, fmt.Errorf("could not decode workspace_id identity source: %w", err)
 			}
 			return authorizers.NewWorkspaceAuthorizer(paramIdentitySource), nil
 		}
@@ -61,7 +61,7 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 			paramIdentitySource, err := helpers.DecodeIdentitySource(manifestID)
 			if err != nil {
 				log.Error(err)
-				return nil, fmt.Errorf("could not decode identity source: %w", err)
+				return nil, fmt.Errorf("could not decode manifest_id identity source: %w", err)
 			}
 			return authorizers.NewManifestAuthorizer(paramIdentitySource), nil
 		}
