@@ -4,7 +4,7 @@ import "github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 
 type AuxiliaryIdentitySource struct {
 	IdentitySource []string
-	HasManisfestId bool
+	HasManifestId  bool
 }
 
 type Mapper interface {
@@ -12,7 +12,7 @@ type Mapper interface {
 }
 
 func NewIdentitySourceMapper(identitySource []string, hasManifestId bool) Mapper {
-	return &AuxiliaryIdentitySource{IdentitySource: identitySource, HasManisfestId: hasManifestId}
+	return &AuxiliaryIdentitySource{IdentitySource: identitySource, HasManifestId: hasManifestId}
 }
 
 func (i *AuxiliaryIdentitySource) Create() map[string]string {
@@ -27,7 +27,7 @@ func (i *AuxiliaryIdentitySource) Create() map[string]string {
 		if helpers.Matches(source, `N:organization:`) {
 			m["workspace_id"] = source
 		}
-		if isManifestSource(i.HasManisfestId, source) {
+		if isManifestSource(i.HasManifestId, source) {
 			m["manifest_id"] = source
 		}
 	}
