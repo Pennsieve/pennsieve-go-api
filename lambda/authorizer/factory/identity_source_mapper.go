@@ -35,6 +35,5 @@ func (i *AuxiliaryIdentitySource) Create() map[string]string {
 }
 
 func isManifestSource(hasManifestId bool, source string) bool {
-	return hasManifestId && !helpers.Matches(source, `Bearer (?P<token>.*)`) &&
-		!helpers.Matches(source, `N:dataset:`) && !helpers.Matches(source, `N:organization:`)
+	return hasManifestId && !helpers.Matches(source, `Bearer (?P<token>.*)`)
 }
