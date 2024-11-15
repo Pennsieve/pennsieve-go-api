@@ -2,20 +2,19 @@ package factory
 
 import "github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 
-type AuxiliaryIdentitySource struct {
+type Mapper interface {
+	Create() map[string]string
+}
+type IdentitySourceMapper struct {
 	IdentitySource []string
 	HasManifestId  bool
 }
 
-type Mapper interface {
-	Create() map[string]string
-}
-
 func NewIdentitySourceMapper(identitySource []string, hasManifestId bool) Mapper {
-	return &AuxiliaryIdentitySource{IdentitySource: identitySource, HasManifestId: hasManifestId}
+	return &IdentitySourceMapper{IdentitySource: identitySource, HasManifestId: hasManifestId}
 }
 
-func (i *AuxiliaryIdentitySource) Create() map[string]string {
+func (i *IdentitySourceMapper) Create() map[string]string {
 	m := make(map[string]string)
 	for _, source := range i.IdentitySource {
 		if helpers.Matches(source, `Bearer (?P<token>.*)`) {
