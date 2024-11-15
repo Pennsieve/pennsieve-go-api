@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -13,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/service"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
@@ -83,16 +83,14 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		"IdentitySource": event.IdentitySource,
 		"Headers":        event.Headers}).Info("request parameters")
 
-	r := regexp.MustCompile(`Bearer (?P<token>.*)`)
-	tokenParts := r.FindStringSubmatch(event.Headers["authorization"])
-	if len(tokenParts) == 0 {
-		logger.Error("expected token to be in the format: Bearer <token>")
+	jwtB64, err := helpers.GetJWT(event.Headers["authorization"])
+	if err != nil {
+		logger.Error(err)
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,
 			Context:      nil,
 		}, nil
 	}
-	jwtB64 := []byte(tokenParts[r.SubexpIndex("token")])
 
 	// Validate and parse token, and return unauthorized if not valid
 	token, err := validateCognitoJWT(jwtB64)

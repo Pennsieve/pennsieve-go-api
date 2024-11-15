@@ -27,3 +27,13 @@ func TestHelpersDecodeIdentitySource(t *testing.T) {
 	result, _ = helpers.DecodeIdentitySource(datasetIdentitySource2[1])
 	assert.Equal(t, result, "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc")
 }
+
+func TestGetJWT(t *testing.T) {
+	result, err := helpers.GetJWT("Bearer ABCD")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "ABCD", string(result))
+
+	result, err = helpers.GetJWT("Bearer")
+	assert.Equal(t, "expected token to be in the format: Bearer <token>", err.Error())
+	assert.Equal(t, 0, len(result))
+}

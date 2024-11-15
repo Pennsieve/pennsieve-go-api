@@ -7,7 +7,6 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
-	log "github.com/sirupsen/logrus"
 )
 
 type AuthorizerFactory interface {
@@ -41,7 +40,6 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		if ok {
 			paramIdentitySource, err := helpers.DecodeIdentitySource(datasetID)
 			if err != nil {
-				log.Error(err)
 				return nil, fmt.Errorf("could not decode dataset_id identity source: %w", err)
 			}
 			return authorizers.NewDatasetAuthorizer(paramIdentitySource), nil
@@ -51,7 +49,6 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		if ok {
 			paramIdentitySource, err := helpers.DecodeIdentitySource(workspaceID)
 			if err != nil {
-				log.Error(err)
 				return nil, fmt.Errorf("could not decode workspace_id identity source: %w", err)
 			}
 			return authorizers.NewWorkspaceAuthorizer(paramIdentitySource), nil
@@ -61,7 +58,6 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 		if ok {
 			paramIdentitySource, err := helpers.DecodeIdentitySource(manifestID)
 			if err != nil {
-				log.Error(err)
 				return nil, fmt.Errorf("could not decode manifest_id identity source: %w", err)
 			}
 			return authorizers.NewManifestAuthorizer(paramIdentitySource), nil
