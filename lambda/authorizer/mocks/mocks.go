@@ -2,12 +2,14 @@ package mocks
 
 import (
 	"context"
+	"fmt"
+	"github.com/google/uuid"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/organization"
 	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/role"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/teamUser"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 )
@@ -53,4 +55,11 @@ func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]t
 func (m *MockClaimManager) GetDatasetID(context.Context, string) (*string, error) {
 	s := "someDatasetID"
 	return &s, nil
+}
+
+func (m *MockClaimManager) GetUserTokenWorkspace() (manager.UserTokenWorkspace, bool) {
+	return manager.UserTokenWorkspace{
+		Id:     7,
+		NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
+	}, true
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
-	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset/role"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/role"
 )
 
 type DatasetAuthorizer struct {

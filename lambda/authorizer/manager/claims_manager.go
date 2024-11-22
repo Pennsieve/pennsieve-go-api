@@ -25,6 +25,7 @@ type IdentityManager interface {
 	GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error)
 	GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error)
 	GetDatasetID(context.Context, string) (*string, error)
+	GetUserTokenWorkspace() (UserTokenWorkspace, bool)
 }
 
 type ClaimsManager struct {
@@ -85,6 +86,23 @@ func (c *ClaimsManager) GetTeamClaims(ctx context.Context, currentUser *pgdbMode
 	return teamClaims, nil
 }
 
+func (c *ClaimsManager) GetUserTokenWorkspace() (UserTokenWorkspace, bool) {
+	var workspace UserTokenWorkspace
+	if jwtOrgId, hasKey := c.Token.Get("custom:organization_id"); !hasKey {
+		return workspace, false
+	} else {
+		workspace.Id = jwtOrgId.(int64)
+	}
+	if jwtOrgNodeId, hasKey := c.Token.Get("custom:organization_node_id"); !hasKey {
+		return workspace, false
+	} else {
+		workspace.NodeId = jwtOrgNodeId.(string)
+	}
+
+	return workspace, true
+
+}
+
 func (c *ClaimsManager) GetActiveOrg(ctx context.Context, currentUser *pgdbModels.User) int64 {
 	orgInt := currentUser.PreferredOrg
 	jwtOrg, hasKey := c.Token.Get("custom:organization_id")
@@ -126,4 +144,9 @@ func getUser(ctx context.Context, q *pgdb.Queries, cognitoId string, isFromToken
 		}
 		return currentUser, nil
 	}
+}
+
+type UserTokenWorkspace struct {
+	Id     int64
+	NodeId string
 }
