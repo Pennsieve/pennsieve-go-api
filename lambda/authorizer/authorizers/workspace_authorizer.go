@@ -22,6 +22,11 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 		return nil, fmt.Errorf("unable to get current user: %w", err)
 	}
 
+	if tokenWorkspace, hasTokenWorkspace := claimsManager.GetTokenWorkspace(); hasTokenWorkspace && tokenWorkspace.NodeId != w.WorkspaceID {
+		return nil, fmt.Errorf("provided workspace id %s does not match API token workspace id %s",
+			w.WorkspaceID,
+			tokenWorkspace.NodeId)
+	}
 	// Get Active Org
 	orgInt := claimsManager.GetActiveOrg(ctx, currentUser)
 

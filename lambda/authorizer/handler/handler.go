@@ -28,6 +28,7 @@ var tokenPoolID string
 var tokenClientID string
 var issuer string
 var tokenIssuer string
+var manifestTableName string
 
 // init runs on cold start of lambda and gets jwt keysets from Cognito user pools.
 func init() {
@@ -36,6 +37,7 @@ func init() {
 	userClientID = os.Getenv("USER_CLIENT")
 	tokenPoolID = os.Getenv("TOKEN_POOL")
 	tokenClientID = os.Getenv("TOKEN_CLIENT")
+	manifestTableName = os.Getenv("MANIFEST_TABLE")
 	issuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
 	tokenIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, tokenPoolID)
 
@@ -128,7 +130,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 			Context:      nil,
 		}, nil
 	}
-	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID)
+	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID, manifestTableName)
 	authorizerMode := os.Getenv("AUTHORIZER_MODE")
 	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {

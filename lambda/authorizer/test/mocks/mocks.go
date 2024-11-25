@@ -57,8 +57,8 @@ func (m *MockClaimManager) GetDatasetID(context.Context, string) (*string, error
 	return &s, nil
 }
 
-func (m *MockClaimManager) GetUserTokenWorkspace() (manager.UserTokenWorkspace, bool) {
-	return manager.UserTokenWorkspace{
+func (m *MockClaimManager) GetTokenWorkspace() (manager.TokenWorkspace, bool) {
+	return manager.TokenWorkspace{
 		Id:     7,
 		NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
 	}, true

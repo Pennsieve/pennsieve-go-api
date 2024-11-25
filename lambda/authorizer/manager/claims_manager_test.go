@@ -1,41 +1,48 @@
-package manager
+package manager_test
 
 import (
-	"fmt"
+	"context"
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestClaimsManager_GetUserTokenWorkspace(t *testing.T) {
-	orgId := int64(13)
-	orgNodeId := fmt.Sprintf("N:organization:%s", uuid.NewString())
-	jwtBuilder := jwt.NewBuilder().
-		Claim("username", uuid.NewString()).
-		Claim("client_id", uuid.NewString())
-
-	tokenWithoutOrg, err := jwtBuilder.Build()
-	require.NoError(t, err)
-
+func TestClaimsManager_GetTokenWorkspace(t *testing.T) {
 	t.Run("token without workspace", func(t *testing.T) {
-		manager := NewClaimsManager(nil, nil, tokenWithoutOrg, uuid.NewString())
-		_, hasWorkspace := manager.GetUserTokenWorkspace()
+		tokenWithoutOrg := test.NewJWT(t)
+		claimsManager := manager.NewClaimsManager(nil, nil, tokenWithoutOrg.Token, uuid.NewString(), uuid.NewString())
+		_, hasWorkspace := claimsManager.GetTokenWorkspace()
 		assert.False(t, hasWorkspace)
 	})
 
-	tokenWithOrg, err := jwtBuilder.
-		Claim("custom:organization_id", orgId).
-		Claim("custom:organization_node_id", orgNodeId).
-		Build()
-	require.NoError(t, err)
+	t.Run("token with workspace", func(t *testing.T) {
+		tokenWithOrg := test.NewJWTWithWorkspace(t)
+		claimsManager := manager.NewClaimsManager(nil, nil, tokenWithOrg.Token, uuid.NewString(), uuid.NewString())
+		tokenWorkspace, hasWorkspace := claimsManager.GetTokenWorkspace()
+		assert.True(t, hasWorkspace)
+		assert.Equal(t, tokenWithOrg.Workspace.Id, tokenWorkspace.Id)
+		assert.Equal(t, tokenWithOrg.Workspace.NodeId, tokenWorkspace.NodeId)
+	})
+}
+
+func TestClaimsManager_GetActiveOrg(t *testing.T) {
+	user := test.NewUser(101, 1001) // Greater org id than will be returned by NewTestJWTWithWorkspace
+
+	t.Run("token without workspace", func(t *testing.T) {
+		tokenWithoutOrg := test.NewJWT(t)
+		claimsManager := manager.NewClaimsManager(nil, nil, tokenWithoutOrg.Token, uuid.NewString(), uuid.NewString())
+		orgId := claimsManager.GetActiveOrg(context.Background(), user)
+		// GetActiveOrg returns the user's preferred org since the token does not contain a workspace
+		assert.Equal(t, user.PreferredOrg, orgId)
+	})
 
 	t.Run("token with workspace", func(t *testing.T) {
-		manager := NewClaimsManager(nil, nil, tokenWithOrg, uuid.NewString())
-		tokenWorkspace, hasWorkspace := manager.GetUserTokenWorkspace()
-		assert.True(t, hasWorkspace)
-		assert.Equal(t, orgId, tokenWorkspace.Id)
-		assert.Equal(t, orgNodeId, tokenWorkspace.NodeId)
+		tokenWithOrg := test.NewJWTWithWorkspace(t)
+		claimsManager := manager.NewClaimsManager(nil, nil, tokenWithOrg.Token, uuid.NewString(), uuid.NewString())
+		orgId := claimsManager.GetActiveOrg(context.Background(), user)
+		// GetActiveOrg returns the workspace from the JWT token and ignores the user's preferred org
+		assert.Equal(t, tokenWithOrg.Workspace.Id, orgId)
 	})
 }
