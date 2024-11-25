@@ -10,6 +10,7 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/authorizer/test"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/organization"
 	pgModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,6 +32,10 @@ func (u userWithCognito) delete(t require.TestingT, db *sql.DB) {
 	test.DeleteUser(t, db, u.user.Id)
 }
 
+// testUser is a user that will be added to seed Postgres before each subtest is run and removed once the subtest ends.
+// Subtests should add or not add organization_user and/or tokens rows depending on
+// the particular case they are testing. Subtests adding rows to these two tables do not need to delete them before they exit
+// since such rows will cascade deleted when this user is deleted.
 var testUser = userWithCognito{
 	// deliberately use a preferredOrgId that doest not exist in the seed DB since this should be ignored
 	// by the workspace authorizer
@@ -115,6 +120,8 @@ func testUserWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 	assert.NoError(t, err)
 
 	assert.Len(t, claims, 3)
+
+	// Org claim
 	assert.Contains(t, claims, "org_claim")
 
 	var orgClaim *organization.Claim
@@ -123,6 +130,19 @@ func testUserWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 	assert.Equal(t, orgNodeId, orgClaim.NodeId)
 	assert.Equal(t, orgId, orgClaim.IntId)
 	assert.Equal(t, pgModels.Delete, orgClaim.Role)
+
+	// User claim
+	assert.Contains(t, claims, "user_claim")
+	var userClaim user.Claim
+	require.IsType(t, userClaim, claims["user_claim"])
+	userClaim = claims["user_claim"].(user.Claim)
+	assert.Equal(t, testUser.user.Id, userClaim.Id)
+	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
+	assert.False(t, userClaim.IsSuperAdmin)
+
+	// Teams claims
+	assert.Contains(t, claims, "teams_claim")
+	assert.Empty(t, claims["teams_claim"])
 
 }
 
@@ -144,12 +164,26 @@ func testUserWithNoPermissionInWorkspace(t *testing.T, pgDB *sql.DB) {
 	assert.Len(t, claims, 3)
 	assert.Contains(t, claims, "org_claim")
 
+	// Org claim
 	var orgClaim *organization.Claim
 	require.IsType(t, orgClaim, claims["org_claim"])
 	orgClaim = claims["org_claim"].(*organization.Claim)
 	assert.Equal(t, orgNodeId, orgClaim.NodeId)
 	assert.Equal(t, orgId, orgClaim.IntId)
 	assert.Equal(t, pgModels.NoPermission, orgClaim.Role)
+
+	// User claim
+	assert.Contains(t, claims, "user_claim")
+	var userClaim user.Claim
+	require.IsType(t, userClaim, claims["user_claim"])
+	userClaim = claims["user_claim"].(user.Claim)
+	assert.Equal(t, testUser.user.Id, userClaim.Id)
+	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
+	assert.False(t, userClaim.IsSuperAdmin)
+
+	// Teams claims
+	assert.Contains(t, claims, "teams_claim")
+	assert.Empty(t, claims["teams_claim"])
 
 }
 
@@ -174,11 +208,25 @@ func testAPIKeyWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 	assert.Len(t, claims, 3)
 	assert.Contains(t, claims, "org_claim")
 
+	// Org claim
 	var orgClaim *organization.Claim
 	require.IsType(t, orgClaim, claims["org_claim"])
 	orgClaim = claims["org_claim"].(*organization.Claim)
 	assert.Equal(t, orgNodeId, orgClaim.NodeId)
 	assert.Equal(t, orgId, orgClaim.IntId)
 	assert.Equal(t, pgModels.Delete, orgClaim.Role)
+
+	// User claim
+	assert.Contains(t, claims, "user_claim")
+	var userClaim user.Claim
+	require.IsType(t, userClaim, claims["user_claim"])
+	userClaim = claims["user_claim"].(user.Claim)
+	assert.Equal(t, testUser.user.Id, userClaim.Id)
+	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
+	assert.False(t, userClaim.IsSuperAdmin)
+
+	// Teams claims
+	assert.Contains(t, claims, "teams_claim")
+	assert.Empty(t, claims["teams_claim"])
 
 }

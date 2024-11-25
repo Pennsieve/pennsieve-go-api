@@ -54,20 +54,22 @@ func init() {
 	userJwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, userPoolID)
 	keySet, err = jwk.Fetch(context.Background(), userJwksURL)
 	if err != nil {
-		log.Error("Unable to fetch Key Set")
+		log.Error("Unable to fetch user pool Key Set", err)
 	}
 
 	// Get TokenPool keyset
 	tokenJwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, tokenPoolID)
 	tokenKeySet, err := jwk.Fetch(context.Background(), tokenJwksURL)
 	if err != nil {
-		log.Error("Unable to fetch Key Set")
+		log.Error("Unable to fetch token pool Key Set", err)
 	}
 
 	// Add tokenKeySet keys to keySet, so we can decode from both user and token pool
 	tokenKeys := tokenKeySet.Keys(context.Background())
 	for tokenKeys.Next(context.Background()) {
-		keySet.AddKey(tokenKeys.Pair().Value.(jwk.Key))
+		if err := keySet.AddKey(tokenKeys.Pair().Value.(jwk.Key)); err != nil {
+			log.Error("Unable to add token pool keys to user pool keys", err)
+		}
 	}
 
 }
