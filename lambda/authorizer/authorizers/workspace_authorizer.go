@@ -27,11 +27,9 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 			w.WorkspaceID,
 			tokenWorkspace.NodeId)
 	}
-	// Get Active Org
-	orgInt := claimsManager.GetActiveOrg(ctx, currentUser)
 
 	// Get Workspace Claim
-	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
+	orgClaim, err := claimsManager.GetOrgClaimByNodeId(ctx, currentUser, w.WorkspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
 	}
@@ -39,8 +37,8 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	// Get Publisher's Claim
 	teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
-			currentUser.Id, orgInt, err)
+		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %s: %w",
+			currentUser.Id, w.WorkspaceID, err)
 	}
 
 	// Get User Claim

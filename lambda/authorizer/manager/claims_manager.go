@@ -21,6 +21,7 @@ type IdentityManager interface {
 	GetUserClaim(context.Context, *pgdbModels.User) user.Claim
 	GetDatasetClaim(context.Context, *pgdbModels.User, string, int64) (*dataset.Claim, error)
 	GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error)
+	GetOrgClaimByNodeId(context.Context, *pgdbModels.User, string) (*organization.Claim, error)
 	GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error)
 	GetDatasetID(context.Context, string) (*string, error)
 	GetTokenWorkspace() (TokenWorkspace, bool)
@@ -71,6 +72,14 @@ func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels
 		return nil, err
 	}
 
+	return orgClaim, nil
+}
+
+func (c *ClaimsManager) GetOrgClaimByNodeId(ctx context.Context, currentUser *pgdbModels.User, workspaceNodeId string) (*organization.Claim, error) {
+	orgClaim, err := c.PostgresDB.GetOrganizationClaimByNodeId(ctx, currentUser.Id, workspaceNodeId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting orgClaim for user %d, workspace %s: %w", currentUser.Id, workspaceNodeId, err)
+	}
 	return orgClaim, nil
 }
 

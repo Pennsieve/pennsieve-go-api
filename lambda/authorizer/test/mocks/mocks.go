@@ -48,6 +48,10 @@ func (m *MockClaimManager) GetOrgClaim(context.Context, *pgdbModels.User, int64)
 	return &organization.Claim{}, nil
 }
 
+func (m *MockClaimManager) GetOrgClaimByNodeId(ctx context.Context, p *pgdbModels.User, s string) (*organization.Claim, error) {
+	return nil, fmt.Errorf("mock method not implemented")
+}
+
 func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error) {
 	return []teamUser.Claim{{IntId: 1, Name: "someTeam1"}}, nil
 }
