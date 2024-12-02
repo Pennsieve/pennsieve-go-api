@@ -2,7 +2,9 @@ package authorizers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	pgModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 )
@@ -32,6 +34,9 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	orgClaim, err := claimsManager.GetOrgClaimByNodeId(ctx, currentUser, w.WorkspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
+	}
+	if orgClaim.Role == pgModels.NoPermission {
+		return nil, errors.New("user has no access to workspace")
 	}
 
 	// Get Publisher's Claim

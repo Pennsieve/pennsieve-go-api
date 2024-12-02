@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.18.4
 	github.com/google/uuid v1.3.0
 	github.com/lestrrat-go/jwx/v2 v2.0.11
-	github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241126225532-b4de084a5519
+	github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241202201637-bae16f3aa1b5
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.4
 )

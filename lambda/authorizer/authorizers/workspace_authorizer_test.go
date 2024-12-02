@@ -117,7 +117,7 @@ func testUserWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 
 	workspaceAuthorizer := authorizers.NewWorkspaceAuthorizer(orgNodeId)
 	claims, err := workspaceAuthorizer.GenerateClaims(context.Background(), claimsManager, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Len(t, claims, 3)
 
@@ -157,34 +157,8 @@ func testUserWithNoPermissionInWorkspace(t *testing.T, pgDB *sql.DB) {
 	claimsManager := manager.NewClaimsManager(pgQueries, nil, token.Token, uuid.NewString(), uuid.NewString())
 
 	workspaceAuthorizer := authorizers.NewWorkspaceAuthorizer(orgNodeId)
-	claims, err := workspaceAuthorizer.GenerateClaims(context.Background(), claimsManager, "")
-	// TODO :should this return an error if the user has no permissions in the DB?
-	assert.NoError(t, err)
-
-	assert.Len(t, claims, 3)
-	assert.Contains(t, claims, "org_claim")
-
-	// Org claim
-	var orgClaim *organization.Claim
-	require.IsType(t, orgClaim, claims["org_claim"])
-	orgClaim = claims["org_claim"].(*organization.Claim)
-	assert.Equal(t, orgNodeId, orgClaim.NodeId)
-	assert.Equal(t, orgId, orgClaim.IntId)
-	assert.Equal(t, pgModels.NoPermission, orgClaim.Role)
-
-	// User claim
-	assert.Contains(t, claims, "user_claim")
-	var userClaim user.Claim
-	require.IsType(t, userClaim, claims["user_claim"])
-	userClaim = claims["user_claim"].(user.Claim)
-	assert.Equal(t, testUser.user.Id, userClaim.Id)
-	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
-	assert.False(t, userClaim.IsSuperAdmin)
-
-	// Teams claims
-	assert.Contains(t, claims, "teams_claim")
-	assert.Empty(t, claims["teams_claim"])
-
+	_, err := workspaceAuthorizer.GenerateClaims(context.Background(), claimsManager, "")
+	assert.ErrorContains(t, err, "user has no access to workspace")
 }
 
 func testAPIKeyWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
@@ -203,7 +177,7 @@ func testAPIKeyWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 
 	workspaceAuthorizer := authorizers.NewWorkspaceAuthorizer(orgNodeId)
 	claims, err := workspaceAuthorizer.GenerateClaims(context.Background(), claimsManager, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Len(t, claims, 3)
 	assert.Contains(t, claims, "org_claim")
