@@ -78,6 +78,8 @@ github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241126225532-b4de084a5519 h1:
 github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241126225532-b4de084a5519/go.mod h1:MeMDPuGOXkY8q+opOES8r7ib3EAt5dveB+PMjgtLNKM=
 github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241202201637-bae16f3aa1b5 h1:pCAT0X07SaYDtlxKomB4KhFTuFGMi0EI9JTG75clBi8=
 github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241202201637-bae16f3aa1b5/go.mod h1:MeMDPuGOXkY8q+opOES8r7ib3EAt5dveB+PMjgtLNKM=
+github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241203210154-937d1d648c1c h1:qRhGOBs2DQBgsljY90hWaWumYoFSJTTZiHISYIIklAk=
+github.com/pennsieve/pennsieve-go-core v1.12.1-0.20241203210154-937d1d648c1c/go.mod h1:MeMDPuGOXkY8q+opOES8r7ib3EAt5dveB+PMjgtLNKM=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
