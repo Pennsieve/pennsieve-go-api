@@ -110,14 +110,24 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	db, err := pgdb.ConnectRDS()
 	postgresDB := pgdb.New(db)
 	if err != nil {
-		logger.Fatalln("unable to connect to RDS instance.")
+		logger.Error("unable to connect to RDS instance: ", err)
+		// deliberately returning non-nil error so caller gets a 500 rather
+		// than 40x response
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, err
 	}
 	defer db.Close()
 
 	// Create a DynamoDB connection
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		logger.Fatalln("unable to connect to RDS instance.")
+		logger.Error("unable to load AWS config: ", err)
+		// deliberately returning non-nil error so caller gets a 500 rather
+		// than 40x response
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, err
 	}
 	client := dynamodb.NewFromConfig(cfg)
 	dynamoDB := dydb.New(client)
