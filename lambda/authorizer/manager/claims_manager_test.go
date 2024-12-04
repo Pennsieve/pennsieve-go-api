@@ -44,5 +44,6 @@ func TestClaimsManager_GetActiveOrg(t *testing.T) {
 		orgId := claimsManager.GetActiveOrg(context.Background(), user)
 		// GetActiveOrg returns the workspace from the JWT token and ignores the user's preferred org
 		assert.Equal(t, tokenWithOrg.Workspace.Id, orgId)
+		assert.NotEqual(t, user.PreferredOrg, orgId)
 	})
 }

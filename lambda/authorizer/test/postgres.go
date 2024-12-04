@@ -14,7 +14,7 @@ func AddUser(t require.TestingT, db *sql.DB, user *pgdb.User, cognitoId string) 
 	require.True(t, user.Id > 3, "test user id should be > 3 to avoid conflict with existing seed users")
 	query := `INSERT INTO "pennsieve"."users" 
     						(id, email, first_name, last_name, is_super_admin, preferred_org_id, node_id, cognito_id) 
-							VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+							VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	_, err := db.Exec(query, user.Id, user.Email, user.FirstName, user.LastName, user.IsSuperAdmin, user.PreferredOrg, user.NodeId, cognitoId)
 	require.NoError(t, err, "error inserting test user")
 }
@@ -40,7 +40,7 @@ func AddOrgUser(t require.TestingT, db *sql.DB, orgId, userId int64, orgPermissi
 
 }
 
-// AddAPIToken adds an API token to the the given user in the given organization.
+// AddAPIToken adds an API token to the given user in the given organization.
 // If the given user is deleted, the row in tokens will automatically be deleted because of
 // a delete cascade in the seed DB's DDL.
 func AddAPIToken(t require.TestingT, db *sql.DB, orgId, userId int64, apiKey string, clientId string) {

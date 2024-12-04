@@ -9,6 +9,23 @@ import (
 	"math/rand"
 )
 
+// JWT wraps a jwt.Token. Create one with either NewJWT, NewJWTWithWorkspace, or JWTBuilder so
+// that the claim values are automatically written to JWT.Username, JWT.ClientId, and optionally JWT.Workspace as fields for easy access in tests
+type JWT struct {
+	Username  string
+	ClientId  string
+	Workspace *manager.TokenWorkspace
+	Token     jwt.Token
+}
+
+func NewJWT(t require.TestingT) JWT {
+	return NewJWTBuilder().Build(t)
+}
+
+func NewJWTWithWorkspace(t require.TestingT) JWT {
+	return NewJWTBuilder().WithRandomWorkspace().Build(t)
+}
+
 type JWTBuilder struct {
 	Username  string
 	ClientId  string
@@ -82,20 +99,4 @@ func (b *JWTBuilder) Build(t require.TestingT) JWT {
 	require.NoError(t, err)
 	testJWT.Token = token
 	return testJWT
-}
-
-// JWT wraps a jwt.Token, also saving the claim values as fields for easy access
-type JWT struct {
-	Username  string
-	ClientId  string
-	Workspace *manager.TokenWorkspace
-	Token     jwt.Token
-}
-
-func NewJWT(t require.TestingT) JWT {
-	return NewJWTBuilder().Build(t)
-}
-
-func NewJWTWithWorkspace(t require.TestingT) JWT {
-	return NewJWTBuilder().WithRandomWorkspace().Build(t)
 }
