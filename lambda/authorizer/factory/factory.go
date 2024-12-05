@@ -21,8 +21,8 @@ func NewCustomAuthorizerFactory() AuthorizerFactory {
 
 func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringParameters map[string]string) (authorizers.Authorizer, error) {
 	var hasManifestId bool
-	manifest_id, hasManifestId := queryStringParameters["manifest_id"]
-	if manifest_id == "" {
+	manifestIdQueryParam, hasManifestId := queryStringParameters["manifest_id"]
+	if manifestIdQueryParam == "" {
 		hasManifestId = false
 	}
 
