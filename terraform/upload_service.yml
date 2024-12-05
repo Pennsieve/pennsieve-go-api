@@ -2178,8 +2178,6 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
       operationId: getPublishingServiceInformation
-      security:
-        - token_auth: [ ]
       tags:
         - Publishing Service Information
       responses:
@@ -2208,8 +2206,6 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
       operationId: getPublishingRepositories
-      security:
-        - token_auth: [ ]
       tags:
         - Publishing Service
       responses:
@@ -2238,8 +2234,6 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
       operationId: getProposalQuestions
-      security:
-        - token_auth: [ ]
       tags:
         - Publishing Service
       responses:
