@@ -1,6 +1,7 @@
 package mappers_test
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
@@ -8,57 +9,63 @@ import (
 )
 
 func TestIdentitySourceMapper(t *testing.T) {
-	UserIdentitySource := []string{"Bearer eyJra.some.random.string"}
-	DatasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N:dataset:some-uuid"}
-	DatasetIdentitySourceFlippedOrder := []string{"N:dataset:some-uuid", "Bearer eyJra.some.random.string"}
-	ManifestIdentitySource := []string{"Bearer eyJra.some.random.string", "someManifestId"}
-	ManifestIdentitySourceFlippedOrder := []string{"someManifestId", "Bearer eyJra.some.random.string"}
-	WorkspaceIdentitySource := []string{"Bearer eyJra.some.random.string", "N:organization:some-uuid"}
-	WorkspaceIdentitySourceFlippedOrder := []string{"N:organization:some-uuid", "Bearer eyJra.some.random.string"}
-	UserIdentitySourceInvalidToken := []string{"eyJra.some.random.string"}
+	token := "Bearer eyJra.some.random.string"
+	datasetId := "N:dataset:some-uuid"
 
-	identitySourceMapper := mappers.NewIdentitySourceMapper(UserIdentitySource, false)
-	auxiliaryIdentitySource := identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, 1, len(auxiliaryIdentitySource))
+	userIdentitySource := []string{token}
+	datasetIdentitySource := []string{token, datasetId}
+	datasetIdentitySourceFlippedOrder := []string{datasetId, token}
 
-	identitySourceMapper = mappers.NewIdentitySourceMapper(DatasetIdentitySource, false)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, "N:dataset:some-uuid", auxiliaryIdentitySource["dataset_id"])
-	assert.Equal(t, 2, len(auxiliaryIdentitySource))
+	// happy path tests
+	for scenario, params := range map[string]struct {
+		idSource []string
+		expected mappers.IdentitySource
+	}{
+		"token only identity source": {userIdentitySource, mappers.IdentitySource{
+			Token: token,
+		}},
+		"identity source with additional source": {datasetIdentitySource, mappers.IdentitySource{
+			Token: token,
+			Other: &datasetId,
+		}},
+		"identity source with additional source in flipped order": {datasetIdentitySourceFlippedOrder, mappers.IdentitySource{
+			Token: token,
+			Other: &datasetId,
+		}},
+	} {
+		t.Run(scenario, func(t *testing.T) {
+			identitySourceMapper, err := mappers.NewIdentitySourceMapper(params.idSource)
+			require.NoError(t, err)
+			auxiliaryIdentitySource, err := identitySourceMapper.Create()
+			require.NoError(t, err)
+			assert.Equal(t, params.expected, auxiliaryIdentitySource)
+		})
+	}
 
-	identitySourceMapper = mappers.NewIdentitySourceMapper(DatasetIdentitySourceFlippedOrder, false)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, "N:dataset:some-uuid", auxiliaryIdentitySource["dataset_id"])
-	assert.Equal(t, 2, len(auxiliaryIdentitySource))
+	userTokenMissingBearer := []string{"eyJra.some.random.string"}
+	userTokenMissingBearerWithOtherId := []string{"eyJra.some.random.string", datasetId}
+	userTokenMissingToken := []string{"Bearer"}
+	userTokenMissingTokenWithOtherId := []string{"Bearer", datasetId}
+	otherIdEmpty := []string{token, ""}
 
-	identitySourceMapper = mappers.NewIdentitySourceMapper(ManifestIdentitySource, true)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, "someManifestId", auxiliaryIdentitySource["manifest_id"])
-	assert.Equal(t, 2, len(auxiliaryIdentitySource))
+	// error tests
+	for scenario, params := range map[string]struct {
+		idSource          []string
+		expectedErrorText string
+	}{
+		"user token missing 'Bearer'":                  {userTokenMissingBearer, "no valid user token found"},
+		"user token missing 'Bearer' with other param": {userTokenMissingBearerWithOtherId, "no valid user token found"},
+		"user token missing token":                     {userTokenMissingToken, "no valid user token found"},
+		"user token missing token with other param":    {userTokenMissingTokenWithOtherId, "no valid user token found"},
+		"empty non-token source":                       {otherIdEmpty, "invalid non-token identity source found"},
+	} {
+		t.Run(scenario, func(t *testing.T) {
+			identitySourceMapper, err := mappers.NewIdentitySourceMapper(params.idSource)
+			require.NoError(t, err)
+			_, err = identitySourceMapper.Create()
+			assert.ErrorContains(t, err, params.expectedErrorText)
+		})
 
-	identitySourceMapper = mappers.NewIdentitySourceMapper(ManifestIdentitySourceFlippedOrder, true)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, "someManifestId", auxiliaryIdentitySource["manifest_id"])
-	assert.Equal(t, 2, len(auxiliaryIdentitySource))
+	}
 
-	identitySourceMapper = mappers.NewIdentitySourceMapper(WorkspaceIdentitySource, false)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, "N:organization:some-uuid", auxiliaryIdentitySource["workspace_id"])
-	assert.Equal(t, 2, len(auxiliaryIdentitySource))
-
-	identitySourceMapper = mappers.NewIdentitySourceMapper(WorkspaceIdentitySourceFlippedOrder, false)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, "Bearer eyJra.some.random.string", auxiliaryIdentitySource["token"])
-	assert.Equal(t, "N:organization:some-uuid", auxiliaryIdentitySource["workspace_id"])
-	assert.Equal(t, 2, len(auxiliaryIdentitySource))
-
-	identitySourceMapper = mappers.NewIdentitySourceMapper(UserIdentitySourceInvalidToken, false)
-	auxiliaryIdentitySource = identitySourceMapper.Create()
-	assert.Equal(t, 0, len(auxiliaryIdentitySource))
 }

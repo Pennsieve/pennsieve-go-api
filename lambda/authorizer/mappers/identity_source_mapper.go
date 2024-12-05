@@ -1,38 +1,52 @@
 package mappers
 
-import "github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
+import (
+	"errors"
+	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
+)
+
+type IdentitySource struct {
+	Token string
+	Other *string
+}
 
 type Mapper interface {
-	Create() map[string]string
+	// Create returns an IdentitySource or a non-nil error if one cannot be created.
+	// The returned IdentitySource.Token will be a non-emtpy Token including the initial 'Bearer'.
+	// If the returned IdentitySource.Other is non-nil, then it is also non-empty.
+	Create() (IdentitySource, error)
 }
+
 type IdentitySourceMapper struct {
 	IdentitySource []string
-	HasManifestId  bool
 }
 
-func NewIdentitySourceMapper(identitySource []string, hasManifestId bool) Mapper {
-	return &IdentitySourceMapper{IdentitySource: identitySource, HasManifestId: hasManifestId}
+func NewIdentitySourceMapper(identitySource []string) (Mapper, error) {
+	if idSourceLen := len(identitySource); idSourceLen == 0 {
+		return nil, errors.New("identity source emtpy")
+	} else if idSourceLen > 2 {
+		return nil, fmt.Errorf("identity source too long: %d", idSourceLen)
+	}
+	return &IdentitySourceMapper{IdentitySource: identitySource}, nil
 }
 
-func (i *IdentitySourceMapper) Create() map[string]string {
-	m := make(map[string]string)
+func (i *IdentitySourceMapper) Create() (IdentitySource, error) {
+	m := IdentitySource{}
 	for _, source := range i.IdentitySource {
+		// need to avoid for-loop variable gotcha since we may take the address of source below (and we are on Go version < 1.22)
+		source := source
 		if helpers.Matches(source, `Bearer (?P<token>.*)`) {
-			m["token"] = source
-		}
-		if helpers.Matches(source, `N:dataset:`) {
-			m["dataset_id"] = source
-		}
-		if helpers.Matches(source, `N:organization:`) {
-			m["workspace_id"] = source
-		}
-		if isManifestSource(i.HasManifestId, source) {
-			m["manifest_id"] = source
+			m.Token = source
+		} else {
+			m.Other = &source
 		}
 	}
-	return m
-}
-
-func isManifestSource(hasManifestId bool, source string) bool {
-	return hasManifestId && !helpers.Matches(source, `Bearer (?P<token>.*)`)
+	if len(m.Token) == 0 {
+		return m, fmt.Errorf("no valid user token found in %s", i.IdentitySource)
+	}
+	if m.Other != nil && len(*m.Other) == 0 {
+		return m, fmt.Errorf("invalid non-token identity source found in %s", i.IdentitySource)
+	}
+	return m, nil
 }

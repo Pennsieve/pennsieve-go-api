@@ -13,28 +13,24 @@ func TestFactory(t *testing.T) {
 	authFactory := factory.NewCustomAuthorizerFactory()
 
 	//ids
-	manifestId := "someManifestId"
-	datasetId := "N:dataset:some-uuid"
-	workspaceId := "N:organization:some-uuid"
+	objectId := "someObjectId"
+	object2Id := "someOtherObjectId"
 
 	//user token header
 	authHeaderValue := "Bearer eyJra.some.random.string"
 
 	// query params
-	withManifestId := map[string]string{"manifest_id": manifestId, "someOtherParam": "someOtherValue"}
-	withDatasetId := map[string]string{"dataset_id": datasetId, "someOtherParam": "someOtherValue"}
-	withWorkspaceId := map[string]string{"organization_id": workspaceId, "someOtherParam": "someOtherValue"}
+	withManifestId := map[string]string{"manifest_id": objectId, "someOtherParam": "someOtherValue"}
+	withDatasetId := map[string]string{"dataset_id": objectId, "someOtherParam": "someOtherValue"}
+	withWorkspaceId := map[string]string{"organization_id": objectId, "someOtherParam": "someOtherValue"}
 	withoutIdQueryParams := map[string]string{"someOtherParam": "someOtherValue"}
-	withDatasetAndManifestIds := map[string]string{"dataset_id": datasetId, "manifest_id": manifestId, "someOtherParam": "someOtherValue"}
-	withDatasetAndWorkspaceIds := map[string]string{"dataset_id": datasetId, "organization_id": workspaceId, "someOtherParam": "someOtherValue"}
+	withDatasetAndManifestIds := map[string]string{"dataset_id": objectId, "manifest_id": object2Id, "someOtherParam": "someOtherValue"}
+	withDatasetAndWorkspaceIds := map[string]string{"dataset_id": objectId, "organization_id": object2Id, "someOtherParam": "someOtherValue"}
 
 	// identity sources
-	manifestIdentitySource := []string{authHeaderValue, manifestId}
-	manifestIdentitySourceFlippedOrder := []string{manifestId, authHeaderValue}
-	datasetIdentitySource := []string{authHeaderValue, datasetId}
-	datasetIdentitySourceFlippedOrder := []string{datasetId, authHeaderValue}
-	workspaceIdentitySource := []string{authHeaderValue, workspaceId}
-	workspaceIdentitySourceFlippedOrder := []string{workspaceId, authHeaderValue}
+	objectIdentitySource := []string{authHeaderValue, objectId}
+	objectIdentitySourceFlippedOrder := []string{objectId, authHeaderValue}
+	object2IdentitySource := []string{object2Id, authHeaderValue}
 	userIdentitySource := []string{authHeaderValue}
 
 	// expected authorizer types
@@ -51,16 +47,16 @@ func TestFactory(t *testing.T) {
 	}{
 		"user authorizer": {userIdentitySource, withoutIdQueryParams, userAuthorizerType},
 		"user authorizer with id related query params":                                 {userIdentitySource, withDatasetId, userAuthorizerType},
-		"dataset authorizer":                                                           {datasetIdentitySource, withDatasetId, datasetAuthorizerType},
-		"dataset authorizer, flipped identity source":                                  {datasetIdentitySourceFlippedOrder, withDatasetId, datasetAuthorizerType},
-		"manifest authorizer":                                                          {manifestIdentitySource, withManifestId, manifestAuthorizerType},
-		"manifest authorizer, flipped identity source":                                 {manifestIdentitySourceFlippedOrder, withManifestId, manifestAuthorizerType},
-		"workspace authorizer":                                                         {workspaceIdentitySource, withWorkspaceId, workspaceAuthorizerType},
-		"workspace authorizer, flipped identity source":                                {workspaceIdentitySourceFlippedOrder, withWorkspaceId, workspaceAuthorizerType},
-		"user supplies both manifest and dataset id to manifest authorizer endpoint":   {manifestIdentitySource, withDatasetAndManifestIds, manifestAuthorizerType},
-		"user supplies both manifest and dataset id to dataset authorizer endpoint":    {datasetIdentitySource, withDatasetAndManifestIds, datasetAuthorizerType},
-		"user supplies both workspace and dataset id to workspace authorizer endpoint": {workspaceIdentitySource, withDatasetAndWorkspaceIds, workspaceAuthorizerType},
-		"user supplies both workspace and dataset id to dataset authorizer endpoint":   {datasetIdentitySource, withDatasetAndWorkspaceIds, datasetAuthorizerType},
+		"dataset authorizer":                                                           {objectIdentitySource, withDatasetId, datasetAuthorizerType},
+		"dataset authorizer, flipped identity source":                                  {objectIdentitySourceFlippedOrder, withDatasetId, datasetAuthorizerType},
+		"manifest authorizer":                                                          {objectIdentitySource, withManifestId, manifestAuthorizerType},
+		"manifest authorizer, flipped identity source":                                 {objectIdentitySourceFlippedOrder, withManifestId, manifestAuthorizerType},
+		"workspace authorizer":                                                         {objectIdentitySource, withWorkspaceId, workspaceAuthorizerType},
+		"workspace authorizer, flipped identity source":                                {objectIdentitySourceFlippedOrder, withWorkspaceId, workspaceAuthorizerType},
+		"user supplies both manifest and dataset id to manifest authorizer endpoint":   {object2IdentitySource, withDatasetAndManifestIds, manifestAuthorizerType},
+		"user supplies both manifest and dataset id to dataset authorizer endpoint":    {objectIdentitySource, withDatasetAndManifestIds, datasetAuthorizerType},
+		"user supplies both workspace and dataset id to workspace authorizer endpoint": {object2IdentitySource, withDatasetAndWorkspaceIds, workspaceAuthorizerType},
+		"user supplies both workspace and dataset id to dataset authorizer endpoint":   {objectIdentitySource, withDatasetAndWorkspaceIds, datasetAuthorizerType},
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			authorizer, err := authFactory.Build(params.idSource, params.queryParams)
@@ -69,12 +65,12 @@ func TestFactory(t *testing.T) {
 		})
 	}
 
-	missingUserTokenIdentitySource := []string{workspaceId}
-	userIdentitySourceInvalidToken := []string{"eyJra.some.random.string"}
-	datasetIdAsOrgIdQueryParam := map[string]string{"organization_id": datasetId, "someOtherParam": "someOtherValue"}
-	orgIdAsDatasetIdQueryParam := map[string]string{"dataset_id": workspaceId, "someOtherParam": "someOtherValue"}
-	manifestIdAsDatasetIdQueryParam := map[string]string{"dataset_id": manifestId, "someOtherParam": "someOtherValue"}
-	datasetIdAsManifestIdQueryParam := map[string]string{"manifest_id": datasetId, "someOtherParam": "someOtherValue"}
+	missingUserTokenIdentitySource := []string{objectId}
+	userIdentitySourceMissingBearer := []string{"eyJra.some.random.string"}
+	userIdentitySourceOnlyBearer := []string{"Bearer"}
+
+	idSourceEmptyObjectId := []string{authHeaderValue, ""}
+	queryParamsEmptyObjectId := map[string]string{"dataset_id": ""}
 
 	// error tests
 	for scenario, params := range map[string]struct {
@@ -82,12 +78,10 @@ func TestFactory(t *testing.T) {
 		queryParams       map[string]string
 		expectedErrorText string
 	}{
-		"missing user token": {missingUserTokenIdentitySource, withWorkspaceId, "no suitable authorizer to process request"},
-		"invalid user token": {userIdentitySourceInvalidToken, withoutIdQueryParams, "no suitable authorizer to process request"},
-		"user supplies dataset id value to organization_id param when using a workspace authorizer endpoint": {datasetIdentitySource, datasetIdAsOrgIdQueryParam, "no suitable authorizer to process request"},
-		"user supplies organization id value to dataset_id param when using a dataset authorizer endpoint":   {workspaceIdentitySource, orgIdAsDatasetIdQueryParam, "no suitable authorizer to process request"},
-		"user supplies dataset id value to manifest_id when using a manifest authorizer endpoint":            {datasetIdentitySource, datasetIdAsManifestIdQueryParam, "no suitable authorizer to process request"},
-		"user supplies a manifest id value to dataset_id when using a dataset authorizer endpoint":           {manifestIdentitySource, manifestIdAsDatasetIdQueryParam, "no suitable authorizer to process request"},
+		"missing user token":           {missingUserTokenIdentitySource, withWorkspaceId, "no valid user token found"},
+		"user token missing 'Bearer'":  {userIdentitySourceMissingBearer, withoutIdQueryParams, "no valid user token found"},
+		"user token only has 'Bearer'": {userIdentitySourceOnlyBearer, withoutIdQueryParams, "no valid user token found"},
+		"empty object id":              {idSourceEmptyObjectId, queryParamsEmptyObjectId, "invalid non-token identity source found"},
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			authorizer, err := authFactory.Build(params.idSource, params.queryParams)
