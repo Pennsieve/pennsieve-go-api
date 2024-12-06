@@ -28,6 +28,7 @@ var tokenPoolID string
 var tokenClientID string
 var issuer string
 var tokenIssuer string
+var manifestTableName string
 
 // init runs on cold start of lambda and gets jwt keysets from Cognito user pools.
 func init() {
@@ -36,6 +37,7 @@ func init() {
 	userClientID = os.Getenv("USER_CLIENT")
 	tokenPoolID = os.Getenv("TOKEN_POOL")
 	tokenClientID = os.Getenv("TOKEN_CLIENT")
+	manifestTableName = os.Getenv("MANIFEST_TABLE")
 	issuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, userPoolID)
 	tokenIssuer = fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", regionID, tokenPoolID)
 
@@ -52,20 +54,22 @@ func init() {
 	userJwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, userPoolID)
 	keySet, err = jwk.Fetch(context.Background(), userJwksURL)
 	if err != nil {
-		log.Error("Unable to fetch Key Set")
+		log.Error("Unable to fetch user pool Key Set", err)
 	}
 
 	// Get TokenPool keyset
 	tokenJwksURL := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s/.well-known/jwks.json", regionID, tokenPoolID)
 	tokenKeySet, err := jwk.Fetch(context.Background(), tokenJwksURL)
 	if err != nil {
-		log.Error("Unable to fetch Key Set")
+		log.Error("Unable to fetch token pool Key Set", err)
 	}
 
 	// Add tokenKeySet keys to keySet, so we can decode from both user and token pool
 	tokenKeys := tokenKeySet.Keys(context.Background())
 	for tokenKeys.Next(context.Background()) {
-		keySet.AddKey(tokenKeys.Pair().Value.(jwk.Key))
+		if err := keySet.AddKey(tokenKeys.Pair().Value.(jwk.Key)); err != nil {
+			log.Error("Unable to add token pool keys to user pool keys", err)
+		}
 	}
 
 }
@@ -106,14 +110,24 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	db, err := pgdb.ConnectRDS()
 	postgresDB := pgdb.New(db)
 	if err != nil {
-		logger.Fatalln("unable to connect to RDS instance.")
+		logger.Error("unable to connect to RDS instance: ", err)
+		// deliberately returning non-nil error so caller gets a 500 rather
+		// than 40x response
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, err
 	}
 	defer db.Close()
 
 	// Create a DynamoDB connection
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		logger.Fatalln("unable to connect to RDS instance.")
+		logger.Error("unable to load AWS config: ", err)
+		// deliberately returning non-nil error so caller gets a 500 rather
+		// than 40x response
+		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+			IsAuthorized: false,
+		}, err
 	}
 	client := dynamodb.NewFromConfig(cfg)
 	dynamoDB := dydb.New(client)
@@ -128,7 +142,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 			Context:      nil,
 		}, nil
 	}
-	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID)
+	claimsManager := manager.NewClaimsManager(postgresDB, dynamoDB, token, tokenClientID, manifestTableName)
 	authorizerMode := os.Getenv("AUTHORIZER_MODE")
 	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {

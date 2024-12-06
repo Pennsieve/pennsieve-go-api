@@ -3,10 +3,10 @@ package authorizers_test
 import (
 	"context"
 	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/test/mocks"
 	"testing"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
-	"github.com/pennsieve/pennsieve-go-api/authorizer/mocks"
 	"github.com/stretchr/testify/assert"
 )
 

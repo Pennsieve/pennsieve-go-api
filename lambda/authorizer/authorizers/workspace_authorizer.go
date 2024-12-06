@@ -2,7 +2,9 @@ package authorizers
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	pgModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 )
@@ -22,20 +24,26 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 		return nil, fmt.Errorf("unable to get current user: %w", err)
 	}
 
-	// Get Active Org
-	orgInt := claimsManager.GetActiveOrg(ctx, currentUser)
+	if tokenWorkspace, hasTokenWorkspace := claimsManager.GetTokenWorkspace(); hasTokenWorkspace && tokenWorkspace.NodeId != w.WorkspaceID {
+		return nil, fmt.Errorf("provided workspace id %s does not match API token workspace id %s",
+			w.WorkspaceID,
+			tokenWorkspace.NodeId)
+	}
 
 	// Get Workspace Claim
-	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
+	orgClaim, err := claimsManager.GetOrgClaimByNodeId(ctx, currentUser, w.WorkspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
+	}
+	if orgClaim.Role == pgModels.NoPermission {
+		return nil, errors.New("user has no access to workspace")
 	}
 
 	// Get Publisher's Claim
 	teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
-			currentUser.Id, orgInt, err)
+		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %s: %w",
+			currentUser.Id, w.WorkspaceID, err)
 	}
 
 	// Get User Claim
