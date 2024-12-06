@@ -408,11 +408,19 @@ components:
         expiration:
           type: string
           description: The date on which the current credentials expire
+        bucket:
+          type: string
+          description: The bucket that stores MicroCT package's viewer assets
+        prefix:
+          type: string
+          description: Root path of the MicroCT package's viewer assets
       required:
         - access_key_id
         - secret_access_key
         - session_token
         - expiration
+        - bucket
+        - prefix
 
     importFile:
       type: object
