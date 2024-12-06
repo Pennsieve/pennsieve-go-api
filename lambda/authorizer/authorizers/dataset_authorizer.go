@@ -55,16 +55,16 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 		}
 
 		return map[string]interface{}{
-			"user_claim":    userClaim,
-			"org_claim":     orgClaim,
-			"dataset_claim": datasetClaim,
-			"teams_claim":   teamClaims,
+			LabelUserClaim:         userClaim,
+			LabelOrganizationClaim: orgClaim,
+			LabelDatasetClaim:      datasetClaim,
+			LabelTeamClaims:        teamClaims,
 		}, nil
 	}
 
 	return map[string]interface{}{
-		"user_claim":    userClaim,
-		"org_claim":     orgClaim,
-		"dataset_claim": datasetClaim,
+		LabelUserClaim:         userClaim,
+		LabelOrganizationClaim: orgClaim,
+		LabelDatasetClaim:      datasetClaim,
 	}, nil
 }
