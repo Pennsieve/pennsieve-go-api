@@ -122,27 +122,27 @@ func testUserWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 	assert.Len(t, claims, 3)
 
 	// Org claim
-	assert.Contains(t, claims, "org_claim")
+	assert.Contains(t, claims, authorizers.LabelOrganizationClaim)
 
 	var orgClaim *organization.Claim
-	require.IsType(t, orgClaim, claims["org_claim"])
-	orgClaim = claims["org_claim"].(*organization.Claim)
+	require.IsType(t, orgClaim, claims[authorizers.LabelOrganizationClaim])
+	orgClaim = claims[authorizers.LabelOrganizationClaim].(*organization.Claim)
 	assert.Equal(t, orgNodeId, orgClaim.NodeId)
 	assert.Equal(t, orgId, orgClaim.IntId)
 	assert.Equal(t, pgModels.Delete, orgClaim.Role)
 
 	// User claim
-	assert.Contains(t, claims, "user_claim")
+	assert.Contains(t, claims, authorizers.LabelUserClaim)
 	var userClaim user.Claim
-	require.IsType(t, userClaim, claims["user_claim"])
-	userClaim = claims["user_claim"].(user.Claim)
+	require.IsType(t, userClaim, claims[authorizers.LabelUserClaim])
+	userClaim = claims[authorizers.LabelUserClaim].(user.Claim)
 	assert.Equal(t, testUser.user.Id, userClaim.Id)
 	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
 	assert.False(t, userClaim.IsSuperAdmin)
 
 	// Teams claims
-	assert.Contains(t, claims, "teams_claim")
-	assert.Empty(t, claims["teams_claim"])
+	assert.Contains(t, claims, authorizers.LabelTeamClaims)
+	assert.Empty(t, claims[authorizers.LabelTeamClaims])
 
 }
 
@@ -180,27 +180,27 @@ func testAPIKeyWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 	require.NoError(t, err)
 
 	assert.Len(t, claims, 3)
-	assert.Contains(t, claims, "org_claim")
+	assert.Contains(t, claims, authorizers.LabelOrganizationClaim)
 
 	// Org claim
 	var orgClaim *organization.Claim
-	require.IsType(t, orgClaim, claims["org_claim"])
-	orgClaim = claims["org_claim"].(*organization.Claim)
+	require.IsType(t, orgClaim, claims[authorizers.LabelOrganizationClaim])
+	orgClaim = claims[authorizers.LabelOrganizationClaim].(*organization.Claim)
 	assert.Equal(t, orgNodeId, orgClaim.NodeId)
 	assert.Equal(t, orgId, orgClaim.IntId)
 	assert.Equal(t, pgModels.Delete, orgClaim.Role)
 
 	// User claim
-	assert.Contains(t, claims, "user_claim")
+	assert.Contains(t, claims, authorizers.LabelUserClaim)
 	var userClaim user.Claim
-	require.IsType(t, userClaim, claims["user_claim"])
-	userClaim = claims["user_claim"].(user.Claim)
+	require.IsType(t, userClaim, claims[authorizers.LabelUserClaim])
+	userClaim = claims[authorizers.LabelUserClaim].(user.Claim)
 	assert.Equal(t, testUser.user.Id, userClaim.Id)
 	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
 	assert.False(t, userClaim.IsSuperAdmin)
 
 	// Teams claims
-	assert.Contains(t, claims, "teams_claim")
-	assert.Empty(t, claims["teams_claim"])
+	assert.Contains(t, claims, authorizers.LabelTeamClaims)
+	assert.Empty(t, claims[authorizers.LabelTeamClaims])
 
 }
