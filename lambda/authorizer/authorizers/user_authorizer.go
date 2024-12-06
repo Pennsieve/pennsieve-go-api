@@ -41,13 +41,13 @@ func (u *UserAuthorizer) GenerateClaims(ctx context.Context, claimsManager manag
 		}
 
 		return map[string]interface{}{
-			"user_claim":  userClaim,
-			"org_claim":   orgClaim,
-			"teams_claim": teamClaims,
+			LabelUserClaim:         userClaim,
+			LabelOrganizationClaim: orgClaim,
+			LabelTeamClaims:        teamClaims,
 		}, nil
 	}
 
 	return map[string]interface{}{
-		"user_claim": userClaim,
+		LabelUserClaim: userClaim,
 	}, nil
 }

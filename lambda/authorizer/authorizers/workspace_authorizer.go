@@ -50,8 +50,8 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	userClaim := claimsManager.GetUserClaim(ctx, currentUser)
 
 	return map[string]interface{}{
-		"user_claim":  userClaim,
-		"org_claim":   orgClaim,
-		"teams_claim": teamClaims,
+		LabelUserClaim:         userClaim,
+		LabelOrganizationClaim: orgClaim,
+		LabelTeamClaims:        teamClaims,
 	}, nil
 }
