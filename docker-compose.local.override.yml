@@ -1,0 +1,7 @@
+services:
+  dynamodb:
+    ports:
+      - "8000:8000"
+  pennsievedb:
+    ports:
+      - "5432:5432"
