@@ -34,9 +34,7 @@ func TestIdentitySourceMapper(t *testing.T) {
 		}},
 	} {
 		t.Run(scenario, func(t *testing.T) {
-			identitySourceMapper, err := mappers.NewIdentitySourceMapper(params.idSource)
-			require.NoError(t, err)
-			auxiliaryIdentitySource, err := identitySourceMapper.Create()
+			auxiliaryIdentitySource, err := mappers.NewIdentitySourceMapper(params.idSource).Create()
 			require.NoError(t, err)
 			assert.Equal(t, params.expected, auxiliaryIdentitySource)
 		})
@@ -47,6 +45,7 @@ func TestIdentitySourceMapper(t *testing.T) {
 	userTokenMissingToken := []string{"Bearer"}
 	userTokenMissingTokenWithOtherId := []string{"Bearer", datasetId}
 	otherIdEmpty := []string{token, ""}
+	tooManyIdentitySources := []string{token, datasetId, "someNewUnexpectedId"}
 
 	// error tests
 	for scenario, params := range map[string]struct {
@@ -58,11 +57,11 @@ func TestIdentitySourceMapper(t *testing.T) {
 		"user token missing token":                     {userTokenMissingToken, "no valid user token found"},
 		"user token missing token with other param":    {userTokenMissingTokenWithOtherId, "no valid user token found"},
 		"empty non-token source":                       {otherIdEmpty, "invalid non-token identity source found"},
+		"unexpectedly large identity source":           {tooManyIdentitySources, "identity source too long"},
+		"empty identity source":                        {[]string{}, "identity source emtpy"},
 	} {
 		t.Run(scenario, func(t *testing.T) {
-			identitySourceMapper, err := mappers.NewIdentitySourceMapper(params.idSource)
-			require.NoError(t, err)
-			_, err = identitySourceMapper.Create()
+			_, err := mappers.NewIdentitySourceMapper(params.idSource).Create()
 			assert.ErrorContains(t, err, params.expectedErrorText)
 		})
 

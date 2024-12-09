@@ -22,17 +22,19 @@ type IdentitySourceMapper struct {
 	IdentitySource []string
 }
 
-func NewIdentitySourceMapper(identitySource []string) (Mapper, error) {
-	if idSourceLen := len(identitySource); idSourceLen == 0 {
-		return nil, errors.New("identity source emtpy")
-	} else if idSourceLen > 2 {
-		return nil, fmt.Errorf("identity source too long: %d", idSourceLen)
-	}
-	return &IdentitySourceMapper{IdentitySource: identitySource}, nil
+func NewIdentitySourceMapper(identitySource []string) Mapper {
+	return &IdentitySourceMapper{IdentitySource: identitySource}
 }
 
 func (i *IdentitySourceMapper) Create() (IdentitySource, error) {
 	m := IdentitySource{}
+
+	if idSourceLen := len(i.IdentitySource); idSourceLen == 0 {
+		return m, errors.New("identity source emtpy")
+	} else if idSourceLen > 2 {
+		return m, fmt.Errorf("identity source too long: %d", idSourceLen)
+	}
+
 	for _, source := range i.IdentitySource {
 		// need to avoid for-loop variable gotcha since we may take the address of source below (and we are on Go version < 1.22)
 		source := source

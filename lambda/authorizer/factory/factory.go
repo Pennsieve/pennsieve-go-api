@@ -2,10 +2,7 @@ package factory
 
 import (
 	"errors"
-	"fmt"
-
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
-	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/mappers"
 )
 
@@ -21,11 +18,7 @@ func NewCustomAuthorizerFactory() AuthorizerFactory {
 
 func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringParameters map[string]string) (authorizers.Authorizer, error) {
 
-	identitySourceMapper, err := mappers.NewIdentitySourceMapper(identitySource)
-	if err != nil {
-		return nil, err
-	}
-	mappedIdentitySource, err := identitySourceMapper.Create()
+	mappedIdentitySource, err := mappers.NewIdentitySourceMapper(identitySource).Create()
 	if err != nil {
 		return nil, err
 	}
@@ -38,27 +31,15 @@ func (f *CustomAuthorizerFactory) Build(identitySource []string, queryStringPara
 	otherIdentitySource := *mappedIdentitySource.Other
 
 	if otherIdentitySource == queryStringParameters["dataset_id"] {
-		paramIdentitySource, err := helpers.DecodeIdentitySource(otherIdentitySource)
-		if err != nil {
-			return nil, fmt.Errorf("could not decode dataset_id identity source: %w", err)
-		}
-		return authorizers.NewDatasetAuthorizer(paramIdentitySource), nil
+		return authorizers.NewDatasetAuthorizer(otherIdentitySource), nil
 	}
 
 	if otherIdentitySource == queryStringParameters["organization_id"] {
-		paramIdentitySource, err := helpers.DecodeIdentitySource(otherIdentitySource)
-		if err != nil {
-			return nil, fmt.Errorf("could not decode workspace_id identity source: %w", err)
-		}
-		return authorizers.NewWorkspaceAuthorizer(paramIdentitySource), nil
+		return authorizers.NewWorkspaceAuthorizer(otherIdentitySource), nil
 	}
 
 	if otherIdentitySource == queryStringParameters["manifest_id"] {
-		paramIdentitySource, err := helpers.DecodeIdentitySource(otherIdentitySource)
-		if err != nil {
-			return nil, fmt.Errorf("could not decode manifest_id identity source: %w", err)
-		}
-		return authorizers.NewManifestAuthorizer(paramIdentitySource), nil
+		return authorizers.NewManifestAuthorizer(otherIdentitySource), nil
 	}
 	return nil, errors.New("no suitable authorizer to process request")
 }
