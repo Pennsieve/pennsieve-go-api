@@ -15,6 +15,7 @@ resource "aws_apigatewayv2_api" "upload-service-gateway" {
     publishing_service_lambda_arn = data.terraform_remote_state.publishing_service.outputs.service_lambda_arn,
     datasets_service_lambda_arn = data.terraform_remote_state.datasets_service.outputs.service_lambda_arn,
     packages_service_lambda_arn = data.terraform_remote_state.packages_service.outputs.service_lambda_arn,
+    imaging_service_lambda_arn = data.terraform_remote_state.imaging_service.outputs.imaging_service_api_lambda_arn,
     import_service_lambda_arn = data.terraform_remote_state.import_service.outputs.import_service_api_lambda_arn,
     integration_service_lambda_arn = data.terraform_remote_state.integration_service.outputs.lambda_service_arn,
     rehydration_service_lambda_arn = data.terraform_remote_state.rehydration_service.outputs.rehydration_service_arn,

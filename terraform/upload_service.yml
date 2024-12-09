@@ -70,6 +70,13 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
+    imaging-service:
+      type: aws_proxy
+      uri: ${imaging_service_lambda_arn}
+      httpMethod: POST
+      passthroughBehavior: when_no_match
+      contentHandling: CONVERT_TO_TEXT
+      payloadFormatVersion: 2.0
     import-service:
       type: aws_proxy
       uri: ${import_service_lambda_arn}
@@ -384,6 +391,36 @@ components:
           description: the packageIds
           items:
             type: string
+
+    microctTemporarySessionResponse:
+      type: object
+      description: a role with temporary, read-only S3 access to a MicroCT package's viewer assets
+      properties:
+        access_key_id:
+          type: string
+          description: The access key ID that identifies the temporary security credentials
+        secret_access_key:
+          type: string
+          description: The secret access key that can be used to sign requests
+        session_token:
+          type: string
+          description: The token that users must pass to the service API to use the temporary credentials
+        expiration:
+          type: string
+          description: The date on which the current credentials expire
+        bucket:
+          type: string
+          description: The bucket that stores MicroCT package's viewer assets
+        prefix:
+          type: string
+          description: Root path of the MicroCT package's viewer assets
+      required:
+        - access_key_id
+        - secret_access_key
+        - session_token
+        - expiration
+        - bucket
+        - prefix
 
     importFile:
       type: object
@@ -2923,6 +2960,44 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'    
+
+  /imaging/microct/{package_id}/session:
+    post:
+      summary: generates temporary access to MicroCT imaging assets
+      description: |
+        Generates a role with temporary, read-only S3 access to a MicroCT package's viewer assets
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/imaging-service'
+      operationId: microctTemporarySession
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Imaging Service
+      parameters:
+        - in: path
+          name: package_id
+          schema:
+            type: string
+          required: true
+          description: The MicroCT package ID
+      parameters:
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset in which the MicroCT package exists
+      responses:
+        '200':
+          description: the generated pre-signed URL for upload to S3
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/microctTemporarySessionResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /import:
     post:
