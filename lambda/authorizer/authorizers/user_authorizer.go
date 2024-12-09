@@ -3,6 +3,7 @@ package authorizers
 import (
 	"context"
 	"fmt"
+	coreAuthorizer "github.com/pennsieve/pennsieve-go-core/pkg/authorizer"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 )
@@ -41,13 +42,13 @@ func (u *UserAuthorizer) GenerateClaims(ctx context.Context, claimsManager manag
 		}
 
 		return map[string]interface{}{
-			LabelUserClaim:         userClaim,
-			LabelOrganizationClaim: orgClaim,
-			LabelTeamClaims:        teamClaims,
+			coreAuthorizer.LabelUserClaim:         userClaim,
+			coreAuthorizer.LabelOrganizationClaim: orgClaim,
+			coreAuthorizer.LabelTeamClaims:        teamClaims,
 		}, nil
 	}
 
 	return map[string]interface{}{
-		LabelUserClaim: userClaim,
+		coreAuthorizer.LabelUserClaim: userClaim,
 	}, nil
 }
