@@ -39,6 +39,7 @@ docker-clean:
 # Remove dynamodb database
 clean: docker-clean
 	rm -rf test-dynamodb-data
+	rm -rf $(WORKING_DIR)/lambda/bin
 
 package:
 	@echo ""
