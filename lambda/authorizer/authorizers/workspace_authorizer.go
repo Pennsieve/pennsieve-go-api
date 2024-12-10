@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	coreAuthorizer "github.com/pennsieve/pennsieve-go-core/pkg/authorizer"
 	pgModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
@@ -50,8 +51,8 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	userClaim := claimsManager.GetUserClaim(ctx, currentUser)
 
 	return map[string]interface{}{
-		LabelUserClaim:         userClaim,
-		LabelOrganizationClaim: orgClaim,
-		LabelTeamClaims:        teamClaims,
+		coreAuthorizer.LabelUserClaim:         userClaim,
+		coreAuthorizer.LabelOrganizationClaim: orgClaim,
+		coreAuthorizer.LabelTeamClaims:        teamClaims,
 	}, nil
 }

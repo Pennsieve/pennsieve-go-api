@@ -2,6 +2,8 @@ module github.com/pennsieve/pennsieve-go-api/authorizer
 
 go 1.22
 
+toolchain go1.23.4
+
 require (
 	github.com/aws/aws-lambda-go v1.32.0
 	github.com/aws/aws-sdk-go-v2/config v1.18.14
@@ -34,7 +36,6 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
-	github.com/google/uuid v1.3.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
