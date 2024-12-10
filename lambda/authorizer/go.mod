@@ -1,6 +1,6 @@
 module github.com/pennsieve/pennsieve-go-api/authorizer
 
-go 1.22.10
+go 1.22
 
 require (
 	github.com/aws/aws-lambda-go v1.32.0
