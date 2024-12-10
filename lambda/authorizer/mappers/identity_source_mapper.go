@@ -36,8 +36,6 @@ func (i *IdentitySourceMapper) Create() (IdentitySource, error) {
 	}
 
 	for _, source := range i.IdentitySource {
-		// need to avoid for-loop variable gotcha since we may take the address of source below (and we are on Go version < 1.22)
-		source := source
 		if helpers.Matches(source, `Bearer (?P<token>.*)`) {
 			m.Token = source
 		} else {
