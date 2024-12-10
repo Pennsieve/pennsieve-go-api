@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/test/mocks"
+	coreAuthorizer "github.com/pennsieve/pennsieve-go-core/pkg/authorizer"
 	"testing"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
@@ -16,8 +17,9 @@ func TestUserAuthorizer(t *testing.T) {
 	claims, _ := authorizer.GenerateClaims(context.Background(), claimsManager, "")
 
 	assert.Equal(t, len(claims), 1)
-	assert.Equal(t, fmt.Sprintf("%s", claims[authorizers.LabelUserClaim]),
-		"User: 1 - N:user:someRandomUuid | isSuperAdmin: true")
+	assert.Equal(t,
+		mocks.MockUserClaim.String(),
+		fmt.Sprintf("%s", claims[coreAuthorizer.LabelUserClaim]))
 }
 
 func TestUserAuthorizerLegacy(t *testing.T) {
@@ -26,10 +28,19 @@ func TestUserAuthorizerLegacy(t *testing.T) {
 	claims, _ := authorizer.GenerateClaims(context.Background(), claimsManager, "LEGACY")
 
 	assert.Equal(t, len(claims), 3)
-	assert.Equal(t, fmt.Sprintf("%s", claims[authorizers.LabelUserClaim]),
-		"User: 1 - N:user:someRandomUuid | isSuperAdmin: true")
-	assert.Equal(t, fmt.Sprintf("%s", claims[authorizers.LabelOrganizationClaim]),
-		"OrganizationId: 0 - NoPermission")
-	assert.Equal(t, fmt.Sprintf("%s", claims[authorizers.LabelTeamClaims]),
-		"[Name: someTeam1 (id: 1 nodeId:  permission: 0)]")
+	assert.Equal(t,
+		mocks.MockUserClaim.String(),
+		fmt.Sprintf("%s", claims[coreAuthorizer.LabelUserClaim]))
+	assert.Equal(t,
+		mocks.MockOrgClaim.String(),
+		fmt.Sprintf("%s", claims[coreAuthorizer.LabelOrganizationClaim]))
+	expectedTeamClaims := "["
+	separator := ""
+	for _, claim := range mocks.MockTeamClaims {
+		expectedTeamClaims += fmt.Sprintf("%s%s", separator, claim)
+	}
+	expectedTeamClaims += "]"
+	assert.Equal(t,
+		expectedTeamClaims,
+		fmt.Sprintf("%s", claims[coreAuthorizer.LabelTeamClaims]))
 }

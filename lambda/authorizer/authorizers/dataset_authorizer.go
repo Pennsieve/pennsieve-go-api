@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
+	coreAuthorizer "github.com/pennsieve/pennsieve-go-core/pkg/authorizer"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/role"
 )
 
@@ -55,16 +56,16 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 		}
 
 		return map[string]interface{}{
-			LabelUserClaim:         userClaim,
-			LabelOrganizationClaim: orgClaim,
-			LabelDatasetClaim:      datasetClaim,
-			LabelTeamClaims:        teamClaims,
+			coreAuthorizer.LabelUserClaim:         userClaim,
+			coreAuthorizer.LabelOrganizationClaim: orgClaim,
+			coreAuthorizer.LabelDatasetClaim:      datasetClaim,
+			coreAuthorizer.LabelTeamClaims:        teamClaims,
 		}, nil
 	}
 
 	return map[string]interface{}{
-		LabelUserClaim:         userClaim,
-		LabelOrganizationClaim: orgClaim,
-		LabelDatasetClaim:      datasetClaim,
+		coreAuthorizer.LabelUserClaim:         userClaim,
+		coreAuthorizer.LabelOrganizationClaim: orgClaim,
+		coreAuthorizer.LabelDatasetClaim:      datasetClaim,
 	}, nil
 }
