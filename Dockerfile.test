@@ -7,6 +7,10 @@ apk add --no-cache git
   
   # Set working directory 
 WORKDIR /go/src/github.com/pennsieve/pennsieve-go-api/lambda/authorizer
+
+COPY lambda/authorizer ./
+
+RUN go mod tidy
   
   # Run tests
 CMD CGO_ENABLED=0 go test -v ./...

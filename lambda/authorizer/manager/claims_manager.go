@@ -3,8 +3,7 @@ package manager
 import (
 	"context"
 	"errors"
-	"os"
-
+	"fmt"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/organization"
@@ -14,7 +13,6 @@ import (
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
 	pgdbQueries "github.com/pennsieve/pennsieve-go-core/pkg/queries/pgdb"
-	log "github.com/sirupsen/logrus"
 )
 
 type IdentityManager interface {
@@ -23,19 +21,22 @@ type IdentityManager interface {
 	GetUserClaim(context.Context, *pgdbModels.User) user.Claim
 	GetDatasetClaim(context.Context, *pgdbModels.User, string, int64) (*dataset.Claim, error)
 	GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error)
+	GetOrgClaimByNodeId(context.Context, *pgdbModels.User, string) (*organization.Claim, error)
 	GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error)
 	GetDatasetID(context.Context, string) (*string, error)
+	GetTokenWorkspace() (TokenWorkspace, bool)
 }
 
 type ClaimsManager struct {
-	PostgresDB    *pgdbQueries.Queries
-	DynamoDB      *dydb.Queries
-	Token         jwt.Token
-	TokenClientID string
+	PostgresDB        *pgdbQueries.Queries
+	DynamoDB          *dydb.Queries
+	Token             jwt.Token
+	TokenClientID     string
+	ManifestTableName string
 }
 
-func NewClaimsManager(postgresDB *pgdbQueries.Queries, dynamoDB *dydb.Queries, token jwt.Token, tokenClientID string) IdentityManager {
-	return &ClaimsManager{postgresDB, dynamoDB, token, tokenClientID}
+func NewClaimsManager(postgresDB *pgdbQueries.Queries, dynamoDB *dydb.Queries, token jwt.Token, tokenClientID string, manifestTable string) IdentityManager {
+	return &ClaimsManager{postgresDB, dynamoDB, token, tokenClientID, manifestTable}
 }
 
 func (c *ClaimsManager) GetDatasetClaim(ctx context.Context, currentUser *pgdbModels.User, datasetId string, orgInt int64) (*dataset.Claim, error) {
@@ -48,9 +49,7 @@ func (c *ClaimsManager) GetDatasetClaim(ctx context.Context, currentUser *pgdbMo
 }
 
 func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (*string, error) {
-	table := os.Getenv("MANIFEST_TABLE")
-
-	manifest, err := c.DynamoDB.GetManifestById(ctx, table, manifestID)
+	manifest, err := c.DynamoDB.GetManifestById(ctx, c.ManifestTableName, manifestID)
 	if err != nil {
 		// log.Error("manifest could not be found")
 		return nil, err
@@ -76,6 +75,14 @@ func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels
 	return orgClaim, nil
 }
 
+func (c *ClaimsManager) GetOrgClaimByNodeId(ctx context.Context, currentUser *pgdbModels.User, workspaceNodeId string) (*organization.Claim, error) {
+	orgClaim, err := c.PostgresDB.GetOrganizationClaimByNodeId(ctx, currentUser.Id, workspaceNodeId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting orgClaim for user %d, workspace %s: %w", currentUser.Id, workspaceNodeId, err)
+	}
+	return orgClaim, nil
+}
+
 func (c *ClaimsManager) GetTeamClaims(ctx context.Context, currentUser *pgdbModels.User) ([]teamUser.Claim, error) {
 	teamClaims, err := c.PostgresDB.GetTeamClaims(ctx, currentUser.Id)
 	if err != nil {
@@ -85,13 +92,29 @@ func (c *ClaimsManager) GetTeamClaims(ctx context.Context, currentUser *pgdbMode
 	return teamClaims, nil
 }
 
-func (c *ClaimsManager) GetActiveOrg(ctx context.Context, currentUser *pgdbModels.User) int64 {
-	orgInt := currentUser.PreferredOrg
-	jwtOrg, hasKey := c.Token.Get("custom:organization_id")
-	if hasKey {
-		orgInt = jwtOrg.(int64)
+func (c *ClaimsManager) GetTokenWorkspace() (TokenWorkspace, bool) {
+	var workspace TokenWorkspace
+	if jwtOrgId, hasKey := c.Token.Get("custom:organization_id"); !hasKey {
+		return workspace, false
+	} else {
+		workspace.Id = jwtOrgId.(int64)
 	}
-	return orgInt
+	if jwtOrgNodeId, hasKey := c.Token.Get("custom:organization_node_id"); !hasKey {
+		return workspace, false
+	} else {
+		workspace.NodeId = jwtOrgNodeId.(string)
+	}
+
+	return workspace, true
+
+}
+
+func (c *ClaimsManager) GetActiveOrg(ctx context.Context, currentUser *pgdbModels.User) int64 {
+	tokenOrg, tokenHasOrg := c.GetTokenWorkspace()
+	if tokenHasOrg {
+		return tokenOrg.Id
+	}
+	return currentUser.PreferredOrg
 }
 
 func (c *ClaimsManager) GetCurrentUser(ctx context.Context) (*pgdbModels.User, error) {
@@ -114,7 +137,7 @@ func getUser(ctx context.Context, q *pgdb.Queries, cognitoId string, isFromToken
 		//var token pgdbModels.Token
 		currentUser, err := q.GetUserByCognitoId(ctx, cognitoId)
 		if err != nil {
-			log.Fatalln("unable to get user:", err)
+			return nil, fmt.Errorf("unable to get user: %w", err)
 		}
 		return currentUser, nil
 
@@ -122,8 +145,13 @@ func getUser(ctx context.Context, q *pgdb.Queries, cognitoId string, isFromToken
 		//var user pgdbModels.User
 		currentUser, err := q.GetByCognitoId(ctx, cognitoId)
 		if err != nil {
-			log.Fatalln("unable to get user:", err)
+			return nil, fmt.Errorf("unable to get user: %w", err)
 		}
 		return currentUser, nil
 	}
+}
+
+type TokenWorkspace struct {
+	Id     int64
+	NodeId string
 }

@@ -13,7 +13,13 @@ The API provides interfaces with the Postgres DB.
 
 ## Testing
 
-The tests are automatically run by Jenkins once you push to a feature branch. Successful tests are required to merge a feature branch into the main branch.
+The tests are automatically run on Jenkins in a Docker container by `make test-ci` once you push to a feature branch. Successful tests are required to merge a feature branch into the main branch.
+
+### Testing locally
+
+Run `make test`. This will run the same tests as `make test-ci`, but they will be run directly by `go test` and not in a separate Docker container as happens with `make test-ci`.
+
+If you want to run or debug individual tests in your IDE, first run `make local-services`. This will start the Docker containers required by some tests: a Postgres with the pennsieve-seed DB and an empty, local, in-memory DynamoBB.
 
 ## Deployment
 
@@ -23,7 +29,7 @@ Artifacts are built in Jenkins and published to S3. The dev build triggers a dep
 
 __Deployment of an Artifact__
 
-1. Deployements to *development* are automatically done by Jenkins once you merge a feature branch into main.
+1. Deployments to *development* are automatically done by Jenkins once you merge a feature branch into main.
 
 2. Deployments to *production* are done via Jenkins.
 
