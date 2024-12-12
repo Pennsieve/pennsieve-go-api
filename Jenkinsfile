@@ -20,14 +20,6 @@ ansiColor('xterm') {
         }
       }
 
-      stage("Package") {
-        try {
-          sh "IMAGE_TAG=${imageTag} make package"
-        } finally {
-          sh "make clean"
-        }
-      }
-
       if(isMain) {
         stage ('Build and Push') {
           sh "IMAGE_TAG=${imageTag} make publish"
@@ -39,6 +31,14 @@ ansiColor('xterm') {
             string(name: 'IMAGE_TAG', value: imageTag),
             string(name: 'TERRAFORM_ACTION', value: 'apply')
           ]
+      } else { // if not main, just run package
+        stage("Build") {
+          try {
+            sh "IMAGE_TAG=${imageTag} make package"
+              } finally {
+                sh "make clean"
+              }
+            }
         }
       }
     } catch (e) {
