@@ -1,6 +1,6 @@
 module github.com/pennsieve/pennsieve-go-api/authorizer
 
-go 1.22
+go 1.22.10
 
 toolchain go1.22.10
 
