@@ -2980,7 +2980,6 @@ paths:
             type: string
           required: true
           description: The MicroCT package ID
-      parameters:
         - in: query
           name: dataset_id
           schema:
