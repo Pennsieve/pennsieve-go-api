@@ -2,6 +2,8 @@ package mocks
 
 import (
 	"context"
+	"fmt"
+	"github.com/google/uuid"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
@@ -54,6 +56,10 @@ func (m *MockClaimManager) GetOrgClaim(context.Context, *pgdbModels.User, int64)
 
 var MockTeamClaims = []teamUser.Claim{{IntId: 1, Name: "someTeam1"}}
 
+func (m *MockClaimManager) GetOrgClaimByNodeId(_ context.Context, _ *pgdbModels.User, _ string) (*organization.Claim, error) {
+	return nil, fmt.Errorf("mock method not implemented")
+}
+
 func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error) {
 	return MockTeamClaims, nil
 }
@@ -61,4 +67,11 @@ func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]t
 func (m *MockClaimManager) GetDatasetID(context.Context, string) (*string, error) {
 	s := "someDatasetID"
 	return &s, nil
+}
+
+func (m *MockClaimManager) GetTokenWorkspace() (manager.TokenWorkspace, bool) {
+	return manager.TokenWorkspace{
+		Id:     7,
+		NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
+	}, true
 }
