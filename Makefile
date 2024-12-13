@@ -46,7 +46,7 @@ package:
 	@echo "**********************************"
 	@echo ""
 	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
+  		env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
 		cd $(WORKING_DIR)/lambda/bin/authorizer/ ; \
 			zip -r $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) .
 
