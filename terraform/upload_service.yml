@@ -2968,6 +2968,12 @@ paths:
             type: string
             minimum: 1
           description: The uuid of the workflow instance.
+        - in: query
+          name: applicationUuid
+          schema:
+            type: string
+          required: true
+          description: application UUID
       responses:
         '200':
           description: The requested workflow instance logs
