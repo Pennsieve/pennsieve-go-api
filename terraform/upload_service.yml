@@ -391,6 +391,24 @@ components:
           description: the packageIds
           items:
             type: string
+    workflowInstanceLogsGetResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          description: the workflow instance processor messages
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                description: The message timestamp
+              message:
+                type: string
+                description: The json string message
+              ingestionTime:
+                type: string
+                description: The message ingestion time
 
     microctTemporarySessionResponse:
       type: object
@@ -2929,6 +2947,44 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
+  /workflows/instances/{id}/logs:          
+    get:
+      summary: Get workflow instance processor logs
+      description: |
+        Gets workflow instance processor logs
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflowInstanceLogs
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance.
+        - in: query
+          name: applicationUuid
+          schema:
+            type: string
+          required: true
+          description: application UUID
+      responses:
+        '200':
+          description: The requested workflow instance logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowInstanceLogsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'         
 
   /workflows:
     post:
