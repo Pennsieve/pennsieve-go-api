@@ -32,6 +32,14 @@ ansiColor('xterm') {
             string(name: 'TERRAFORM_ACTION', value: 'apply')
           ]
         }
+      } else { // if not main, just run package
+        stage("Build") {
+          try {
+            sh "IMAGE_TAG=${imageTag} make package"
+          } finally {
+            sh "make clean"
+          }
+        }
       }
     } catch (e) {
       slackSend(color: '#b20000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) by ${authorName}")

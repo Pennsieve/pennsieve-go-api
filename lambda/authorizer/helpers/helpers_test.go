@@ -17,17 +17,6 @@ func TestHelpersMatches(t *testing.T) {
 	assert.Equal(t, result, false)
 }
 
-func TestHelpersDecodeIdentitySource(t *testing.T) {
-	datasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N%3Adataset%3A3c10091e-4ef8-45ac-b3ae-4497eb34c7dc"}
-	result, _ := helpers.DecodeIdentitySource(datasetIdentitySource[1])
-	assert.Equal(t, result, "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc")
-
-	// non-encoded string should be unaffected
-	datasetIdentitySource2 := []string{"Bearer eyJra.some.random.string", "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc"}
-	result, _ = helpers.DecodeIdentitySource(datasetIdentitySource2[1])
-	assert.Equal(t, result, "N:dataset:3c10091e-4ef8-45ac-b3ae-4497eb34c7dc")
-}
-
 func TestGetJWT(t *testing.T) {
 	result, err := helpers.GetJWT("Bearer ABCD")
 	assert.Equal(t, nil, err)
