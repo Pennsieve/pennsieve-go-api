@@ -19,16 +19,16 @@ func TestIdentitySourceMapper(t *testing.T) {
 	// happy path tests
 	for scenario, params := range map[string]struct {
 		idSource []string
-		expected mappers.IdentitySource
+		expected mappers.MappedIdentitySource
 	}{
-		"token only identity source": {userIdentitySource, mappers.IdentitySource{
+		"token only identity source": {userIdentitySource, mappers.MappedIdentitySource{
 			Token: token,
 		}},
-		"identity source with additional source": {datasetIdentitySource, mappers.IdentitySource{
+		"identity source with additional source": {datasetIdentitySource, mappers.MappedIdentitySource{
 			Token: token,
 			Other: &datasetId,
 		}},
-		"identity source with additional source in flipped order": {datasetIdentitySourceFlippedOrder, mappers.IdentitySource{
+		"identity source with additional source in flipped order": {datasetIdentitySourceFlippedOrder, mappers.MappedIdentitySource{
 			Token: token,
 			Other: &datasetId,
 		}},
@@ -58,7 +58,7 @@ func TestIdentitySourceMapper(t *testing.T) {
 		"user token missing token with other param":    {userTokenMissingTokenWithOtherId, "no valid user token found"},
 		"empty non-token source":                       {otherIdEmpty, "invalid non-token identity source found"},
 		"unexpectedly large identity source":           {tooManyIdentitySources, "identity source too long"},
-		"empty identity source":                        {[]string{}, "identity source emtpy"},
+		"empty identity source":                        {[]string{}, "identity source empty"},
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			_, err := mappers.NewIdentitySourceMapper(params.idSource).Create()

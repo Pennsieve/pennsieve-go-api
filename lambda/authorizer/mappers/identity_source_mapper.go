@@ -6,16 +6,16 @@ import (
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 )
 
-type IdentitySource struct {
+type MappedIdentitySource struct {
 	Token string
 	Other *string
 }
 
 type Mapper interface {
-	// Create returns an IdentitySource or a non-nil error if one cannot be created.
-	// The returned IdentitySource.Token will be a non-emtpy Token including the initial 'Bearer'.
-	// If the returned IdentitySource.Other is non-nil, then it is also non-empty.
-	Create() (IdentitySource, error)
+	// Create returns an MappedIdentitySource or a non-nil error if one cannot be created.
+	// The returned MappedIdentitySource.Token will be a non-empty Token including the initial 'Bearer'.
+	// If the returned MappedIdentitySource.Other is non-nil, then it is also non-empty.
+	Create() (MappedIdentitySource, error)
 }
 
 type IdentitySourceMapper struct {
@@ -26,11 +26,11 @@ func NewIdentitySourceMapper(identitySource []string) Mapper {
 	return &IdentitySourceMapper{IdentitySource: identitySource}
 }
 
-func (i *IdentitySourceMapper) Create() (IdentitySource, error) {
-	m := IdentitySource{}
+func (i *IdentitySourceMapper) Create() (MappedIdentitySource, error) {
+	m := MappedIdentitySource{}
 
 	if idSourceLen := len(i.IdentitySource); idSourceLen == 0 {
-		return m, errors.New("identity source emtpy")
+		return m, errors.New("identity source empty")
 	} else if idSourceLen > 2 {
 		return m, fmt.Errorf("identity source too long: %d", idSourceLen)
 	}
