@@ -1,7 +1,8 @@
 package factory_test
 
 import (
-	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/factory"
@@ -11,47 +12,81 @@ import (
 func TestFactory(t *testing.T) {
 	authFactory := factory.NewCustomAuthorizerFactory()
 
-	withManifestId := map[string]string{"manifest_id": "someManifestId"}
-	withDatasetId := map[string]string{"dataset_id": "someDatasetId"}
-	withWorkspaceId := map[string]string{"dataset_id": "somehWorkspaceId"}
-	withoutQueryParams := map[string]string{}
+	//ids
+	objectId := "someObjectId"
+	object2Id := "someOtherObjectId"
 
-	UserIdentitySource := []string{"Bearer eyJra.some.random.string"}
-	authorizer, _ := authFactory.Build(UserIdentitySource, withoutQueryParams)
-	assert.Equal(t, "*authorizers.UserAuthorizer", fmt.Sprintf("%T", authorizer))
+	//user token header
+	authHeaderValue := "Bearer eyJra.some.random.string"
 
-	DatasetIdentitySource := []string{"Bearer eyJra.some.random.string", "N:dataset:some-uuid"}
-	authorizer, _ = authFactory.Build(DatasetIdentitySource, withDatasetId)
-	assert.Equal(t, "*authorizers.DatasetAuthorizer", fmt.Sprintf("%T", authorizer))
+	// query params
+	withManifestId := map[string]string{"manifest_id": objectId, "someOtherParam": "someOtherValue"}
+	withDatasetId := map[string]string{"dataset_id": objectId, "someOtherParam": "someOtherValue"}
+	withWorkspaceId := map[string]string{"organization_id": objectId, "someOtherParam": "someOtherValue"}
+	withoutIdQueryParams := map[string]string{"someOtherParam": "someOtherValue"}
+	withDatasetAndManifestIds := map[string]string{"dataset_id": objectId, "manifest_id": object2Id, "someOtherParam": "someOtherValue"}
+	withDatasetAndWorkspaceIds := map[string]string{"dataset_id": objectId, "organization_id": object2Id, "someOtherParam": "someOtherValue"}
 
-	DatasetIdentitySourceFlippedOrder := []string{"N:dataset:some-uuid", "Bearer eyJra.some.random.string"}
-	authorizer, _ = authFactory.Build(DatasetIdentitySourceFlippedOrder, withDatasetId)
-	assert.Equal(t, "*authorizers.DatasetAuthorizer", fmt.Sprintf("%T", authorizer))
+	// identity sources
+	objectIdentitySource := []string{authHeaderValue, objectId}
+	objectIdentitySourceFlippedOrder := []string{objectId, authHeaderValue}
+	object2IdentitySource := []string{object2Id, authHeaderValue}
+	userIdentitySource := []string{authHeaderValue}
 
-	ManifestIdentitySource := []string{"Bearer eyJra.some.random.string", "someManifestId"}
-	authorizer, _ = authFactory.Build(ManifestIdentitySource, withManifestId)
-	assert.Equal(t, "*authorizers.ManifestAuthorizer", fmt.Sprintf("%T", authorizer))
+	// expected authorizer types
+	var userAuthorizerType *authorizers.UserAuthorizer
+	var datasetAuthorizerType *authorizers.DatasetAuthorizer
+	var workspaceAuthorizerType *authorizers.WorkspaceAuthorizer
+	var manifestAuthorizerType *authorizers.ManifestAuthorizer
 
-	ManifestIdentitySourceFlippedOrder := []string{"someManifestId", "Bearer eyJra.some.random.string"}
-	authorizer, _ = authFactory.Build(ManifestIdentitySourceFlippedOrder, withManifestId)
-	assert.Equal(t, "*authorizers.ManifestAuthorizer", fmt.Sprintf("%T", authorizer))
+	// happy path tests
+	for scenario, params := range map[string]struct {
+		idSource               []string
+		queryParams            map[string]string
+		expectedAuthorizerType authorizers.Authorizer
+	}{
+		"user authorizer": {userIdentitySource, withoutIdQueryParams, userAuthorizerType},
+		"user authorizer with id related query params":                                 {userIdentitySource, withDatasetId, userAuthorizerType},
+		"dataset authorizer":                                                           {objectIdentitySource, withDatasetId, datasetAuthorizerType},
+		"dataset authorizer, flipped identity source":                                  {objectIdentitySourceFlippedOrder, withDatasetId, datasetAuthorizerType},
+		"manifest authorizer":                                                          {objectIdentitySource, withManifestId, manifestAuthorizerType},
+		"manifest authorizer, flipped identity source":                                 {objectIdentitySourceFlippedOrder, withManifestId, manifestAuthorizerType},
+		"workspace authorizer":                                                         {objectIdentitySource, withWorkspaceId, workspaceAuthorizerType},
+		"workspace authorizer, flipped identity source":                                {objectIdentitySourceFlippedOrder, withWorkspaceId, workspaceAuthorizerType},
+		"user supplies both manifest and dataset id to manifest authorizer endpoint":   {object2IdentitySource, withDatasetAndManifestIds, manifestAuthorizerType},
+		"user supplies both manifest and dataset id to dataset authorizer endpoint":    {objectIdentitySource, withDatasetAndManifestIds, datasetAuthorizerType},
+		"user supplies both workspace and dataset id to workspace authorizer endpoint": {object2IdentitySource, withDatasetAndWorkspaceIds, workspaceAuthorizerType},
+		"user supplies both workspace and dataset id to dataset authorizer endpoint":   {objectIdentitySource, withDatasetAndWorkspaceIds, datasetAuthorizerType},
+	} {
+		t.Run(scenario, func(t *testing.T) {
+			authorizer, err := authFactory.Build(params.idSource, params.queryParams)
+			require.NoError(t, err)
+			assert.IsType(t, params.expectedAuthorizerType, authorizer)
+		})
+	}
 
-	WorkspaceIdentitySource := []string{"Bearer eyJra.some.random.string", "N:organization:some-uuid"}
-	authorizer, _ = authFactory.Build(WorkspaceIdentitySource, withWorkspaceId)
-	assert.Equal(t, "*authorizers.WorkspaceAuthorizer", fmt.Sprintf("%T", authorizer))
+	missingUserTokenIdentitySource := []string{objectId}
+	userIdentitySourceMissingBearer := []string{"eyJra.some.random.string"}
+	userIdentitySourceOnlyBearer := []string{"Bearer"}
 
-	WorkspaceIdentitySourceFlippedOrder := []string{"N:organization:some-uuid", "Bearer eyJra.some.random.string"}
-	authorizer, _ = authFactory.Build(WorkspaceIdentitySourceFlippedOrder, withWorkspaceId)
-	assert.Equal(t, "*authorizers.WorkspaceAuthorizer", fmt.Sprintf("%T", authorizer))
+	idSourceEmptyObjectId := []string{authHeaderValue, ""}
+	queryParamsEmptyObjectId := map[string]string{"dataset_id": ""}
 
-	InvalidIdentitySource := []string{"N:organization:some-uuid"}
-	authorizer, err := authFactory.Build(InvalidIdentitySource, withWorkspaceId)
-	assert.Equal(t, nil, authorizer)
-	assert.Equal(t, err.Error(), "no suitable authorizer to process request")
-
-	UserIdentitySourceInvalidToken := []string{"eyJra.some.random.string"}
-	authorizer, err = authFactory.Build(UserIdentitySourceInvalidToken, withoutQueryParams)
-	assert.Equal(t, nil, authorizer)
-	assert.Equal(t, err.Error(), "no suitable authorizer to process request")
-
+	// error tests
+	for scenario, params := range map[string]struct {
+		idSource          []string
+		queryParams       map[string]string
+		expectedErrorText string
+	}{
+		"missing user token":           {missingUserTokenIdentitySource, withWorkspaceId, "no valid user token found"},
+		"user token missing 'Bearer'":  {userIdentitySourceMissingBearer, withoutIdQueryParams, "no valid user token found"},
+		"user token only has 'Bearer'": {userIdentitySourceOnlyBearer, withoutIdQueryParams, "no valid user token found"},
+		"empty object id":              {idSourceEmptyObjectId, queryParamsEmptyObjectId, "invalid non-token identity source found"},
+	} {
+		t.Run(scenario, func(t *testing.T) {
+			authorizer, err := authFactory.Build(params.idSource, params.queryParams)
+			assert.Equal(t, nil, authorizer)
+			assert.ErrorContains(t, err, params.expectedErrorText)
+		})
+	}
 }

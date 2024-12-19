@@ -1,38 +1,52 @@
 package mappers
 
-import "github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
+import (
+	"errors"
+	"fmt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
+)
+
+type MappedIdentitySource struct {
+	Token string
+	Other *string
+}
 
 type Mapper interface {
-	Create() map[string]string
+	// Create returns an MappedIdentitySource or a non-nil error if one cannot be created.
+	// The returned MappedIdentitySource.Token will be a non-empty Token including the initial 'Bearer'.
+	// If the returned MappedIdentitySource.Other is non-nil, then it is also non-empty.
+	Create() (MappedIdentitySource, error)
 }
+
 type IdentitySourceMapper struct {
 	IdentitySource []string
-	HasManifestId  bool
 }
 
-func NewIdentitySourceMapper(identitySource []string, hasManifestId bool) Mapper {
-	return &IdentitySourceMapper{IdentitySource: identitySource, HasManifestId: hasManifestId}
+func NewIdentitySourceMapper(identitySource []string) Mapper {
+	return &IdentitySourceMapper{IdentitySource: identitySource}
 }
 
-func (i *IdentitySourceMapper) Create() map[string]string {
-	m := make(map[string]string)
+func (i *IdentitySourceMapper) Create() (MappedIdentitySource, error) {
+	m := MappedIdentitySource{}
+
+	if idSourceLen := len(i.IdentitySource); idSourceLen == 0 {
+		return m, errors.New("identity source empty")
+	} else if idSourceLen > 2 {
+		return m, fmt.Errorf("identity source too long: %d", idSourceLen)
+	}
+
 	for _, source := range i.IdentitySource {
 		if helpers.Matches(source, `Bearer (?P<token>.*)`) {
-			m["token"] = source
-		}
-		if helpers.Matches(source, `N:dataset:`) {
-			m["dataset_id"] = source
-		}
-		if helpers.Matches(source, `N:organization:`) {
-			m["workspace_id"] = source
-		}
-		if isManifestSource(i.HasManifestId, source) {
-			m["manifest_id"] = source
+			m.Token = source
+		} else {
+			m.Other = &source
 		}
 	}
-	return m
-}
-
-func isManifestSource(hasManifestId bool, source string) bool {
-	return hasManifestId && !helpers.Matches(source, `Bearer (?P<token>.*)`)
+	if len(m.Token) == 0 {
+		return m, fmt.Errorf("no valid user token found in %s", i.IdentitySource)
+	}
+	if m.Other != nil && len(*m.Other) == 0 {
+		return m, fmt.Errorf("invalid non-token identity source found in %s", i.IdentitySource)
+	}
+	return m, nil
 }

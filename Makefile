@@ -1,4 +1,4 @@
-.PHONY: help clean local-services test test-ci start-dynamodb docker-clean package publish
+.PHONY: help clean local-services test test-ci docker-clean package publish
 
 LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
@@ -28,17 +28,16 @@ test-ci:
 	docker compose -f docker-compose.test.yml down --remove-orphans
 	docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from test
 
-# Start a clean DynamoDB container for local testing
-start-dynamodb: docker-clean
-	docker compose -f docker-compose.test.yml up dynamodb
-
-
 # Spin down active docker containers.
 docker-clean:
 	docker compose -f docker-compose.test.yml down
 
 # Remove dynamodb database
 clean: docker-clean
+	rm -rf $(WORKING_DIR)/lambda/bin
+
+tidy:
+	cd $(WORKING_DIR)/lambda/authorizer && go mod tidy
 
 package:
 	@echo ""
@@ -47,7 +46,7 @@ package:
 	@echo "**********************************"
 	@echo ""
 	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=amd64 go build -o $(WORKING_DIR)/lambda/bin/authorizer/authorizer_lambda; \
+  		env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
 		cd $(WORKING_DIR)/lambda/bin/authorizer/ ; \
 			zip -r $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) .
 
