@@ -34,7 +34,7 @@ __Deployment of an Artifact__
 2. Deployments to *production* are done via Jenkins.
 
     1. Determine the artifact version you want to deploy (you can find the latest version number in the development deployment job).
-    2. Run the production deployment task with the new IMAGE_TAG
+    2. Run the production deployment task with the new `IMAGE_TAG`
     
 Note: After terraforming the authorizer, you need to manually add the invoke role
 to the authorizer as this is currently not automatically picked up from the OAS 
