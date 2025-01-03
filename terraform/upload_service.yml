@@ -3655,7 +3655,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: postEnableTrackingExternalRepo
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - GitHub Service
       requestBody:
@@ -3686,7 +3686,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: postDisableTrackingExternalRepo
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - GitHub Service
       requestBody:
@@ -3717,7 +3717,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: updateExternalRepo
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - Repository Service
       requestBody:
@@ -3747,7 +3747,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       operationId: publishRepository
       tags:
         - Repository Service
