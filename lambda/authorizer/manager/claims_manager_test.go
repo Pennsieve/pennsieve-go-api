@@ -20,7 +20,7 @@ import (
 
 func TestClaimsManager(t *testing.T) {
 
-	for scenario, tstFunc := range map[string]func(t *testing.T, params *mocks.ManagerParams){
+	for scenario, tstFunc := range map[string]func(t *testing.T, params *mocks.ClaimsManagerParams){
 		"GetCurrentUser":      testGetCurrentUser,
 		"GetUserClaim":        testGetUserClaim,
 		"GetTokenWorkspace":   testGetTokenWorkspace,
@@ -34,7 +34,7 @@ func TestClaimsManager(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 
 			t.Run("token without workspace", func(t *testing.T) {
-				noWorkspaceParams := mocks.NewNoWorkspaceTokenManagerParams(t)
+				noWorkspaceParams := mocks.NewClaimsManagerParams(t)
 				tstFunc(t, noWorkspaceParams)
 				noWorkspaceParams.AssertMockExpectations(t)
 			})
@@ -44,7 +44,7 @@ func TestClaimsManager(t *testing.T) {
 					Id:     5001,
 					NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
 				}
-				withWorkspaceParams := mocks.NewWorkspaceTokenManagerParams(t, tokenWorkspace)
+				withWorkspaceParams := mocks.NewClaimsManagerParams(t).WithTokenWorkspace(t, tokenWorkspace)
 				tstFunc(t, withWorkspaceParams)
 				withWorkspaceParams.AssertMockExpectations(t)
 			})
@@ -54,9 +54,9 @@ func TestClaimsManager(t *testing.T) {
 
 }
 
-func testGetCurrentUser(t *testing.T, params *mocks.ManagerParams) {
+func testGetCurrentUser(t *testing.T, params *mocks.ClaimsManagerParams) {
 	expectedUser := test.NewUser(101, 2001)
-	claimsManager := params.WithUserQueryMocked(t, expectedUser).BuildManager()
+	claimsManager := params.WithUserQueryMocked(t, expectedUser).BuildClaimsManager()
 
 	ctx := context.Background()
 	user, err := claimsManager.GetCurrentUser(ctx)
@@ -64,8 +64,8 @@ func testGetCurrentUser(t *testing.T, params *mocks.ManagerParams) {
 	assert.Equal(t, expectedUser, user)
 }
 
-func testGetUserClaim(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetUserClaim(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	ctx := context.Background()
@@ -77,8 +77,8 @@ func testGetUserClaim(t *testing.T, params *mocks.ManagerParams) {
 
 }
 
-func testGetTokenWorkspace(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetTokenWorkspace(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	tokenWorkspace, hasTokenWorkspace := claimsManager.GetTokenWorkspace()
 	if params.TestJWT.Workspace == nil {
@@ -89,8 +89,8 @@ func testGetTokenWorkspace(t *testing.T, params *mocks.ManagerParams) {
 	}
 }
 
-func testGetActiveOrg(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetActiveOrg(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	expectedOrgId := params.GetExpectedOrgId(expectedUser)
@@ -103,8 +103,8 @@ func testGetActiveOrg(t *testing.T, params *mocks.ManagerParams) {
 	}
 }
 
-func testGetDatasetClaim(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetDatasetClaim(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	// Set up Mock
 	expectedUser := test.NewUser(101, 2001)
@@ -124,8 +124,8 @@ func testGetDatasetClaim(t *testing.T, params *mocks.ManagerParams) {
 	assert.Equal(t, expectedDatasetClaim, claim)
 }
 
-func testGetManifest(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetManifest(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	// set up mock
 	expectedManifestId := uuid.NewString()
@@ -142,8 +142,8 @@ func testGetManifest(t *testing.T, params *mocks.ManagerParams) {
 	assert.Equal(t, expectedManifest, manifest)
 }
 
-func testGetOrgClaim(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetOrgClaim(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	expectedOrgId := params.GetExpectedOrgId(expectedUser)
@@ -162,8 +162,8 @@ func testGetOrgClaim(t *testing.T, params *mocks.ManagerParams) {
 	assert.Equal(t, expectedClaim, claim)
 }
 
-func testGetOrgClaimByNodeId(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetOrgClaimByNodeId(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	expectedOrgId := params.GetExpectedOrgId(expectedUser)
@@ -182,8 +182,8 @@ func testGetOrgClaimByNodeId(t *testing.T, params *mocks.ManagerParams) {
 	assert.Equal(t, expectedClaim, claim)
 }
 
-func testGetTeamClaims(t *testing.T, params *mocks.ManagerParams) {
-	claimsManager := params.BuildManager()
+func testGetTeamClaims(t *testing.T, params *mocks.ClaimsManagerParams) {
+	claimsManager := params.BuildClaimsManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	expectedClaims := []teamUser.Claim{

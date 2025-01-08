@@ -24,7 +24,7 @@ import (
 
 func TestManifestAuthorizer(t *testing.T) {
 
-	for scenario, tstFunc := range map[string]func(t *testing.T, params *mocks.ManagerParams){
+	for scenario, tstFunc := range map[string]func(t *testing.T, params *mocks.ClaimsManagerParams){
 		"GenerateClaims":                        testGenerateClaims,
 		"GenerateClaims, Legacy":                testGenerateClaimsLegacy,
 		"GenerateClaims, no dataset permission": testGenerateClaimsNoDatasetPermission,
@@ -33,7 +33,7 @@ func TestManifestAuthorizer(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 
 			t.Run("token without workspace", func(t *testing.T) {
-				noWorkspaceParams := mocks.NewNoWorkspaceTokenManagerParams(t)
+				noWorkspaceParams := mocks.NewClaimsManagerParams(t)
 				tstFunc(t, noWorkspaceParams)
 				noWorkspaceParams.AssertMockExpectations(t)
 			})
@@ -43,7 +43,7 @@ func TestManifestAuthorizer(t *testing.T) {
 					Id:     5001,
 					NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
 				}
-				withWorkspaceParams := mocks.NewWorkspaceTokenManagerParams(t, tokenWorkspace)
+				withWorkspaceParams := mocks.NewClaimsManagerParams(t).WithTokenWorkspace(t, tokenWorkspace)
 				tstFunc(t, withWorkspaceParams)
 				withWorkspaceParams.AssertMockExpectations(t)
 			})
@@ -52,10 +52,10 @@ func TestManifestAuthorizer(t *testing.T) {
 	}
 }
 
-func testGenerateClaims(t *testing.T, managerParams *mocks.ManagerParams) {
+func testGenerateClaims(t *testing.T, managerParams *mocks.ClaimsManagerParams) {
 	//Setup
 	currentUser := test.NewUser(101, 1001)
-	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildManager()
+	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildClaimsManager()
 
 	manifestId := uuid.NewString()
 	datasetId := int64(999)
@@ -103,10 +103,10 @@ func testGenerateClaims(t *testing.T, managerParams *mocks.ManagerParams) {
 		claims[coreAuthorizer.LabelDatasetClaim])
 }
 
-func testGenerateClaimsLegacy(t *testing.T, managerParams *mocks.ManagerParams) {
+func testGenerateClaimsLegacy(t *testing.T, managerParams *mocks.ClaimsManagerParams) {
 	//Setup
 	currentUser := test.NewUser(101, 1001)
-	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildManager()
+	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildClaimsManager()
 
 	manifestId := uuid.NewString()
 	datasetId := int64(999)
@@ -170,10 +170,10 @@ func testGenerateClaimsLegacy(t *testing.T, managerParams *mocks.ManagerParams) 
 	assert.Equal(t, teamClaims, claims[coreAuthorizer.LabelTeamClaims])
 }
 
-func testGenerateClaimsNoDatasetPermission(t *testing.T, managerParams *mocks.ManagerParams) {
+func testGenerateClaimsNoDatasetPermission(t *testing.T, managerParams *mocks.ClaimsManagerParams) {
 	//Setup
 	currentUser := test.NewUser(101, 1001)
-	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildManager()
+	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildClaimsManager()
 
 	manifestId := uuid.NewString()
 	datasetId := int64(999)
@@ -210,10 +210,10 @@ func testGenerateClaimsNoDatasetPermission(t *testing.T, managerParams *mocks.Ma
 	assert.ErrorContains(t, err, "user has no access to dataset")
 }
 
-func testGenerateClaimsNoOrgPermission(t *testing.T, managerParams *mocks.ManagerParams) {
+func testGenerateClaimsNoOrgPermission(t *testing.T, managerParams *mocks.ClaimsManagerParams) {
 	//Setup
 	currentUser := test.NewUser(101, 1001)
-	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildManager()
+	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildClaimsManager()
 
 	manifestId := uuid.NewString()
 	expectedOrgId := managerParams.GetExpectedOrgId(currentUser)
@@ -246,10 +246,10 @@ func testGenerateClaimsNoOrgPermission(t *testing.T, managerParams *mocks.Manage
 // non-workspace tokens
 func TestManifestOrgDoesNotMatchPreferredOrg(t *testing.T) {
 	//Setup
-	managerParams := mocks.NewNoWorkspaceTokenManagerParams(t)
+	managerParams := mocks.NewClaimsManagerParams(t)
 	userPreferredOrg := int64(1001)
 	currentUser := test.NewUser(101, userPreferredOrg)
-	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildManager()
+	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildClaimsManager()
 
 	// point of test is that this is different from user's PreferredOrgId, which should be ignored
 	manifestOrgId := int64(6001)
@@ -306,10 +306,10 @@ func TestManifestOrgDoesNotMatchTokenOrg(t *testing.T) {
 		Id:     3001,
 		NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
 	}
-	managerParams := mocks.NewWorkspaceTokenManagerParams(t, tokenWorkspace)
+	managerParams := mocks.NewClaimsManagerParams(t).WithTokenWorkspace(t, tokenWorkspace)
 	userPreferredOrg := int64(1001)
 	currentUser := test.NewUser(101, userPreferredOrg)
-	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildManager()
+	claimsManager := managerParams.WithUserQueryMocked(t, currentUser).BuildClaimsManager()
 
 	// point of test is that this is different from tokenWorkspace.Id, which should cause an error
 	manifestOrgId := int64(6001)
