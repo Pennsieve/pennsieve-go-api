@@ -64,9 +64,9 @@ func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]t
 	return MockTeamClaims, nil
 }
 
-func (m *MockClaimManager) GetDatasetID(context.Context, string) (*string, error) {
+func (m *MockClaimManager) GetDatasetID(context.Context, string) (string, error) {
 	s := "someDatasetID"
-	return &s, nil
+	return s, nil
 }
 
 func (m *MockClaimManager) GetTokenWorkspace() (manager.TokenWorkspace, bool) {

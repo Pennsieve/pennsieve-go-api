@@ -11,6 +11,9 @@ import (
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/organization"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/role"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/user"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -30,31 +33,31 @@ func TestManifestAuthorizer(t *testing.T) {
 	manifestTableName := uuid.NewString()
 	claimsManager := manager.NewClaimsManager(mockPg, mockDy, token.Token, tokenClientId, manifestTableName)
 
-	user := test.NewUser(101, 1001)
+	currentUser := test.NewUser(101, 1001)
 	orgClaim := &organization.Claim{
-		Role:            0,
-		IntId:           user.PreferredOrg,
-		NodeId:          "",
+		Role:            pgdb.Read,
+		IntId:           currentUser.PreferredOrg,
+		NodeId:          fmt.Sprintf("N:organization:%s", uuid.NewString()),
 		EnabledFeatures: nil,
 	}
 	manifest := &dydb.ManifestTable{
 		ManifestId:     manifestId,
 		DatasetId:      datasetId,
 		DatasetNodeId:  datasetNodeId,
-		OrganizationId: user.PreferredOrg,
-		UserId:         user.Id,
+		OrganizationId: currentUser.PreferredOrg,
+		UserId:         currentUser.Id,
 		Status:         "",
 		DateCreated:    0,
 	}
 	datasetClaim := &dataset.Claim{
-		Role:   0,
+		Role:   role.Viewer,
 		NodeId: datasetNodeId,
 		IntId:  datasetId,
 	}
-	mockPg.OnGetByCognitoId(token.Username).Return(user, nil)
-	mockPg.OnGetOrganizationClaim(user.Id, user.PreferredOrg).Return(orgClaim, nil)
+	mockPg.OnGetByCognitoId(token.Username).Return(currentUser, nil)
+	mockPg.OnGetOrganizationClaim(currentUser.Id, currentUser.PreferredOrg).Return(orgClaim, nil)
 	mockDy.OnGetManifestById(manifestTableName, manifestId).Return(manifest, nil)
-	mockPg.OnGetDatasetClaim(user, datasetNodeId, user.PreferredOrg).Return(datasetClaim, nil)
+	mockPg.OnGetDatasetClaim(currentUser, datasetNodeId, currentUser.PreferredOrg).Return(datasetClaim, nil)
 
 	claims, err := authorizer.GenerateClaims(context.Background(), claimsManager, "")
 	require.NoError(t, err)
@@ -64,8 +67,8 @@ func TestManifestAuthorizer(t *testing.T) {
 
 	assert.Equal(t, 3, len(claims))
 	assert.Equal(t,
-		mocks.MockUserClaim.String(),
-		fmt.Sprintf("%s", claims[coreAuthorizer.LabelUserClaim]))
+		expectedUserClaim(currentUser),
+		claims[coreAuthorizer.LabelUserClaim])
 	assert.Equal(t,
 		orgClaim,
 		claims[coreAuthorizer.LabelOrganizationClaim])
@@ -98,4 +101,12 @@ func TestManifestAuthorizerLegacy(t *testing.T) {
 	assert.Equal(t,
 		expectedTeamClaims,
 		fmt.Sprintf("%s", claims[coreAuthorizer.LabelTeamClaims]))
+}
+
+func expectedUserClaim(currentUser *pgdb.User) user.Claim {
+	return user.Claim{
+		Id:           currentUser.Id,
+		NodeId:       currentUser.NodeId,
+		IsSuperAdmin: currentUser.IsSuperAdmin,
+	}
 }

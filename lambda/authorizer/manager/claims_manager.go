@@ -13,14 +13,14 @@ import (
 )
 
 type IdentityManager interface {
-	GetCurrentUser(context.Context) (*pgdbModels.User, error)
-	GetActiveOrg(context.Context, *pgdbModels.User) int64
-	GetUserClaim(context.Context, *pgdbModels.User) user.Claim
-	GetDatasetClaim(context.Context, *pgdbModels.User, string, int64) (*dataset.Claim, error)
-	GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error)
-	GetOrgClaimByNodeId(context.Context, *pgdbModels.User, string) (*organization.Claim, error)
-	GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error)
-	GetDatasetID(context.Context, string) (*string, error)
+	GetCurrentUser(ctx context.Context) (*pgdbModels.User, error)
+	GetActiveOrg(ctx context.Context, user *pgdbModels.User) int64
+	GetUserClaim(ctx context.Context, user *pgdbModels.User) user.Claim
+	GetDatasetClaim(ctx context.Context, user *pgdbModels.User, datasetId string, orgId int64) (*dataset.Claim, error)
+	GetOrgClaim(ctx context.Context, user *pgdbModels.User, orgId int64) (*organization.Claim, error)
+	GetOrgClaimByNodeId(ctx context.Context, user *pgdbModels.User, orgNodeId string) (*organization.Claim, error)
+	GetTeamClaims(ctx context.Context, user *pgdbModels.User) ([]teamUser.Claim, error)
+	GetDatasetID(ctx context.Context, manifestId string) (string, error)
 	GetTokenWorkspace() (TokenWorkspace, bool)
 }
 
@@ -45,14 +45,13 @@ func (c *ClaimsManager) GetDatasetClaim(ctx context.Context, currentUser *pgdbMo
 	return datasetClaim, nil
 }
 
-func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (*string, error) {
+func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (string, error) {
 	manifest, err := c.DynamoDB.GetManifestById(ctx, c.ManifestTableName, manifestID)
 	if err != nil {
-		// log.Error("manifest could not be found")
-		return nil, err
+		return "", err
 	}
 
-	return &manifest.DatasetNodeId, nil
+	return manifest.DatasetNodeId, nil
 }
 
 func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModels.User) user.Claim {

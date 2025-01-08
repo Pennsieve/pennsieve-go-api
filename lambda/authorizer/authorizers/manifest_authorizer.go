@@ -41,7 +41,7 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 		return nil, fmt.Errorf("datasetId could not be retrieved: %w", err)
 	}
 	// Get Dataset Claim
-	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, *datasetID, orgInt)
+	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, datasetID, orgInt)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Dataset Role: %w", err)
 	}

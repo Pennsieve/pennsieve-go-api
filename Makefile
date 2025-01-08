@@ -39,6 +39,9 @@ clean: docker-clean
 tidy:
 	cd $(WORKING_DIR)/lambda/authorizer && go mod tidy
 
+vet:
+	cd $(WORKING_DIR)/lambda/authorizer && go vet ./...
+
 package:
 	@echo ""
 	@echo "**********************************"
