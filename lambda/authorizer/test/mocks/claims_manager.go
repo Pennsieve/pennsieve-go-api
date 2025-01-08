@@ -65,10 +65,6 @@ func (m *MockClaimManager) GetTeamClaims(context.Context, int64) ([]teamUser.Cla
 	return MockTeamClaims, nil
 }
 
-func (m *MockClaimManager) GetDatasetID(context.Context, string) (string, error) {
-	s := "someDatasetID"
-	return s, nil
-}
 func (m *MockClaimManager) GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error) {
 	return nil, fmt.Errorf("mock method not implemented")
 }

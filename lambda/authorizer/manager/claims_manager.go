@@ -21,7 +21,6 @@ type IdentityManager interface {
 	GetOrgClaim(ctx context.Context, userId int64, orgId int64) (*organization.Claim, error)
 	GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error)
 	GetTeamClaims(ctx context.Context, userId int64) ([]teamUser.Claim, error)
-	GetDatasetID(ctx context.Context, manifestId string) (string, error)
 	GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error)
 	GetTokenWorkspace() (TokenWorkspace, bool)
 }
@@ -45,15 +44,6 @@ func (c *ClaimsManager) GetDatasetClaim(ctx context.Context, currentUser *pgdbMo
 	}
 
 	return datasetClaim, nil
-}
-
-func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (string, error) {
-	manifest, err := c.DynamoDB.GetManifestById(ctx, c.ManifestTableName, manifestID)
-	if err != nil {
-		return "", err
-	}
-
-	return manifest.DatasetNodeId, nil
 }
 
 func (c *ClaimsManager) GetManifest(ctx context.Context, manifestID string) (*dydb.ManifestTable, error) {

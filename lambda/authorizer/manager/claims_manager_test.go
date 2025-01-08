@@ -26,7 +26,7 @@ func TestClaimsManager(t *testing.T) {
 		"GetTokenWorkspace":   testGetTokenWorkspace,
 		"GetActiveOrg":        testGetActiveOrg,
 		"GetDatasetClaim":     testGetDatasetClaim,
-		"GetDatasetId":        testGetDatasetId,
+		"GetManifest":         testGetManifest,
 		"GetOrgClaim":         testGetOrgClaim,
 		"GetOrgClaimByNodeId": testGetOrgClaimByNodeId,
 		"GetTeamClaims":       testGetTeamClaims,
@@ -124,7 +124,7 @@ func testGetDatasetClaim(t *testing.T, params *mocks.ManagerParams) {
 	assert.Equal(t, expectedDatasetClaim, claim)
 }
 
-func testGetDatasetId(t *testing.T, params *mocks.ManagerParams) {
+func testGetManifest(t *testing.T, params *mocks.ManagerParams) {
 	claimsManager := params.BuildManager()
 
 	// set up mock
@@ -137,9 +137,9 @@ func testGetDatasetId(t *testing.T, params *mocks.ManagerParams) {
 	params.MockPennsieveDy.OnGetManifestById(params.ManifestTableName, expectedManifestId).Return(expectedManifest, nil)
 
 	ctx := context.Background()
-	datasetId, err := claimsManager.GetDatasetID(ctx, expectedManifestId)
+	manifest, err := claimsManager.GetManifest(ctx, expectedManifestId)
 	require.NoError(t, err)
-	assert.Equal(t, expectedManifest.DatasetNodeId, datasetId)
+	assert.Equal(t, expectedManifest, manifest)
 }
 
 func testGetOrgClaim(t *testing.T, params *mocks.ManagerParams) {
