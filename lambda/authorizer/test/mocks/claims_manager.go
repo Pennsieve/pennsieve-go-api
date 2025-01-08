@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/dydb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
@@ -67,6 +68,9 @@ func (m *MockClaimManager) GetTeamClaims(context.Context, int64) ([]teamUser.Cla
 func (m *MockClaimManager) GetDatasetID(context.Context, string) (string, error) {
 	s := "someDatasetID"
 	return s, nil
+}
+func (m *MockClaimManager) GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error) {
+	return nil, fmt.Errorf("mock method not implemented")
 }
 
 func (m *MockClaimManager) GetTokenWorkspace() (manager.TokenWorkspace, bool) {

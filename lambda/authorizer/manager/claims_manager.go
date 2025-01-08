@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/dydb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/organization"
 	pgdbModels "github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/teamUser"
@@ -21,6 +22,7 @@ type IdentityManager interface {
 	GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error)
 	GetTeamClaims(ctx context.Context, userId int64) ([]teamUser.Claim, error)
 	GetDatasetID(ctx context.Context, manifestId string) (string, error)
+	GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error)
 	GetTokenWorkspace() (TokenWorkspace, bool)
 }
 
@@ -52,6 +54,15 @@ func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (st
 	}
 
 	return manifest.DatasetNodeId, nil
+}
+
+func (c *ClaimsManager) GetManifest(ctx context.Context, manifestID string) (*dydb.ManifestTable, error) {
+	manifest, err := c.DynamoDB.GetManifestById(ctx, c.ManifestTableName, manifestID)
+	if err != nil {
+		return nil, err
+	}
+
+	return manifest, nil
 }
 
 func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModels.User) *user.Claim {

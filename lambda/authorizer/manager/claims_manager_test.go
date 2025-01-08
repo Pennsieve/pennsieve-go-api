@@ -18,87 +18,9 @@ import (
 	"testing"
 )
 
-type managerParams struct {
-	mockPennsievePg   *mocks.MockPennsievePgAPI
-	mockPennsieveDy   *mocks.MockPennsieveDyAPI
-	testJWT           test.JWT
-	tokenClientId     string
-	manifestTableName string
-}
-
-func (p *managerParams) buildManager() manager.IdentityManager {
-	return manager.NewClaimsManager(p.mockPennsievePg, p.mockPennsieveDy, p.testJWT.Token, p.tokenClientId, p.manifestTableName)
-}
-
-func (p *managerParams) withUserQueryMocked(t require.TestingT, currentUser *pgdb.User) *managerParams {
-	if p.testJWT.Workspace == nil && p.tokenClientId != p.testJWT.ClientId {
-		// If the jwt does not contain a workspace and did not come from the token pool, then we
-		// expect the manager.ClaimsManager to call the pgdb method that queries only the user table
-		p.mockPennsievePg.OnGetByCognitoId(p.testJWT.Username).Return(currentUser, nil)
-	} else if p.testJWT.Workspace != nil && p.tokenClientId == p.testJWT.ClientId {
-		// If the jwt contains a workspace and came from the token pool, then we
-		// expect the manager.ClaimsManager to call the pgdb method that queries a join of the users and token tables.
-		p.mockPennsievePg.OnGetUserByCognitoId(p.testJWT.Username).Return(currentUser, nil)
-	} else {
-		require.FailNow(t, "inconsistent managerParams", "testJWT should be non-nil if and only if testJWT clientId is the tokenClientId")
-	}
-	return p
-}
-
-func (p *managerParams) getExpectedOrgId(user *pgdb.User) int64 {
-	if p.testJWT.Workspace == nil {
-		return user.PreferredOrg
-	}
-	return p.testJWT.Workspace.Id
-}
-
-func (p *managerParams) getExpectedOrgNodeId() string {
-	if p.testJWT.Workspace == nil {
-		return fmt.Sprintf("N:organization:%s", uuid.NewString())
-	}
-	return p.testJWT.Workspace.NodeId
-}
-
-func (p *managerParams) assertMockExpectations(t *testing.T) {
-	p.mockPennsievePg.AssertExpectations(t)
-	p.mockPennsieveDy.AssertExpectations(t)
-}
-
-func newNoWorkspaceTokenManagerParams(t require.TestingT) *managerParams {
-	// A JWT token with no workspace and a clientId
-	// different from the tokenClientId (initialized below)
-	testJWT := test.NewJWTBuilder().Build(t)
-
-	return &managerParams{
-		mockPennsievePg: mocks.NewMockPennsievePgAPI(),
-		mockPennsieveDy: mocks.NewMockPennsieveDyAPI(),
-		testJWT:         testJWT,
-		// tokenClientID will be different from the random clientId in testJWT
-		tokenClientId:     uuid.NewString(),
-		manifestTableName: uuid.NewString(),
-	}
-}
-
-func newWorkspaceTokenManagerParams(t require.TestingT, tokenWorkspace manager.TokenWorkspace) *managerParams {
-	// A JWT token with a workspace and a clientId
-	// that will match the tokenClientId (initialized below)
-	testJWT := test.NewJWTBuilder().
-		WithWorkspace(tokenWorkspace.Id, tokenWorkspace.NodeId).
-		Build(t)
-
-	return &managerParams{
-		mockPennsievePg: mocks.NewMockPennsievePgAPI(),
-		mockPennsieveDy: mocks.NewMockPennsieveDyAPI(),
-		testJWT:         testJWT,
-		// tokenClientID matches the clientId in token
-		tokenClientId:     testJWT.ClientId,
-		manifestTableName: uuid.NewString(),
-	}
-}
-
 func TestClaimsManager(t *testing.T) {
 
-	for scenario, tstFunc := range map[string]func(t *testing.T, params *managerParams){
+	for scenario, tstFunc := range map[string]func(t *testing.T, params *mocks.ManagerParams){
 		"GetCurrentUser":      testGetCurrentUser,
 		"GetUserClaim":        testGetUserClaim,
 		"GetTokenWorkspace":   testGetTokenWorkspace,
@@ -112,9 +34,9 @@ func TestClaimsManager(t *testing.T) {
 		t.Run(scenario, func(t *testing.T) {
 
 			t.Run("token without workspace", func(t *testing.T) {
-				noWorkspaceParams := newNoWorkspaceTokenManagerParams(t)
+				noWorkspaceParams := mocks.NewNoWorkspaceTokenManagerParams(t)
 				tstFunc(t, noWorkspaceParams)
-				noWorkspaceParams.assertMockExpectations(t)
+				noWorkspaceParams.AssertMockExpectations(t)
 			})
 
 			t.Run("token with workspace", func(t *testing.T) {
@@ -122,9 +44,9 @@ func TestClaimsManager(t *testing.T) {
 					Id:     5001,
 					NodeId: fmt.Sprintf("N:organization:%s", uuid.NewString()),
 				}
-				withWorkspaceParams := newWorkspaceTokenManagerParams(t, tokenWorkspace)
+				withWorkspaceParams := mocks.NewWorkspaceTokenManagerParams(t, tokenWorkspace)
 				tstFunc(t, withWorkspaceParams)
-				withWorkspaceParams.assertMockExpectations(t)
+				withWorkspaceParams.AssertMockExpectations(t)
 			})
 
 		})
@@ -132,9 +54,9 @@ func TestClaimsManager(t *testing.T) {
 
 }
 
-func testGetCurrentUser(t *testing.T, params *managerParams) {
+func testGetCurrentUser(t *testing.T, params *mocks.ManagerParams) {
 	expectedUser := test.NewUser(101, 2001)
-	claimsManager := params.withUserQueryMocked(t, expectedUser).buildManager()
+	claimsManager := params.WithUserQueryMocked(t, expectedUser).BuildManager()
 
 	ctx := context.Background()
 	user, err := claimsManager.GetCurrentUser(ctx)
@@ -142,8 +64,8 @@ func testGetCurrentUser(t *testing.T, params *managerParams) {
 	assert.Equal(t, expectedUser, user)
 }
 
-func testGetUserClaim(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetUserClaim(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	ctx := context.Background()
@@ -155,45 +77,45 @@ func testGetUserClaim(t *testing.T, params *managerParams) {
 
 }
 
-func testGetTokenWorkspace(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetTokenWorkspace(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	tokenWorkspace, hasTokenWorkspace := claimsManager.GetTokenWorkspace()
-	if params.testJWT.Workspace == nil {
+	if params.TestJWT.Workspace == nil {
 		assert.False(t, hasTokenWorkspace)
 	} else {
 		assert.True(t, hasTokenWorkspace)
-		assert.Equal(t, *params.testJWT.Workspace, tokenWorkspace)
+		assert.Equal(t, *params.TestJWT.Workspace, tokenWorkspace)
 	}
 }
 
-func testGetActiveOrg(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetActiveOrg(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	expectedUser := test.NewUser(101, 2001)
-	expectedOrgId := params.getExpectedOrgId(expectedUser)
+	expectedOrgId := params.GetExpectedOrgId(expectedUser)
 
 	ctx := context.Background()
 	orgId := claimsManager.GetActiveOrg(ctx, expectedUser)
 	assert.Equal(t, expectedOrgId, orgId)
-	if params.testJWT.Workspace != nil {
+	if params.TestJWT.Workspace != nil {
 		assert.NotEqual(t, expectedUser.PreferredOrg, orgId)
 	}
 }
 
-func testGetDatasetClaim(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetDatasetClaim(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	// Set up Mock
 	expectedUser := test.NewUser(101, 2001)
 	datasetId := fmt.Sprintf("N:dataset:%s", uuid.NewString())
-	expectedOrgId := params.getExpectedOrgId(expectedUser)
+	expectedOrgId := params.GetExpectedOrgId(expectedUser)
 	expectedDatasetClaim := &dataset.Claim{
 		Role:   role.Viewer,
 		NodeId: datasetId,
 		IntId:  555,
 	}
-	params.mockPennsievePg.OnGetDatasetClaim(expectedUser, datasetId, expectedOrgId).Return(expectedDatasetClaim, nil)
+	params.MockPennsievePg.OnGetDatasetClaim(expectedUser, datasetId, expectedOrgId).Return(expectedDatasetClaim, nil)
 
 	ctx := context.Background()
 	claim, err := claimsManager.GetDatasetClaim(ctx, expectedUser, datasetId, expectedOrgId)
@@ -202,8 +124,8 @@ func testGetDatasetClaim(t *testing.T, params *managerParams) {
 	assert.Equal(t, expectedDatasetClaim, claim)
 }
 
-func testGetDatasetId(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetDatasetId(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	// set up mock
 	expectedManifestId := uuid.NewString()
@@ -212,7 +134,7 @@ func testGetDatasetId(t *testing.T, params *managerParams) {
 		DatasetId:     555,
 		DatasetNodeId: fmt.Sprintf("N:dataset:%s", uuid.NewString()),
 	}
-	params.mockPennsieveDy.OnGetManifestById(params.manifestTableName, expectedManifestId).Return(expectedManifest, nil)
+	params.MockPennsieveDy.OnGetManifestById(params.ManifestTableName, expectedManifestId).Return(expectedManifest, nil)
 
 	ctx := context.Background()
 	datasetId, err := claimsManager.GetDatasetID(ctx, expectedManifestId)
@@ -220,19 +142,19 @@ func testGetDatasetId(t *testing.T, params *managerParams) {
 	assert.Equal(t, expectedManifest.DatasetNodeId, datasetId)
 }
 
-func testGetOrgClaim(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetOrgClaim(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	expectedUser := test.NewUser(101, 2001)
-	expectedOrgId := params.getExpectedOrgId(expectedUser)
-	expectedOrgNodeId := params.getExpectedOrgNodeId()
+	expectedOrgId := params.GetExpectedOrgId(expectedUser)
+	expectedOrgNodeId := params.GetExpectedOrgNodeId()
 	expectedClaim := &organization.Claim{
 		Role:            pgdb.Owner,
 		IntId:           expectedOrgId,
 		NodeId:          expectedOrgNodeId,
 		EnabledFeatures: []pgdb.FeatureFlags{{OrganizationId: expectedOrgId, Feature: "test-feature", Enabled: true}},
 	}
-	params.mockPennsievePg.OnGetOrganizationClaim(expectedUser.Id, expectedOrgId).Return(expectedClaim, nil)
+	params.MockPennsievePg.OnGetOrganizationClaim(expectedUser.Id, expectedOrgId).Return(expectedClaim, nil)
 
 	ctx := context.Background()
 	claim, err := claimsManager.GetOrgClaim(ctx, expectedUser.Id, expectedOrgId)
@@ -240,19 +162,19 @@ func testGetOrgClaim(t *testing.T, params *managerParams) {
 	assert.Equal(t, expectedClaim, claim)
 }
 
-func testGetOrgClaimByNodeId(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetOrgClaimByNodeId(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	expectedUser := test.NewUser(101, 2001)
-	expectedOrgId := params.getExpectedOrgId(expectedUser)
-	expectedOrgNodeId := params.getExpectedOrgNodeId()
+	expectedOrgId := params.GetExpectedOrgId(expectedUser)
+	expectedOrgNodeId := params.GetExpectedOrgNodeId()
 	expectedClaim := &organization.Claim{
 		Role:            pgdb.Owner,
 		IntId:           expectedOrgId,
 		NodeId:          expectedOrgNodeId,
 		EnabledFeatures: []pgdb.FeatureFlags{{OrganizationId: expectedOrgId, Feature: "test-feature", Enabled: true}},
 	}
-	params.mockPennsievePg.OnGetOrganizationClaimByNodeId(expectedUser.Id, expectedOrgNodeId).Return(expectedClaim, nil)
+	params.MockPennsievePg.OnGetOrganizationClaimByNodeId(expectedUser.Id, expectedOrgNodeId).Return(expectedClaim, nil)
 
 	ctx := context.Background()
 	claim, err := claimsManager.GetOrgClaimByNodeId(ctx, expectedUser.Id, expectedOrgNodeId)
@@ -260,8 +182,8 @@ func testGetOrgClaimByNodeId(t *testing.T, params *managerParams) {
 	assert.Equal(t, expectedClaim, claim)
 }
 
-func testGetTeamClaims(t *testing.T, params *managerParams) {
-	claimsManager := params.buildManager()
+func testGetTeamClaims(t *testing.T, params *mocks.ManagerParams) {
+	claimsManager := params.BuildManager()
 
 	expectedUser := test.NewUser(101, 2001)
 	expectedClaims := []teamUser.Claim{
@@ -280,7 +202,7 @@ func testGetTeamClaims(t *testing.T, params *managerParams) {
 			TeamType:   "type 2",
 		},
 	}
-	params.mockPennsievePg.OnGetTeamClaims(expectedUser.Id).Return(expectedClaims, nil)
+	params.MockPennsievePg.OnGetTeamClaims(expectedUser.Id).Return(expectedClaims, nil)
 
 	ctx := context.Background()
 	claims, err := claimsManager.GetTeamClaims(ctx, expectedUser.Id)
