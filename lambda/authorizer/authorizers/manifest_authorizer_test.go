@@ -46,8 +46,6 @@ func TestManifestAuthorizer(t *testing.T) {
 		DatasetNodeId:  datasetNodeId,
 		OrganizationId: currentUser.PreferredOrg,
 		UserId:         currentUser.Id,
-		Status:         "",
-		DateCreated:    0,
 	}
 	datasetClaim := &dataset.Claim{
 		Role:   role.Viewer,
@@ -103,8 +101,8 @@ func TestManifestAuthorizerLegacy(t *testing.T) {
 		fmt.Sprintf("%s", claims[coreAuthorizer.LabelTeamClaims]))
 }
 
-func expectedUserClaim(currentUser *pgdb.User) user.Claim {
-	return user.Claim{
+func expectedUserClaim(currentUser *pgdb.User) *user.Claim {
+	return &user.Claim{
 		Id:           currentUser.Id,
 		NodeId:       currentUser.NodeId,
 		IsSuperAdmin: currentUser.IsSuperAdmin,

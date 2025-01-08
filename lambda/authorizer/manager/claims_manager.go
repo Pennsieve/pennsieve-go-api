@@ -15,7 +15,7 @@ import (
 type IdentityManager interface {
 	GetCurrentUser(ctx context.Context) (*pgdbModels.User, error)
 	GetActiveOrg(ctx context.Context, user *pgdbModels.User) int64
-	GetUserClaim(ctx context.Context, user *pgdbModels.User) user.Claim
+	GetUserClaim(ctx context.Context, user *pgdbModels.User) *user.Claim
 	GetDatasetClaim(ctx context.Context, user *pgdbModels.User, datasetId string, orgId int64) (*dataset.Claim, error)
 	GetOrgClaim(ctx context.Context, userId int64, orgId int64) (*organization.Claim, error)
 	GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error)
@@ -54,8 +54,8 @@ func (c *ClaimsManager) GetDatasetID(ctx context.Context, manifestID string) (st
 	return manifest.DatasetNodeId, nil
 }
 
-func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModels.User) user.Claim {
-	return user.Claim{
+func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModels.User) *user.Claim {
+	return &user.Claim{
 		Id:           currentUser.Id,
 		NodeId:       currentUser.NodeId,
 		IsSuperAdmin: currentUser.IsSuperAdmin,

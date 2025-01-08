@@ -38,8 +38,8 @@ var MockUserClaim = user.Claim{
 	IsSuperAdmin: true,
 }
 
-func (m *MockClaimManager) GetUserClaim(context.Context, *pgdbModels.User) user.Claim {
-	return MockUserClaim
+func (m *MockClaimManager) GetUserClaim(context.Context, *pgdbModels.User) *user.Claim {
+	return &MockUserClaim
 }
 
 var MockDatasetClaim = dataset.Claim{Role: role.Manager}
