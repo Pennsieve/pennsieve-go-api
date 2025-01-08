@@ -17,9 +17,9 @@ type IdentityManager interface {
 	GetActiveOrg(ctx context.Context, user *pgdbModels.User) int64
 	GetUserClaim(ctx context.Context, user *pgdbModels.User) user.Claim
 	GetDatasetClaim(ctx context.Context, user *pgdbModels.User, datasetId string, orgId int64) (*dataset.Claim, error)
-	GetOrgClaim(ctx context.Context, user *pgdbModels.User, orgId int64) (*organization.Claim, error)
-	GetOrgClaimByNodeId(ctx context.Context, user *pgdbModels.User, orgNodeId string) (*organization.Claim, error)
-	GetTeamClaims(ctx context.Context, user *pgdbModels.User) ([]teamUser.Claim, error)
+	GetOrgClaim(ctx context.Context, userId int64, orgId int64) (*organization.Claim, error)
+	GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error)
+	GetTeamClaims(ctx context.Context, userId int64) ([]teamUser.Claim, error)
 	GetDatasetID(ctx context.Context, manifestId string) (string, error)
 	GetTokenWorkspace() (TokenWorkspace, bool)
 }
@@ -62,8 +62,8 @@ func (c *ClaimsManager) GetUserClaim(ctx context.Context, currentUser *pgdbModel
 	}
 }
 
-func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels.User, orgInt int64) (*organization.Claim, error) {
-	orgClaim, err := c.PostgresDB.GetOrganizationClaim(ctx, currentUser.Id, orgInt)
+func (c *ClaimsManager) GetOrgClaim(ctx context.Context, userId int64, orgId int64) (*organization.Claim, error) {
+	orgClaim, err := c.PostgresDB.GetOrganizationClaim(ctx, userId, orgId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,16 +71,16 @@ func (c *ClaimsManager) GetOrgClaim(ctx context.Context, currentUser *pgdbModels
 	return orgClaim, nil
 }
 
-func (c *ClaimsManager) GetOrgClaimByNodeId(ctx context.Context, currentUser *pgdbModels.User, workspaceNodeId string) (*organization.Claim, error) {
-	orgClaim, err := c.PostgresDB.GetOrganizationClaimByNodeId(ctx, currentUser.Id, workspaceNodeId)
+func (c *ClaimsManager) GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error) {
+	orgClaim, err := c.PostgresDB.GetOrganizationClaimByNodeId(ctx, userId, orgNodeId)
 	if err != nil {
-		return nil, fmt.Errorf("error getting orgClaim for user %d, workspace %s: %w", currentUser.Id, workspaceNodeId, err)
+		return nil, fmt.Errorf("error getting orgClaim for user %d, workspace %s: %w", userId, orgNodeId, err)
 	}
 	return orgClaim, nil
 }
 
-func (c *ClaimsManager) GetTeamClaims(ctx context.Context, currentUser *pgdbModels.User) ([]teamUser.Claim, error) {
-	teamClaims, err := c.PostgresDB.GetTeamClaims(ctx, currentUser.Id)
+func (c *ClaimsManager) GetTeamClaims(ctx context.Context, userId int64) ([]teamUser.Claim, error) {
+	teamClaims, err := c.PostgresDB.GetTeamClaims(ctx, userId)
 	if err != nil {
 		return nil, err
 	}

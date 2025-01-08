@@ -67,7 +67,7 @@ func (m *MockPennsievePgAPI) OnGetOrganizationClaimByNodeId(userId int64, organi
 }
 
 func (m *MockPennsievePgAPI) OnGetTeamClaims(userId int64) *mock.Call {
-	return m.On("TeamClaims", mock.Anything, userId)
+	return m.On("GetTeamClaims", mock.Anything, userId)
 }
 
 func (m *MockPennsievePgAPI) OnGetUserByCognitoId(cognitoId string) *mock.Call {

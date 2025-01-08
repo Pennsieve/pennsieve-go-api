@@ -1,4 +1,4 @@
-.PHONY: help clean local-services test test-ci docker-clean package publish
+.PHONY: help clean local-services test test-ci docker-clean package publish tidy vet
 
 LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
@@ -21,7 +21,7 @@ local-services:
 	docker compose -f docker-compose.test.yml down --remove-orphans
 	docker compose -f docker-compose.test.yml -f docker-compose.local.override.yml up -d dynamodb pennsievedb
 
-test: local-services
+test: vet local-services
 	cd $(WORKING_DIR)/lambda/authorizer && go test -v ./...
 
 test-ci:
