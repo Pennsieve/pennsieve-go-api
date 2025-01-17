@@ -380,6 +380,9 @@ components:
         uuid:
           type: string
           description: the UUID of the integration execution
+        name:
+          type: string
+          description: the name of the workflow instance
         applicationId:
           type: integer
           description: the id of the application
@@ -391,6 +394,13 @@ components:
           description: the packageIds
           items:
             type: string
+        startedAt:
+          type: string
+          description: the timestamp when the workflow instance was started
+        completedAt:
+          type: string
+          description: the timestamp when the workflow instance completed
+
     workflowInstanceLogsGetResponse:
       type: object
       properties:
