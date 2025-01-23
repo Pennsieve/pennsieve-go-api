@@ -367,7 +367,7 @@ components:
           type: array
           description: the packageIds
           items:
-            type: string  
+            type: string
     integrationResponse:
       type: object
       properties:
@@ -852,9 +852,11 @@ components:
     postApplicationsResponse:
       type: object
       properties:
-        postResponse:
+        deploymentId:
           type: string
-          description: the response from initiating creation of an application
+          description: a unique string identifying the app deployment
+        application:
+          $ref: '#/components/schemas/applicationsGetResponse'
     deleteApplicationsResponse:
       type: object
       properties:
@@ -898,11 +900,11 @@ components:
               type: string
               description: the account type of compute resource account
     postApplicationsDeployResponse:
-        type: object
-        properties:
-          postResponse:
-            type: string
-            description: the response from initiating deployment of an application
+      type: object
+      properties:
+        deploymentId:
+          type: string
+          description: a unique string identifying the initiated deployment
     workflowRequest:
       type: object
       properties:
@@ -1241,7 +1243,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/drsObjectResponse'
       description: "Response containing the DRS object metadata and access methods."
-  
+
     multipleDrsObjectsRequest:
       type: object
       properties:
@@ -2891,9 +2893,9 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'          
+          $ref: '#/components/responses/Error'
 
-  /integrations/{id}:          
+  /integrations/{id}:
     get:
       summary: Get integration by uuid
       description: |
@@ -2926,7 +2928,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /workflows/instances/{id}:          
+  /workflows/instances/{id}:
     get:
       summary: Get workflow instance by uuid
       description: |
@@ -2958,7 +2960,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /workflows/instances/{id}/logs:          
+  /workflows/instances/{id}/logs:
     get:
       summary: Get workflow instance processor logs
       description: |
@@ -2994,7 +2996,7 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'         
+          $ref: '#/components/responses/Error'
 
   /workflows:
     post:
@@ -3025,7 +3027,7 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'    
+          $ref: '#/components/responses/Error'
 
   /imaging/microct/{package_id}/session:
     post:
@@ -3974,7 +3976,7 @@ paths:
           description: "DrsObject not found"
         '401':
           description: "Unauthorized"
-      security: []
+      security: [ ]
 
     post:
       operationId: postUserById
@@ -3985,7 +3987,7 @@ paths:
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
         Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
       tags:
-        - DRS Service      
+        - DRS Service
       parameters:
         - name: object_id
           in: path
@@ -4011,7 +4013,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
   /ga4gh/drs/v1/objects:
     post:
@@ -4023,7 +4025,7 @@ paths:
         Returns an array of object metadata, and a list of access methods that can be used to fetch objects' bytes.
         Currently this is limited to use passports (one or more) or a single bearer token, so make sure your bulk request is for objects that all use the same passports/token.
       tags:
-        - DRS Service      
+        - DRS Service
       parameters:
         - name: expand
           in: query
@@ -4052,7 +4054,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
 
   /ga4gh/drs/v1/objects/{object_id}/access/{access_id}:
@@ -4066,7 +4068,7 @@ paths:
         This method only needs to be called when using an AccessMethod that contains an access_id 
         (e.g., for servers that use signed URLs for fetching object bytes).
       tags:
-        - DRS Service      
+        - DRS Service
       parameters:
         - name: object_id
           in: path
@@ -4091,7 +4093,7 @@ paths:
           description: "Access URL not found"
         '401':
           description: "Unauthorized"
-      security: []
+      security: [ ]
 
     post:
       operationId: postUserbyAccessId
@@ -4136,7 +4138,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
   /ga4gh/drs/v1/objects/access:
     post:
       operationId: postAllObjects
@@ -4150,7 +4152,7 @@ paths:
         Currently this is limited to use passports (one or more) or a single bearer token, 
         so make sure your bulk request is for objects that all use the same passports/token.
       tags:
-        - DRS Service        
+        - DRS Service
       requestBody:
         required: true
         content:
@@ -4169,7 +4171,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
   /ga4gh/drs/v1/service-info:
     get:
