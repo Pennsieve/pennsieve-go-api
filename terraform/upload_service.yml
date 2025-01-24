@@ -401,6 +401,39 @@ components:
           type: string
           description: the timestamp when the workflow instance completed
 
+    workflowInstanceStatusResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the UUID of the workflow instance
+        status:
+          type: string
+          description: the status of the overall workflow instance
+        startedAt:
+          type: string
+          description: the timestamp when the workflow instance was started
+        completedAt:
+          type: string
+          description: the timestamp when the workflow instance completed
+        processors:
+          type: array
+          items:
+            type: object
+            properties:
+              uuid:
+                type: string
+                description: the UUID of the processor
+              status:
+                type: string
+                description: the status of the individual processo
+              startedAt:
+                type: string
+                description: the timestamp when the processor was started
+              completedAt:
+                type: string
+                description: the timestamp when the processor completed
+
     workflowInstanceLogsGetResponse:
       type: object
       properties:
@@ -953,6 +986,19 @@ components:
         integrationId:
           type: string
           description: the UUID of the integration execution
+    workflowInstanceStatusRequest:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the UUID of the workflow instance or processor
+        status:
+          type: string
+          description: the current status of the workflow instance or processor
+        timestamp:
+          type: integer
+          description: the timestamp when the status change occured
+
     trackRepositoryRequest:
       type: object
       properties:
@@ -2953,6 +2999,79 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows/instances/{id}/status:
+    get:
+      summary: Get the statuses for a workflow instance
+      description: |
+        Retrieves the status of for the workflow instance and each of its processors
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflowInstanceStatus
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance
+      responses:
+        '200':
+          description: The requested workflow instance statuses
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowInstanceStatusResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Set a status for a workflow instance
+      description: |
+        Sets the status of a workflow instance, or one of its processors
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: putWorkflowInstanceStatus
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance
+      requestBody:
+        description: workflow instance status event request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowInstanceStatusRequest'
+      responses:
+        '200':
+          description: A response indicating a successful status update
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: a message indicating a successful status update
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
