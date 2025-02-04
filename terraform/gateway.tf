@@ -1,7 +1,7 @@
 resource "aws_apigatewayv2_api" "upload-service-gateway" {
-  name          = "serverless_upload_service"
+  name          = "Pennsieve API Version 2"
   protocol_type = "HTTP"
-  description = "API Gateway for Upload-Service V2"
+  description = "API Gateway for Pennsieve API V2"
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["*"]
