@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// ClaimsManagerParams are encapsulates the parameters needed to call manager.NewClaimsManager() for ease of testing.
+// ClaimsManagerParams encapsulates the parameters needed to call manager.NewClaimsManager() for ease of testing.
 // The manager.PennsievePgAPI and manager.PennsieveDyAPI parameters are *MockPennsievePgAPI and *MockPennsieveDyAPI
 // respectively.
 //
