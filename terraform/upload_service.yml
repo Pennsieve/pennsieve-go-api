@@ -3855,9 +3855,9 @@ paths:
 
   /applications/{id}/deployments:
     get:
-      summary: Get the deployment history for a specific application
+      summary: Get the deployment history for an application
       description: |
-        Get the deployment history for a specific application
+        Get the deployment history for an application
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getDeployments
@@ -3872,6 +3872,12 @@ paths:
           schema:
             type: string
           description: The uuid of the application
+        - in: query
+          name: organization_id
+          required: true
+          schema:
+            type: string
+          description: the node id of the application's workspace
       responses:
         '200':
           description: The requested deployment history
@@ -3916,6 +3922,12 @@ paths:
           schema:
             type: string
           description: The uuid of the deployment
+        - in: query
+          name: organization_id
+          required: true
+          schema:
+            type: string
+          description: the node id of the application's workspace
       responses:
         '200':
           description: The requested deployment details
