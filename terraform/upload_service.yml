@@ -2966,7 +2966,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstances
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - Integration Service
       responses:
@@ -3459,7 +3459,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: getAccounts
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - Account Service
       responses:
@@ -3625,7 +3625,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: getComputeNodes
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - Compute Node Service
       responses:
@@ -3740,7 +3740,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getApplications
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - App Deploy Service
       responses:
