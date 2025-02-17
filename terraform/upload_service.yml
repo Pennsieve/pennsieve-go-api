@@ -2889,6 +2889,13 @@ paths:
       summary: Get workflow instances
       description: |
         Get a list of workflow instances
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstances
@@ -3382,6 +3389,13 @@ paths:
       summary: Get account details for compute resources
       description: |
         Get account details for compute resources
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: getAccounts
@@ -3548,6 +3562,13 @@ paths:
       summary: Get compute nodes
       description: |
         Get a list of compute nodes
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: getComputeNodes
@@ -3663,6 +3684,13 @@ paths:
       summary: Get applications
       description: |
         Get a list of applications
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getApplications
