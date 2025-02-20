@@ -215,6 +215,24 @@ components:
             properties:
               message:
                 type: string
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
     Error:
       description: Server Error
       content:
@@ -367,7 +385,7 @@ components:
           type: array
           description: the packageIds
           items:
-            type: string  
+            type: string
     integrationResponse:
       type: object
       properties:
@@ -885,15 +903,70 @@ components:
     postApplicationsResponse:
       type: object
       properties:
-        postResponse:
+        deploymentId:
           type: string
-          description: the response from initiating creation of an application
+          description: a unique string identifying the app deployment
+        application:
+          $ref: '#/components/schemas/applicationsGetResponse'
     deleteApplicationsResponse:
       type: object
       properties:
         deleteResponse:
           type: string
           description: the response from initiating deletion of an application
+    getDeploymentResponse:
+      type: object
+      properties:
+        deploymentId:
+          type: string
+          description: The unique identifier for the deployment.
+        applicationId:
+          type: string
+          description: The ID of the application associated with the deployment.
+        initiatedAt:
+          type: string
+          format: date-time
+          description: Timestamp when the deployment was initiated.
+        lastStatus:
+          type: string
+          description: The last known status of the deployment.
+        desiredStatus:
+          type: string
+          description: The desired status of the deployment.
+        taskArn:
+          type: string
+          description: ARN of the task associated with the deployment.
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the state change occurred.
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: The timestamp when the task was created (entered PENDING state).
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: The timestamp when the task started (entered RUNNING state).
+        stoppedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: The timestamp when the task stopped (entered STOPPED state).
+        stopCode:
+          type: string
+          nullable: true
+          description: An optional code indicating why the task was stopped.
+        stoppedReason:
+          type: string
+          nullable: true
+          description: A string indicating the reason why the task was stopped.
+        errored:
+          type: boolean
+          description: Indicates whether the task encountered an error.
     applicationDeployRequest:
       type: object
       properties:
@@ -931,11 +1004,11 @@ components:
               type: string
               description: the account type of compute resource account
     postApplicationsDeployResponse:
-        type: object
-        properties:
-          postResponse:
-            type: string
-            description: the response from initiating deployment of an application
+      type: object
+      properties:
+        deploymentId:
+          type: string
+          description: a unique string identifying the initiated deployment
     workflowRequest:
       type: object
       properties:
@@ -1287,7 +1360,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/drsObjectResponse'
       description: "Response containing the DRS object metadata and access methods."
-  
+
     multipleDrsObjectsRequest:
       type: object
       properties:
@@ -2889,6 +2962,13 @@ paths:
       summary: Get workflow instances
       description: |
         Get a list of workflow instances
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstances
@@ -2937,9 +3017,9 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'          
+          $ref: '#/components/responses/Error'
 
-  /integrations/{id}:          
+  /integrations/{id}:
     get:
       summary: Get integration by uuid
       description: |
@@ -2972,7 +3052,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /workflows/instances/{id}:          
+  /workflows/instances/{id}:
     get:
       summary: Get workflow instance by uuid
       description: |
@@ -3077,7 +3157,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /workflows/instances/{id}/logs:          
+  /workflows/instances/{id}/logs:
     get:
       summary: Get workflow instance processor logs
       description: |
@@ -3113,7 +3193,7 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'         
+          $ref: '#/components/responses/Error'
 
   /workflows:
     post:
@@ -3144,7 +3224,7 @@ paths:
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
-          $ref: '#/components/responses/Error'    
+          $ref: '#/components/responses/Error'
 
   /imaging/microct/{package_id}/session:
     post:
@@ -3382,6 +3462,13 @@ paths:
       summary: Get account details for compute resources
       description: |
         Get account details for compute resources
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: getAccounts
@@ -3548,6 +3635,13 @@ paths:
       summary: Get compute nodes
       description: |
         Get a list of compute nodes
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: getComputeNodes
@@ -3663,6 +3757,13 @@ paths:
       summary: Get applications
       description: |
         Get a list of applications
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getApplications
@@ -3780,6 +3881,97 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
+  /applications/{id}/deployments:
+    get:
+      summary: Get the deployment history for an application
+      description: |
+        Get the deployment history for an application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getDeployments
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the application
+        - in: query
+          name: organization_id
+          required: true
+          schema:
+            type: string
+          description: the node id of the application's workspace
+      responses:
+        '200':
+          description: The requested deployment history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deployments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/getDeploymentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /applications/{id}/deployments/{deploymentId}:
+    get:
+      summary: Get the details for a specific application deployment
+      description: |
+        Get the details for a specific application deployment
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getDeployment
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the application
+        - in: path
+          name: deploymentId
+          required: true
+          schema:
+            type: string
+          description: The uuid of the deployment
+        - in: query
+          name: organization_id
+          required: true
+          schema:
+            type: string
+          description: the node id of the application's workspace
+      responses:
+        '200':
+          description: The requested deployment details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getDeploymentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Error'
+
   /applications/deploy:
     post:
       summary: Deploys an application from a source to a destination
@@ -3820,7 +4012,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: postEnableTrackingExternalRepo
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - GitHub Service
       requestBody:
@@ -3851,7 +4043,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: postDisableTrackingExternalRepo
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - GitHub Service
       requestBody:
@@ -3882,7 +4074,7 @@ paths:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: updateExternalRepo
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       tags:
         - Repository Service
       requestBody:
@@ -3912,7 +4104,7 @@ paths:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       security:
-        - token_auth: [ ]
+        - token_workspace_auth: [ ]
       operationId: publishRepository
       tags:
         - Repository Service
@@ -4129,7 +4321,7 @@ paths:
           description: "DrsObject not found"
         '401':
           description: "Unauthorized"
-      security: []
+      security: [ ]
 
     post:
       operationId: postUserById
@@ -4140,7 +4332,7 @@ paths:
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
         Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
       tags:
-        - DRS Service      
+        - DRS Service
       parameters:
         - name: object_id
           in: path
@@ -4166,7 +4358,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
   /ga4gh/drs/v1/objects:
     post:
@@ -4178,7 +4370,7 @@ paths:
         Returns an array of object metadata, and a list of access methods that can be used to fetch objects' bytes.
         Currently this is limited to use passports (one or more) or a single bearer token, so make sure your bulk request is for objects that all use the same passports/token.
       tags:
-        - DRS Service      
+        - DRS Service
       parameters:
         - name: expand
           in: query
@@ -4207,7 +4399,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
 
   /ga4gh/drs/v1/objects/{object_id}/access/{access_id}:
@@ -4221,7 +4413,7 @@ paths:
         This method only needs to be called when using an AccessMethod that contains an access_id 
         (e.g., for servers that use signed URLs for fetching object bytes).
       tags:
-        - DRS Service      
+        - DRS Service
       parameters:
         - name: object_id
           in: path
@@ -4246,7 +4438,7 @@ paths:
           description: "Access URL not found"
         '401':
           description: "Unauthorized"
-      security: []
+      security: [ ]
 
     post:
       operationId: postUserbyAccessId
@@ -4291,7 +4483,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
   /ga4gh/drs/v1/objects/access:
     post:
       operationId: postAllObjects
@@ -4305,7 +4497,7 @@ paths:
         Currently this is limited to use passports (one or more) or a single bearer token, 
         so make sure your bulk request is for objects that all use the same passports/token.
       tags:
-        - DRS Service        
+        - DRS Service
       requestBody:
         required: true
         content:
@@ -4324,7 +4516,7 @@ paths:
         '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
   /ga4gh/drs/v1/service-info:
     get:
