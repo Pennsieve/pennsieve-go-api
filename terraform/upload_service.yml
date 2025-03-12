@@ -1062,9 +1062,6 @@ components:
     workflowInstanceStatusRequest:
       type: object
       properties:
-        uuid:
-          type: string
-          description: the UUID of the workflow instance or processor
         status:
           type: string
           description: the current status of the workflow instance or processor
@@ -3118,7 +3115,7 @@ paths:
     put:
       summary: Set a status for a workflow instance
       description: |
-        Sets the status of a workflow instance, or one of its processors
+        Sets the status of a workflow instance
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: putWorkflowInstanceStatus
@@ -3136,6 +3133,56 @@ paths:
           description: The uuid of the workflow instance
       requestBody:
         description: workflow instance status event request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowInstanceStatusRequest'
+      responses:
+        '200':
+          description: A response indicating a successful status update
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: a message indicating a successful status update
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows/instances/{id}/processor/{processorId}/status:
+    put:
+      summary: Set a status for a workflow instance processor
+      description: |
+        Sets the status of an individual workflow instance processor
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: putWorkflowInstanceProcessorStatus
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance
+        - in: path
+          name: processorId
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance processor
+      requestBody:
+        description: workflow instance processor status event request body
         required: true
         content:
           application/json:
