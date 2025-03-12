@@ -412,6 +412,9 @@ components:
           description: the packageIds
           items:
             type: string
+        status:
+          type: string
+          description: the state in which the workflow instance is currently in
         startedAt:
           type: string
           description: the timestamp when the workflow instance was started
@@ -434,7 +437,7 @@ components:
         completedAt:
           type: string
           description: the timestamp when the workflow instance completed
-        processors:
+        workflow:
           type: array
           items:
             type: object
