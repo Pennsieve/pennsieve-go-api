@@ -4099,7 +4099,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /applications/appstore:
+  /applications/store:
     post:
       summary: Adds an application to the App Store
       description: |
