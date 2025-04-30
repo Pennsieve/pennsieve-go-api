@@ -1006,7 +1006,7 @@ components:
             accountType:
               type: string
               description: the account type of compute resource account
-    addToAppStoreRequest:
+    postAppStoreRequest:
       type: object
       properties:
         source:
@@ -1022,29 +1022,6 @@ components:
             tag:
               type: string
               description: the release tag
-        destination:
-          type: object
-          description: the destination repository for the application
-          properties:
-            type:
-              type: string
-              description: the type of destination, for example ecr
-            url:
-              type: string
-              description: the url of the destination
-        account:
-          type: object
-          description: the registered compute resource
-          properties:
-            uuid:
-              type: string
-              description: the uuid of the compute resource account
-            accountId:
-              type: string
-              description: the accountId of the compute resource account
-            accountType:
-              type: string
-              description: the account type of compute resource account
 
     postApplicationsDeployResponse:
       type: object
@@ -4117,7 +4094,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/addToAppStoreRequest'
+              $ref: '#/components/schemas/postAppStoreRequest'
       responses:
         '202':
           description: Successfully initiated App Store registration
