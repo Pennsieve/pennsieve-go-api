@@ -12,7 +12,6 @@ resource "aws_apigatewayv2_api" "upload-service-gateway" {
   body          = templatefile("${path.module}/upload_service.yml", {
     upload_service_lambda_arn = data.terraform_remote_state.upload-service.outputs.service_lambda_arn,
     model_service_lambda_arn = data.terraform_remote_state.model_service.outputs.service_lambda_arn,
-    publishing_service_lambda_arn = data.terraform_remote_state.publishing_service.outputs.service_lambda_arn,
     datasets_service_lambda_arn = data.terraform_remote_state.datasets_service.outputs.service_lambda_arn,
     packages_service_lambda_arn = data.terraform_remote_state.packages_service.outputs.service_lambda_arn,
     imaging_service_lambda_arn = data.terraform_remote_state.imaging_service.outputs.imaging_service_api_lambda_arn,

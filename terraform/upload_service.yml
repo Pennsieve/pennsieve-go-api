@@ -49,13 +49,6 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
-    publishing-service:
-      type: aws_proxy
-      uri: ${publishing_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
     datasets-service:
       type: aws_proxy
       uri: ${datasets_service_lambda_arn}
@@ -301,51 +294,6 @@ components:
           targetName:
             type: string
             description: Name of the uploaded file as it should appear on the platform. This includes the extension of the file.
-    surveyResponse:
-      type: object
-      properties:
-        questionId:
-          type: integer
-          description: the intake question number
-        response:
-          type: string
-          description: the user response to the intake question
-    datasetProposal:
-      type: object
-      properties:
-        userId:
-          type: integer
-          description: the user id number
-        proposalId:
-          type: integer
-          description: the proposal id number
-        proposalNodeId:
-          type: string
-          description: the proposal node id
-        name:
-          type: string
-          description: the name of the dataset proposal
-        description:
-          type: string
-          description: the dataset proposal short description
-        repositoryId:
-          type: integer
-          description: the repository id
-        status:
-          type: string
-          description: the dataset proposal status
-        survey:
-          type: array
-          items:
-            $ref: "#/components/schemas/surveyResponse"
-    datasetProposalsList:
-      type: array
-      items:
-        $ref: "#/components/schemas/datasetProposal"
-    proposalCreateRequest:
-      type: object
-      items:
-        $ref: "#/components/schemas/datasetProposal"
     restoreRequest:
       type: object
       properties:
@@ -412,6 +360,9 @@ components:
           description: the packageIds
           items:
             type: string
+        status:
+          type: string
+          description: the state in which the workflow instance is currently in
         startedAt:
           type: string
           description: the timestamp when the workflow instance was started
@@ -434,7 +385,7 @@ components:
         completedAt:
           type: string
           description: the timestamp when the workflow instance completed
-        processors:
+        workflow:
           type: array
           items:
             type: object
@@ -1003,12 +954,35 @@ components:
             accountType:
               type: string
               description: the account type of compute resource account
+    postAppStoreRequest:
+      type: object
+      properties:
+        source:
+          type: object
+          description: the source for the application
+          properties:
+            type:
+              type: string
+              description: the type of source, for example github
+            url:
+              type: string
+              description: the git url of the source
+            tag:
+              type: string
+              description: the release tag
+
     postApplicationsDeployResponse:
       type: object
       properties:
         deploymentId:
           type: string
           description: a unique string identifying the initiated deployment
+    postAppStoreResponse:
+      type: object
+      properties:
+        registrationId:
+          type: string
+          description: a unique string identifying the App Store registration
     workflowRequest:
       type: object
       properties:
@@ -1062,9 +1036,6 @@ components:
     workflowInstanceStatusRequest:
       type: object
       properties:
-        uuid:
-          type: string
-          description: the UUID of the workflow instance or processor
         status:
           type: string
           description: the current status of the workflow instance or processor
@@ -2354,342 +2325,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /publishing/info:
-    get:
-      summary: Get Publishing Service Information
-      description: |
-        This method returns a list of Publishing Service Information and URLs to fetch the associated files.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: getPublishingServiceInformation
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service Information
-      responses:
-        '200':
-          description: The returned Publishing Service Information.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  description: Response for getPublishingServiceInformation endpoint.
-                  properties:
-                    Count:
-                      description: Number of Publishing Service Information pieces.
-                      type: integer
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/repositories:
-    get:
-      summary: Get Publishing Repositories
-      description: |
-        This method returns a list of Publishing Repositories.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: getPublishingRepositories
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      responses:
-        '200':
-          description: The returned Publishing Repositories.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  description: Response for getPublishingRepositories endpoint.
-                  properties:
-                    Count:
-                      description: Number of Publishing Repositories.
-                      type: integer
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/questions:
-    get:
-      summary: Get Proposal Questions
-      description: |
-        This method returns a list of intake questions that may be included in Dataset Proposals
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: getProposalQuestions
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      responses:
-        '200':
-          description: The returned intake questions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  description: Response for getProposalQuestions endpoint.
-                  properties:
-                    Count:
-                      description: Number of intake questions
-                      type: integer
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/proposal:
-    get:
-      summary: Get a User's Dataset Proposals
-      description: |
-        This method returns a list of Dataset Proposals owned by the User
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: getDatasetProposals
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      responses:
-        '200':
-          description: The returned Dataset Proposals
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/datasetProposalsList"
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-    post:
-      summary: Create a Dataset Proposal
-      description: |
-        This method will create a Dataset Proposal for the User
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: createDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      requestBody:
-        description: the Dataset Proposal to create
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/proposalCreateRequest'
-      responses:
-        '201':
-          description: The created Dataset Proposal.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/datasetProposalsList'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-    put:
-      summary: Update a Dataset Proposal
-      description: |
-        This method will update a Dataset Proposal for the User
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: updateDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      requestBody:
-        description: the Dataset Proposal to update
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/proposalCreateRequest'
-      responses:
-        '200':
-          description: The updated Dataset Proposal.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/datasetProposalsList'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-    delete:
-      summary: Delete a Dataset Proposal
-      description: |
-        This method will delete a Dataset Proposal for the User
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: deleteDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      parameters:
-        - in: query
-          name: proposal_node_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The Node Id of the Dataset Proposal to be deleted.
-      responses:
-        '200':
-          description: Successfully deleted the Dataset Proposal.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/proposal/submit:
-    post:
-      summary: Submit a Dataset Proposal to a Repository for review
-      description: |
-        This method will submit a Dataset Proposal to a Repository for review.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: submitDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      parameters:
-        - in: query
-          name: node_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The Node Id of the Dataset Proposal to be submitted.
-      responses:
-        '200':
-          description: Successfully submitted the Dataset Proposal.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/proposal/withdraw:
-    post:
-      summary: Withdraw the request to review a Dataset Proposal from a Repository
-      description: |
-        This method will withdraw the request to review a Dataset Proposal from a Repository.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: withdrawDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      parameters:
-        - in: query
-          name: node_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The Node Id of the Dataset Proposal to be withdrawn.
-      responses:
-        '200':
-          description: Successfully withdrew the Dataset Proposal.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/submission:
-    get:
-      summary: Get Dataset Proposals submitted to the Repository
-      description: |
-        This method returns a list of Dataset Proposals that have been submitted to the Repository
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: getSubmittedDatasetProposals
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      parameters:
-        - in: query
-          name: status
-          required: false
-          schema:
-            type: string
-            minimum: 1
-          description: The Dataset Proposal Status
-      responses:
-        '200':
-          description: The returned Dataset Proposals
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/datasetProposalsList"
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/submission/accept:
-    post:
-      summary: Accept the submitted Dataset Proposal
-      description: |
-        This method will accept the Dataset Proposal that was submitted to a Repository.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: acceptDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      parameters:
-        - in: query
-          name: node_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The Node Id of the Dataset Proposal to be accepted.
-      responses:
-        '200':
-          description: Successfully accepted the Dataset Proposal.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /publishing/submission/reject:
-    post:
-      summary: Reject the submitted Dataset Proposal
-      description: |
-        This method will reject the Dataset Proposal that was submitted to a Repository.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/publishing-service'
-      operationId: rejectDatasetProposal
-      security:
-        - token_auth: [ ]
-      tags:
-        - Publishing Service
-      parameters:
-        - in: query
-          name: node_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The Node Id of the Dataset Proposal to be rejected.
-      responses:
-        '200':
-          description: Successfully rejected the Dataset Proposal.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
 
   /datasets/trashcan:
     get:
@@ -3118,7 +2753,7 @@ paths:
     put:
       summary: Set a status for a workflow instance
       description: |
-        Sets the status of a workflow instance, or one of its processors
+        Sets the status of a workflow instance
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: putWorkflowInstanceStatus
@@ -3136,6 +2771,56 @@ paths:
           description: The uuid of the workflow instance
       requestBody:
         description: workflow instance status event request body
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowInstanceStatusRequest'
+      responses:
+        '200':
+          description: A response indicating a successful status update
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: a message indicating a successful status update
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows/instances/{id}/processor/{processorId}/status:
+    put:
+      summary: Set a status for a workflow instance processor
+      description: |
+        Sets the status of an individual workflow instance processor
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: putWorkflowInstanceProcessorStatus
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance
+        - in: path
+          name: processorId
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow instance processor
+      requestBody:
+        description: workflow instance processor status event request body
         required: true
         content:
           application/json:
@@ -3976,7 +3661,7 @@ paths:
     post:
       summary: Deploys an application from a source to a destination
       description: |
-        Deployes an application
+        Deploys an application
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: postApplicationDeploy
@@ -3998,6 +3683,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/postApplicationsDeployResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/store:
+    post:
+      summary: Adds an application to the App Store
+      description: |
+        Adds to App Store
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postAppStore
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/postAppStoreRequest'
+      responses:
+        '202':
+          description: Successfully initiated App Store registration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/postAppStoreResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
