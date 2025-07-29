@@ -1521,8 +1521,6 @@ components:
     repository:
       type: object
       properties:
-        origin:
-          type: string
         name:
           type: string
         full_name:
@@ -1531,21 +1529,11 @@ components:
           type: string
         url:
           type: string
-        tracking:
+        publishing_to_discover:
           type: boolean
-        type:
-          type: string
-        details:
-          type: object
-          properties:
-            organization_id:
-              type: integer
-            user_id:
-              type: integer
-            dataset_id:
-              type: integer
-            application_id:
-              type: string
+        publishing_to_appstore:
+          type: boolean          
+
 
     repositoriesResponse:
       type: object
@@ -3719,130 +3707,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /repository/enable:
-    post:
-      summary: Enable tracking of an external repository
-      description: |
-        Begins tracking of an external repository for publishing or the AppStore.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: postEnableTrackingExternalRepo
-      security:
-        - token_workspace_auth: [ ]
-      tags:
-        - GitHub Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/trackRepositoryRequest'
-      responses:
-        '201':
-          description: Successfully enabled tracking of the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repository/disable:
-    post:
-      summary: Disable tracking of an external repository
-      description: |
-        Stops tracking of an external repository for publishing or the AppStore.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: postDisableTrackingExternalRepo
-      security:
-        - token_workspace_auth: [ ]
-      tags:
-        - GitHub Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/trackRepositoryRequest'
-      responses:
-        '201':
-          description: Successfully disabled tracking of the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repository/external:
-    put:
-      summary: Update the attributes of an external repository
-      description: |
-        Updates the External Repository and the attached Dataset
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: updateExternalRepo
-      security:
-        - token_workspace_auth: [ ]
-      tags:
-        - Repository Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/updateRepositoryRequest'
-      responses:
-        '200':
-          description: Successfully updated the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repository/publish:
-    post:
-      summary: request publishing of an external repository
-      description: |
-        Requests that an external repository be published.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      security:
-        - token_workspace_auth: [ ]
-      operationId: publishRepository
-      tags:
-        - Repository Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/publishRepositoryRequest'
-      responses:
-        '201':
-          description: Successfully published the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
+  
   /repositories:
     get:
       summary: Get all Repositories that the authenticated user has access to
@@ -3871,7 +3736,7 @@ paths:
             default: 25
           required: false
           description: the number of items to return on each page
-      operationId: getMyRepositories
+      operationId: getRepositories
       tags:
         - Repository Service
       responses:
@@ -3886,89 +3751,6 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /repositories/github:
-    get:
-      summary: Get GitHub Repositories
-      description: |
-        List repositories for the authenticated GitHub user
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      security:
-        - token_auth: [ ]
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          required: false
-          description: the page number to return
-        - in: query
-          name: size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 25
-          required: false
-          description: the number of items to return on each page
-      operationId: getGitHubRepositories
-      tags:
-        - GitHub Service
-      responses:
-        '200':
-          description: List of GitHub repositories.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/githubReposResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repositories/external:
-    get:
-      summary: Get External Repositories
-      description: |
-        List registered external repositories for the authenticated user
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      security:
-        - token_auth: [ ]
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          required: false
-          description: the page number to return
-        - in: query
-          name: size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 25
-          required: false
-          description: the number of items to return on each page
-      operationId: getExternalRepositories
-      tags:
-        - Repository Service
-      responses:
-        '200':
-          description: List of GitHub repositories.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalReposResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
 
   /webhooks/github:
     post:
