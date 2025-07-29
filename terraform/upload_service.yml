@@ -255,7 +255,7 @@ components:
           type: string
           description: UUID of the manifest.
         files:
-          $ref: "#/components/schemas/manifestFiles"
+          $ref: '#/components/schemas/manifestFiles'
     addFilesResponse:
       type: object
       description: Response for addFiles endpoint.
@@ -858,7 +858,7 @@ components:
           type: string
           description: a unique string identifying the app deployment
         application:
-          $ref: "#/components/schemas/applicationsGetResponse"
+          $ref: '#/components/schemas/applicationsGetResponse'
     deleteApplicationsResponse:
       type: object
       properties:
@@ -1185,7 +1185,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/githubRepo"
-
+    
     drsObjectRequest:
       type: object
       properties:
@@ -1329,7 +1329,7 @@ components:
     getDrsObjectWithPassportResponse:
       type: object
       allOf:
-        - $ref: "#/components/schemas/drsObjectResponse"
+        - $ref: '#/components/schemas/drsObjectResponse'
       description: "Response containing the DRS object metadata and access methods."
 
     multipleDrsObjectsRequest:
@@ -1390,7 +1390,7 @@ components:
           type: array
           description: "Array of objects (DrsObject) that were successfully resolved."
           items:
-            $ref: "#/components/schemas/drsObjectResponse"
+            $ref: '#/components/schemas/drsObjectResponse'
 
     fetchUrlsRequest:
       type: object
@@ -1441,6 +1441,7 @@ components:
           items:
             type: string
             example: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIn0..."
+
 
     bulkFetchUrlsRequest:
       type: object
@@ -1520,6 +1521,8 @@ components:
     repository:
       type: object
       properties:
+        origin:
+          type: string
         name:
           type: string
         full_name:
@@ -1528,10 +1531,21 @@ components:
           type: string
         url:
           type: string
-        publishing_to_discover:
+        tracking:
           type: boolean
-        publishing_to_appstore:
-          type: boolean
+        type:
+          type: string
+        details:
+          type: object
+          properties:
+            organization_id:
+              type: integer
+            user_id:
+              type: integer
+            dataset_id:
+              type: integer
+            application_id:
+              type: string
 
     repositoriesResponse:
       type: object
@@ -1546,7 +1560,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/repository"
-
+    
     ServiceInfoResponse:
       type: object
       properties:
@@ -1604,7 +1618,7 @@ paths:
   /manifest:
     get:
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestList
       summary: List manifests for dataset
       description: |
@@ -1617,11 +1631,11 @@ paths:
           required: true
           description: The dataset for which we want to retrieve datasets.
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Upload Service
       responses:
-        "200":
+        '200':
           description: A list of manifests.
           content:
             application/json:
@@ -1648,19 +1662,19 @@ paths:
                     updated:
                       type: string
                       description: Date when the manifest was last updated.
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     post:
       summary: Synchronize manifest
       description: |
         Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: syncManifest
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Upload Service
       parameters:
@@ -1676,26 +1690,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/manifestCreateRequest"
+              $ref: '#/components/schemas/manifestCreateRequest'
       responses:
-        "200":
+        '200':
           description: The created manifest.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/addFilesResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/addFilesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /manifest/files:
     get:
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestFiles
       summary: Get files for manifest
       security:
-        - token_manifest_auth: []
+        - token_manifest_auth: [ ]
       tags:
         - Upload Service
       description: |
@@ -1738,7 +1752,7 @@ paths:
           required: false
           description: Filter by upload status.
       responses:
-        "200":
+        '200':
           description: The requested files for a manifest.
           content:
             application/json:
@@ -1765,19 +1779,19 @@ paths:
                     type: string
                     description: Date when the manifest was last updated.
                   files:
-                    $ref: "#/components/schemas/manifestFiles"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                    $ref: '#/components/schemas/manifestFiles'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /manifest/status:
     get:
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: verifyFileStatus
       summary: Verify status for manifest files
       security:
-        - token_manifest_auth: []
+        - token_manifest_auth: [ ]
       tags:
         - Upload Service
       description: |
@@ -1817,7 +1831,7 @@ paths:
             type: boolean
           description: Update status to verified for returned files. If checked, this will always check for Finalized status.
       responses:
-        "200":
+        '200':
           description: The requested files for a manifest.
           content:
             application/json:
@@ -1839,18 +1853,18 @@ paths:
                   continuation_token:
                     type: string
                     description: ID of the last returned item.
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /manifest/archive:
     post:
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: archiveManifest
       summary: Archive manifest to disk
       security:
-        - token_manifest_auth: []
+        - token_manifest_auth: [ ]
       tags:
         - Upload Service
       description: |
@@ -1873,7 +1887,7 @@ paths:
             default: false
           description: true if files should be removed from manifest table
       responses:
-        "200":
+        '200':
           description: Successfully submitted archive task.
           content:
             application/json:
@@ -1887,17 +1901,17 @@ paths:
                   message:
                     type: string
                     description: Message indicating action.
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     get:
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestArchiveURL
       summary: Get Presigned URL to Manifest archive
       security:
-        - token_manifest_auth: []
+        - token_manifest_auth: [ ]
       tags:
         - Upload Service
       description: |
@@ -1911,7 +1925,7 @@ paths:
             minimum: 1
           description: UUID of the manifest archive to be returned.
       responses:
-        "200":
+        '200':
           description: Successfully submitted archive task.
           content:
             application/json:
@@ -1925,10 +1939,10 @@ paths:
                   message:
                     type: string
                     description: Message indicating action.
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     delete:
       summary: Delete an upload manifest
       description: |
@@ -1936,10 +1950,10 @@ paths:
         \
         The manifest needs to be in 'archived' state before delete is allowed.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/manifest-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: deleteManifestArchive
       security:
-        - token_manifest_auth: []
+        - token_manifest_auth: [ ]
       tags:
         - Upload Service
       parameters:
@@ -1951,7 +1965,7 @@ paths:
             minimum: 1
           description: UUID of the manifest to be deleted.
       responses:
-        "200":
+        '200':
           description: Successfully deleted the Dataset Proposal.
           content:
             application/json:
@@ -1962,20 +1976,20 @@ paths:
                   message:
                     type: string
                     description: Message indicating action.
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /metadata/models:
     get:
       summary: Get models for dataset
       description: |
         This method returns a list of models that are defined in a dataset.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/model-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
       operationId: graphGetModels
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Metadata Service
       parameters:
@@ -1986,7 +2000,7 @@ paths:
           required: true
           description: The dataset where file will be uploaded.
       responses:
-        "200":
+        '200':
           description: The returned models.
           content:
             application/json:
@@ -2008,20 +2022,20 @@ paths:
                     Description:
                       description: Array of uploadIds that were not added to manifest.
                       type: string
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /metadata/query:
     post:
       summary: Search metadata graph
       description: |
         Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/model-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
       operationId: queryGraph
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Metadata Service|Search
       parameters:
@@ -2081,31 +2095,31 @@ paths:
                   type: string
                   description: Name of property that should be used to order the results.
       responses:
-        "200":
+        '200':
           description: The returned results.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/addFilesResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/addFilesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /metadata/package:
     get:
       summary: Get package metadata
       description: |
         This method returns all metadata records associated with the package.
-
+        
         It includes the record that associated with the package, and all metadata records that are hierarchically parents of the associated record.
         For example, consider three models (Patient, Visit, Sample) where Patient has a relationship to Visit and Visit has a relationship to Sample. If a file is associated with a Sample record, this methods returns the sample, visit and patient metadata. 
-
+        
         Note that the direction of the relationship is important and only relationships "upstream" are returned. This includes records that have a property that points to another record.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/model-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
       operationId: graphGetPackageMetadata
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Metadata Service
       parameters:
@@ -2122,7 +2136,7 @@ paths:
           required: true
           description: The requested package node id.
       responses:
-        "200":
+        '200':
           description: The returned records.
           content:
             application/json:
@@ -2140,20 +2154,20 @@ paths:
                       type: string
                     props:
                       type: object
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /metadata/query/autocomplete:
     post:
       summary: Autocomplete for search
       description: |
         This endpoint returns a list of values that will return in valid query responses that include a minimum of 1 search result.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/model-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
       operationId: autoComplete
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Metadata Service|Search
       parameters:
@@ -2211,16 +2225,16 @@ paths:
                         type: string
                         description: The value of the predicate
       responses:
-        "200":
+        '200':
           description: The returned results.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/autocompleteResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/autocompleteResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /metadata/records/relationships:
     post:
@@ -2228,10 +2242,10 @@ paths:
       description: |
         Allows the user to create relationships in bulk between existing records for a specific dataset.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/model-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
       operationId: batchCreateRelationships
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Metadata Service|Records
       parameters:
@@ -2276,7 +2290,7 @@ paths:
                         type: string
                         description: List of object IDs of records of type to_model
       responses:
-        "200":
+        '200':
           description: The returned results.
           content:
             application/json:
@@ -2307,10 +2321,10 @@ paths:
                       type: string
                     updated_by:
                       type: string
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /datasets/trashcan:
     get:
@@ -2318,10 +2332,10 @@ paths:
       description: |
         Returns a list of deleted items from a dataset folder
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/datasets-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
       operationId: getTrashcan
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Datasets Service|Trashcan
       parameters:
@@ -2355,7 +2369,7 @@ paths:
           required: false
           description: offset used for pagination of results
       responses:
-        "200":
+        '200':
           description: The contents of the dataset's trashcan.
           content:
             application/json:
@@ -2387,20 +2401,20 @@ paths:
                     type: array
                     items:
                       type: string
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /datasets/manifest:
     get:
       summary: Presigned url to manifest of dataset
       description: |
         Returns a presigned URL to a file containing the current manifest of an unpublished dataset.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/datasets-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
       operationId: getManifest
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Datasets Service
       parameters:
@@ -2411,7 +2425,7 @@ paths:
           required: true
           description: dataset node id
       responses:
-        "200":
+        '200':
           description: The contents of the dataset's trashcan.
           content:
             application/json:
@@ -2420,20 +2434,20 @@ paths:
                 properties:
                   url:
                     type: string
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /packages/restore:
     post:
       summary: Restore deleted items
       description: |
         Starts restore process for the given deleted items
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/packages-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/packages-service'
       operationId: restoreItems
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Packages Service
       parameters:
@@ -2449,18 +2463,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/restoreRequest"
+              $ref: '#/components/schemas/restoreRequest'
       responses:
-        "200":
+        '200':
           description: The result of starting the restore process.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/restoreResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/restoreResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /integrations:
     post:
@@ -2468,11 +2482,11 @@ paths:
       description: |
         Calls endpoint of application with supplied payload
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: callIntegration
       deprecated: true
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       requestBody:
@@ -2481,53 +2495,53 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/integrationRequest"
+              $ref: '#/components/schemas/integrationRequest'
       responses:
-        "200":
+        '200':
           description: The result of starting the integration process.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/integrationResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     get:
       summary: Get integrations
       description: |
         Get a list of integrations
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getIntegrations
       deprecated: true
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       responses:
-        "200":
+        '200':
           description: The requested integrations
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/integrationGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                  $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     put:
       summary: Update integration
       description: |
         Updates integration with supplied payload
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: updateIntegration
       deprecated: true
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       requestBody:
@@ -2536,18 +2550,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/integrationRequest"
+              $ref: '#/components/schemas/integrationRequest'
       responses:
-        "200":
+        '200':
           description: The result of updating the integration.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/integrationResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /workflows/instances:
     post:
@@ -2555,10 +2569,10 @@ paths:
       description: |
         Initiates workflow with supplied payload
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: initiateWorkflow
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       requestBody:
@@ -2567,18 +2581,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/integrationRequest"
+              $ref: '#/components/schemas/integrationRequest'
       responses:
-        "200":
+        '200':
           description: The result of starting the workflow.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/integrationResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     get:
       summary: Get workflow instances
       description: |
@@ -2591,34 +2605,34 @@ paths:
           required: true
           description: The organization ID.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstances
       security:
-        - token_workspace_auth: []
+        - token_workspace_auth: [ ]
       tags:
         - Integration Service
       responses:
-        "200":
+        '200':
           description: The requested workflow instances
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/integrationGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                  $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     put:
       summary: Update a workflow instance
       description: |
         Updates workflow instance using supplied payload
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: updateWorkflowInstance
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       requestBody:
@@ -2627,18 +2641,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/integrationRequest"
+              $ref: '#/components/schemas/integrationRequest'
       responses:
-        "200":
+        '200':
           description: The result of updating the workflow instance.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/integrationResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/integrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /integrations/{id}:
     get:
@@ -2646,11 +2660,11 @@ paths:
       description: |
         Gets integration by integrationId
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getIntegration
       deprecated: true
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       parameters:
@@ -2662,16 +2676,16 @@ paths:
             minimum: 1
           description: The uuid of the integration.
       responses:
-        "200":
+        '200':
           description: The requested integration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/integrationGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /workflows/instances/{id}:
     get:
@@ -2679,10 +2693,10 @@ paths:
       description: |
         Gets workflow instance by uuid
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstance
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       parameters:
@@ -2694,16 +2708,16 @@ paths:
             minimum: 1
           description: The uuid of the workflow instance.
       responses:
-        "200":
+        '200':
           description: The requested workflow instance
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/integrationGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/integrationGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /workflows/instances/{id}/status:
     get:
@@ -2711,10 +2725,10 @@ paths:
       description: |
         Retrieves the status of for the workflow instance and each of its processors
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstanceStatus
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       parameters:
@@ -2726,25 +2740,25 @@ paths:
             minimum: 1
           description: The uuid of the workflow instance
       responses:
-        "200":
+        '200':
           description: The requested workflow instance statuses
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/workflowInstanceStatusResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/workflowInstanceStatusResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     put:
       summary: Set a status for a workflow instance
       description: |
         Sets the status of a workflow instance
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: putWorkflowInstanceStatus
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       parameters:
@@ -2761,9 +2775,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/workflowInstanceStatusRequest"
+              $ref: '#/components/schemas/workflowInstanceStatusRequest'
       responses:
-        "200":
+        '200':
           description: A response indicating a successful status update
           content:
             application/json:
@@ -2773,10 +2787,10 @@ paths:
                   message:
                     type: string
                     description: a message indicating a successful status update
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /workflows/instances/{id}/processor/{processorId}/status:
     put:
@@ -2784,10 +2798,10 @@ paths:
       description: |
         Sets the status of an individual workflow instance processor
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: putWorkflowInstanceProcessorStatus
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       parameters:
@@ -2811,9 +2825,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/workflowInstanceStatusRequest"
+              $ref: '#/components/schemas/workflowInstanceStatusRequest'
       responses:
-        "200":
+        '200':
           description: A response indicating a successful status update
           content:
             application/json:
@@ -2823,10 +2837,10 @@ paths:
                   message:
                     type: string
                     description: a message indicating a successful status update
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /workflows/instances/{id}/logs:
     get:
@@ -2834,10 +2848,10 @@ paths:
       description: |
         Gets workflow instance processor logs
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: getWorkflowInstanceLogs
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       parameters:
@@ -2855,16 +2869,16 @@ paths:
           required: true
           description: application UUID
       responses:
-        "200":
+        '200':
           description: The requested workflow instance logs
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/workflowInstanceLogsGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/workflowInstanceLogsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /workflows:
     post:
@@ -2872,10 +2886,10 @@ paths:
       description: |
         Calls endpoint of compute node with supplied payload
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/integration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
       operationId: startWorflow
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Integration Service
       requestBody:
@@ -2884,18 +2898,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/workflowRequest"
+              $ref: '#/components/schemas/workflowRequest'
       responses:
-        "200":
+        '200':
           description: The result of starting the workflow process.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/workflowResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /imaging/microct/{package_id}/session:
     post:
@@ -2903,10 +2917,10 @@ paths:
       description: |
         Generates a role with temporary, read-only S3 access to a MicroCT package's viewer assets
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/imaging-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/imaging-service'
       operationId: microctTemporarySession
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Imaging Service
       parameters:
@@ -2923,16 +2937,16 @@ paths:
           required: true
           description: The dataset in which the MicroCT package exists
       responses:
-        "200":
+        '200':
           description: the generated pre-signed URL for upload to S3
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/microctTemporarySessionResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/microctTemporarySessionResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /import:
     post:
@@ -2940,10 +2954,10 @@ paths:
       description: |
         Calls endpoint on import-service to create an import manifest
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/import-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
       operationId: createImportManifest
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Import Service
       parameters:
@@ -2959,28 +2973,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/createImportManifestRequest"
+              $ref: '#/components/schemas/createImportManifestRequest'
       responses:
-        "201":
+        '201':
           description: Created import manifest.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/importManifestResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/importManifestResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
   /import/{import_id}/upload/{upload_key}/presign:
     get:
       summary: generate upload pre-signed URL
       description: |
         Generates an S3 pre-signed URL for uploading an import file to S3
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/import-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
       operationId: importPresignUpload
       security:
-        - token_dataset_auth: []
+        - token_dataset_auth: [ ]
       tags:
         - Import Service
       parameters:
@@ -2997,16 +3011,16 @@ paths:
           required: true
           description: The upload key associated with the file being uploaded
       responses:
-        "200":
+        '200':
           description: the generated pre-signed URL for upload to S3
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/importPresignUploadResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/importPresignUploadResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /discover/rehydrate:
     post:
@@ -3014,7 +3028,7 @@ paths:
       description: |
         Calls endpoint to trigger rehydration process
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/rehydration-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/rehydration-service'
       operationId: rehydrate
       tags:
         - Discover/Rehydration Service
@@ -3024,18 +3038,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/rehydrationRequest"
+              $ref: '#/components/schemas/rehydrationRequest'
       responses:
-        "200":
+        '200':
           description: The result of starting the rehydration process.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/rehydrationResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/rehydrationResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /readme/docs/{slug}:
     get:
@@ -3043,10 +3057,10 @@ paths:
       description: |
         Gets Pennsieve readme.io doc by slug
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/readme-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/readme-service'
       operationId: getReadmeDoc
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Readme Service
       parameters:
@@ -3057,16 +3071,16 @@ paths:
             type: string
           description: The URL-safe slug of the readme.io doc. Slugs must be all lowercase, and replace spaces with hyphens.
       responses:
-        "200":
+        '200':
           description: The requested document
           content:
             application/json:
               schema:
-                $ref: "https://dash.readme.com/api/v1/schema#/components/schemas/docSchemaResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: 'https://dash.readme.com/api/v1/schema#/components/schemas/docSchemaResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /pennsieve-accounts/{accountType}:
     get:
@@ -3074,10 +3088,10 @@ paths:
       description: |
         Gets Pennsieve Accounts by accountType
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/account-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: getPennsieveAccounts
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Account Service
       parameters:
@@ -3088,16 +3102,16 @@ paths:
             type: string
           description: The Pennsieve account type.
       responses:
-        "200":
+        '200':
           description: The requested account
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/pennsieveAccountsGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/pennsieveAccountsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /accounts:
     post:
@@ -3105,10 +3119,10 @@ paths:
       description: |
         Creates an account for an external compute resource. Such as an AWS account.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/account-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: postAccounts
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Account Service
       requestBody:
@@ -3117,18 +3131,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/accountRequest"
+              $ref: '#/components/schemas/accountRequest'
       responses:
-        "201":
+        '201':
           description: Successfully created compute resource account
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postAccountsResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/postAccountsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     get:
       summary: Get account details for compute resources
       description: |
@@ -3141,25 +3155,25 @@ paths:
           required: true
           description: The organization ID.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/account-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: getAccounts
       security:
-        - token_workspace_auth: []
+        - token_workspace_auth: [ ]
       tags:
         - Account Service
       responses:
-        "200":
+        '200':
           description: The requested compute resource accounts
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/accountsGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                  $ref: '#/components/schemas/accountsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /accounts/{id}:
     get:
@@ -3167,10 +3181,10 @@ paths:
       description: |
         Get account details for a specific compute resource
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/account-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/account-service'
       operationId: getAccount
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Account Service
       parameters:
@@ -3181,16 +3195,16 @@ paths:
             type: string
           description: The uuid of the compute resource account
       responses:
-        "200":
+        '200':
           description: The requested compute resource account
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/accountsGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/accountsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /accounts/github/user:
     get:
@@ -3198,36 +3212,36 @@ paths:
       description: |
         Returns an existing GitHub profile when user has installed the Pennsieve GitHub App.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/github-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: getGithubUser
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Account Service
       responses:
-        "201":
+        '201':
           description: GitHub profile information.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/githubProfileResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/githubProfileResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     delete:
       summary: Deletes Pennsieve GitHub App
       description: |
         Deletes the Pennsieve GitHub App from the user's GitHub Account and removes profile from Pennsieve.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/github-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: deleteGithubUser
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Account Service
       responses:
-        "201":
+        '201':
           description: Success message.
           content:
             application/json:
@@ -3236,10 +3250,10 @@ paths:
                 properties:
                   message:
                     type: string
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /accounts/github/register:
     post:
@@ -3247,10 +3261,10 @@ paths:
       description: |
         Installs and Authorizes the Pennsieve Github App in the user's Github Account.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/github-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: postGithubRegister
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Account Service
       requestBody:
@@ -3259,18 +3273,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/githubPostRegisterRequest"
+              $ref: '#/components/schemas/githubPostRegisterRequest'
       responses:
-        "201":
+        '201':
           description: Successfully installed and authorized the Pennsieve GitHub App.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/githubProfileResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/githubProfileResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /compute-nodes:
     post:
@@ -3278,10 +3292,10 @@ paths:
       description: |
         Creates a compute-node
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/compute-node-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: postComputeNodes
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Compute Node Service
       requestBody:
@@ -3290,18 +3304,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/computeNodeRequest"
+              $ref: '#/components/schemas/computeNodeRequest'
       responses:
-        "202":
+        '202':
           description: Successfully initiated compute node creation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postComputeNodesResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/postComputeNodesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     get:
       summary: Get compute nodes
       description: |
@@ -3314,25 +3328,25 @@ paths:
           required: true
           description: The organization ID.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/compute-node-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: getComputeNodes
       security:
-        - token_workspace_auth: []
+        - token_workspace_auth: [ ]
       tags:
         - Compute Node Service
       responses:
-        "200":
+        '200':
           description: The requested compute nodes
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/computeNodesGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                  $ref: '#/components/schemas/computeNodesGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /compute-nodes/{id}:
     get:
@@ -3340,10 +3354,10 @@ paths:
       description: |
         Get details for a specific compute node
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/compute-node-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: getComputeNode
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Compute Node Service
       parameters:
@@ -3354,25 +3368,25 @@ paths:
             type: string
           description: The uuid of the compute node
       responses:
-        "200":
+        '200':
           description: The requested compute node
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/computeNodesGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/computeNodesGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     delete:
       summary: Delete a specific compute node
       description: |
         Delete a specific compute node
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/compute-node-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/compute-node-service'
       operationId: deleteComputeNode
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - Compute Node Service
       parameters:
@@ -3383,16 +3397,16 @@ paths:
             type: string
           description: The uuid of the compute node
       responses:
-        "202":
+        '202':
           description: Successfully initiated compute node deletion
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/deleteComputeNodesResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/deleteComputeNodesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /applications:
     post:
@@ -3400,10 +3414,10 @@ paths:
       description: |
         Creates an application
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: postApplications
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - App Deploy Service
       requestBody:
@@ -3412,18 +3426,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/applicationRequest"
+              $ref: '#/components/schemas/applicationRequest'
       responses:
-        "202":
+        '202':
           description: Successfully initiated application creation
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postApplicationsResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/postApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     get:
       summary: Get applications
       description: |
@@ -3436,25 +3450,25 @@ paths:
           required: true
           description: The organization ID.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getApplications
       security:
-        - token_workspace_auth: []
+        - token_workspace_auth: [ ]
       tags:
         - App Deploy Service
       responses:
-        "200":
+        '200':
           description: The requested applications
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/applicationsGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                  $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /applications/{id}:
     get:
@@ -3462,10 +3476,10 @@ paths:
       description: |
         Get details for a specific application
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getApplication
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - App Deploy Service
       parameters:
@@ -3476,25 +3490,25 @@ paths:
             type: string
           description: The uuid of the application
       responses:
-        "200":
+        '200':
           description: The requested application
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/applicationsGetResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     delete:
       summary: Delete a specific application
       description: |
         Delete a specific application
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: deleteApplication
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - App Deploy Service
       parameters:
@@ -3505,25 +3519,25 @@ paths:
             type: string
           description: The uuid of the application
       responses:
-        "202":
+        '202':
           description: Successfully initiated application deletion
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/deleteApplicationsResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/deleteApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     put:
       summary: Update the properties of an application
       description: |
         Update the properties of an application
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: updateApplication
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - App Deploy Service
       parameters:
@@ -3539,18 +3553,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/applicationRequest"
+              $ref: '#/components/schemas/applicationRequest'
       responses:
-        "200":
+        '200':
           description: Successfully updated application properties
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postApplicationsResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/postApplicationsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /applications/{id}/deployments:
     get:
@@ -3558,10 +3572,10 @@ paths:
       description: |
         Get the deployment history for an application
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getDeployments
       security:
-        - token_workspace_auth: []
+        - token_workspace_auth: [ ]
       tags:
         - App Deploy Service
       parameters:
@@ -3578,7 +3592,7 @@ paths:
             type: string
           description: the node id of the application's workspace
       responses:
-        "200":
+        '200':
           description: The requested deployment history
           content:
             application/json:
@@ -3588,13 +3602,13 @@ paths:
                   deployments:
                     type: array
                     items:
-                      $ref: "#/components/schemas/getDeploymentResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "409":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/Error"
+                      $ref: '#/components/schemas/getDeploymentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Error'
 
   /applications/{id}/deployments/{deploymentId}:
     get:
@@ -3602,10 +3616,10 @@ paths:
       description: |
         Get the details for a specific application deployment
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: getDeployment
       security:
-        - token_workspace_auth: []
+        - token_workspace_auth: [ ]
       tags:
         - App Deploy Service
       parameters:
@@ -3628,20 +3642,20 @@ paths:
             type: string
           description: the node id of the application's workspace
       responses:
-        "200":
+        '200':
           description: The requested deployment details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/getDeploymentResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/getDeploymentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/Error'
 
   /applications/deploy:
     post:
@@ -3649,10 +3663,10 @@ paths:
       description: |
         Deploys an application
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: postApplicationDeploy
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - App Deploy Service
       requestBody:
@@ -3661,18 +3675,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/applicationDeployRequest"
+              $ref: '#/components/schemas/applicationDeployRequest'
       responses:
-        "202":
+        '202':
           description: Successfully initiated application deployment
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postApplicationsDeployResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/postApplicationsDeployResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /applications/store:
     post:
@@ -3680,10 +3694,10 @@ paths:
       description: |
         Adds to App Store
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/app-deploy-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
       operationId: postAppStore
       security:
-        - token_auth: []
+        - token_auth: [ ]
       tags:
         - App Deploy Service
       requestBody:
@@ -3692,18 +3706,142 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/postAppStoreRequest"
+              $ref: '#/components/schemas/postAppStoreRequest'
       responses:
-        "202":
+        '202':
           description: Successfully initiated App Store registration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/postAppStoreResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/postAppStoreResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/enable:
+    post:
+      summary: Enable tracking of an external repository
+      description: |
+        Begins tracking of an external repository for publishing or the AppStore.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: postEnableTrackingExternalRepo
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/trackRepositoryRequest'
+      responses:
+        '201':
+          description: Successfully enabled tracking of the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/disable:
+    post:
+      summary: Disable tracking of an external repository
+      description: |
+        Stops tracking of an external repository for publishing or the AppStore.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: postDisableTrackingExternalRepo
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/trackRepositoryRequest'
+      responses:
+        '201':
+          description: Successfully disabled tracking of the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/external:
+    put:
+      summary: Update the attributes of an external repository
+      description: |
+        Updates the External Repository and the attached Dataset
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: updateExternalRepo
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - Repository Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/updateRepositoryRequest'
+      responses:
+        '200':
+          description: Successfully updated the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/publish:
+    post:
+      summary: request publishing of an external repository
+      description: |
+        Requests that an external repository be published.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_workspace_auth: [ ]
+      operationId: publishRepository
+      tags:
+        - Repository Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/publishRepositoryRequest'
+      responses:
+        '201':
+          description: Successfully published the external repository.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalRepository'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /repositories:
     get:
@@ -3712,9 +3850,9 @@ paths:
         Returns a list of Repositories from all sources (origins) that a user has access to, and indicates whether |
         a repository is being tracked for publishing, app-store, or other purpose. This endpoint is paginated.
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/github-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       security:
-        - token_auth: []
+        - token_auth: [ ]
       parameters:
         - in: query
           name: page
@@ -3733,20 +3871,104 @@ paths:
             default: 25
           required: false
           description: the number of items to return on each page
-      operationId: getRepositories
+      operationId: getMyRepositories
       tags:
         - Repository Service
       responses:
-        "200":
+        '200':
           description: List of Repositories.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/repositoriesResponse"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/repositoriesResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/github:
+    get:
+      summary: Get GitHub Repositories
+      description: |
+        List repositories for the authenticated GitHub user
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: the page number to return
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          description: the number of items to return on each page
+      operationId: getGitHubRepositories
+      tags:
+        - GitHub Service
+      responses:
+        '200':
+          description: List of GitHub repositories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/githubReposResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/external:
+    get:
+      summary: Get External Repositories
+      description: |
+        List registered external repositories for the authenticated user
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: the page number to return
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 25
+          required: false
+          description: the number of items to return on each page
+      operationId: getExternalRepositories
+      tags:
+        - Repository Service
+      responses:
+        '200':
+          description: List of GitHub repositories.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/externalReposResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /webhooks/github:
     post:
@@ -3754,7 +3976,7 @@ paths:
       description: |
         Receives GitHub events
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/github-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
       operationId: webhookEndpointForGitHub
       tags:
         - GitHub Service
@@ -3764,25 +3986,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/githubWebhookEvent"
+              $ref: '#/components/schemas/githubWebhookEvent'
       responses:
-        "200":
+        '200':
           description: Received and accepted GitHub webhook event.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/githubWebhookEventAccepted"
-        "4XX":
-          $ref: "#/components/responses/Unauthorized"
-        "5XX":
-          $ref: "#/components/responses/Error"
+                $ref: '#/components/schemas/githubWebhookEventAccepted'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
   /ga4gh/drs/v1/objects/{object_id}:
     get:
       operationId: getUserById
       summary: "Get info about a DrsObject"
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/drs-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
         If the `expand` query parameter is set to `true` and the object_id refers to a bundle, the entire set of objects in the bundle is expanded and included in the result.
@@ -3805,23 +4027,23 @@ paths:
             If true and the object_id refers to a bundle, then the entire set of objects in the bundle is expanded. 
             Recursion continues through the entire sub-tree of the bundle.
       responses:
-        "200":
+        '200':
           description: "Successful response containing the DrsObject information"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/drsObjectResponse"
-        "404":
+                $ref: '#/components/schemas/drsObjectResponse'
+        '404':
           description: "DrsObject not found"
-        "401":
+        '401':
           description: "Unauthorized"
-      security: []
+      security: [ ]
 
     post:
       operationId: postUserById
       summary: "Get info about a DrsObject through POST'ing a Passport"
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/drs-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
         Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
@@ -3839,27 +4061,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/getDrsObjectWithPassportRequest"
+              $ref: '#/components/schemas/getDrsObjectWithPassportRequest'
       responses:
-        "200":
+        '200':
           description: "Successful response containing the DrsObject information"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/getDrsObjectWithPassportResponse"
-        "404":
+                $ref: '#/components/schemas/getDrsObjectWithPassportResponse'
+        '404':
           description: "DrsObject not found"
-        "401":
+        '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
   /ga4gh/drs/v1/objects:
     post:
       operationId: getUserObject
       summary: "Get info about multiple DrsObjects with an optional Passport(s)"
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/drs-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns an array of object metadata, and a list of access methods that can be used to fetch objects' bytes.
         Currently this is limited to use passports (one or more) or a single bearer token, so make sure your bulk request is for objects that all use the same passports/token.
@@ -3880,27 +4102,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/multipleDrsObjectsRequest"
+              $ref: '#/components/schemas/multipleDrsObjectsRequest'
       responses:
-        "200":
+        '200':
           description: "Successful response containing the DrsObjects information"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/multipleDrsObjectsResponse"
-        "404":
+                $ref: '#/components/schemas/multipleDrsObjectsResponse'
+        '404':
           description: "DrsObject(s) not found"
-        "401":
+        '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
+
 
   /ga4gh/drs/v1/objects/{object_id}/access/{access_id}:
     get:
       operationId: getUserbyAccessId
       summary: "Get a URL for fetching bytes"
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/drs-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns a URL that can be used to fetch the bytes of a DrsObject. 
         This method only needs to be called when using an AccessMethod that contains an access_id 
@@ -3921,23 +4144,23 @@ paths:
             type: string
           description: "An access_id from the access_methods list of a DrsObject"
       responses:
-        "200":
+        '200':
           description: "The AccessURL was found successfully"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/fetchUrlResponse"
-        "404":
+                $ref: '#/components/schemas/fetchUrlResponse'
+        '404':
           description: "Access URL not found"
-        "401":
+        '401':
           description: "Unauthorized"
-      security: []
+      security: [ ]
 
     post:
       operationId: postUserbyAccessId
       summary: "Get a URL for fetching bytes through POST'ing a Passport"
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/drs-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       description: |
         Returns a URL that can be used to fetch the bytes of a DrsObject. 
         This method only needs to be called when using an AccessMethod that contains an access_id 
@@ -3963,25 +4186,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/fetchUrlWithPassportRequest"
+              $ref: '#/components/schemas/fetchUrlWithPassportRequest'
       responses:
-        "200":
+        '200':
           description: "The AccessURL was found successfully"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/fetchUrlResponse"
-        "404":
+                $ref: '#/components/schemas/fetchUrlResponse'
+        '404':
           description: "Access URL not found"
-        "401":
+        '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
   /ga4gh/drs/v1/objects/access:
     post:
       operationId: postAllObjects
       x-amazon-apigateway-integration:
-        $ref: "#/components/x-amazon-apigateway-integrations/drs-service"
+        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
       summary: "Get URLs for fetching bytes from multiple objects with an optional Passport(s)"
       description: |
         Returns an array of URL objects that can be used to fetch the bytes of multiple DrsObjects. 
@@ -3996,20 +4219,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/bulkFetchUrlsRequest"
+              $ref: '#/components/schemas/bulkFetchUrlsRequest'
       responses:
-        "200":
+        '200':
           description: "Successful response containing the AccessURLs"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/bulkFetchUrlsResponse"
-        "404":
+                $ref: '#/components/schemas/bulkFetchUrlsResponse'
+        '404':
           description: "Access URLs not found"
-        "401":
+        '401':
           description: "Unauthorized"
       security:
-        - PassportAuth: []
+        - PassportAuth: [ ]
 
   /ga4gh/drs/v1/service-info:
     get:
@@ -4017,15 +4240,15 @@ paths:
       description: |
         Returns information about the DRS service based on GA4GH Service Info specification.
       responses:
-        "200":
+        '200':
           description: A JSON object with details about the DRS service.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServiceInfoResponse"
-        "500":
+                $ref: '#/components/schemas/ServiceInfoResponse'
+        '500':
           description: "Internal server error. Something went wrong on the server side."
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InternalServerError"
+                $ref: '#/components/schemas/InternalServerError'
