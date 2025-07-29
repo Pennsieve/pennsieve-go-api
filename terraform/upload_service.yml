@@ -1055,56 +1055,7 @@ components:
         type:
           type: string
           description: the purpose of tracking (publishing or appstore)
-    externalRepository:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: the id number of the external repository
-        origin:
-          type: string
-          description: the name of the origin (e.g., GitHub)
-        url:
-          type: string
-          description: the URL of the external repository
-        type:
-          type: string
-          description: the purpose of tracking (publishing or appstore)
-        status:
-          type: string
-          description: the tracking status (enabled, disabled, suspended)
-        organization_id:
-          type: integer
-          description: the Pennsieve Workspace organization id
-        user_id:
-          type: integer
-          description: the Pennsieve User id
-        dataset_id:
-          type: integer
-          description: the id of the dataset in the Pennsieve Workspace for publishing repos
-        application_id:
-          type: string
-          description: the UUID of the Application in the AppStore
-        created_at:
-          type: string
-          description: the date and time when the external repo was created
-        updated_at:
-          type: string
-          description: the date and time when the external repo was updated
-    externalReposResponse:
-      type: object
-      properties:
-        page:
-          type: integer
-        size:
-          type: integer
-        count:
-          type: integer
-        repos:
-          type: array
-          items:
-            $ref: "#/components/schemas/externalRepository"
-
+    
     updateRepositoryRequest:
       type: object
       properties:
@@ -1548,6 +1499,46 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/repository"
+
+    repositoryRequest:
+      type: object
+      properties:
+        repository_id:
+          type: integer
+        publishing_to_discover:
+          type: boolean
+        PublishingToAppstore:
+          type: boolean
+
+    postRepositoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        repository_id:
+          type: integer
+        publishing_to_discover:
+          type: boolean
+        PublishingToAppstore:
+          type: boolean
+        created_at:
+          type: string
+          description: the date and time when the external repository was created
+
+    putRepositoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        repository_id:
+          type: integer
+        publishing_to_discover:
+          type: boolean
+        PublishingToAppstore:
+          type: boolean
+        updated_at:
+          type: string
+          description: the date and time when the external repository was updated
     
     ServiceInfoResponse:
       type: object
@@ -3750,7 +3741,66 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+    post:
+        summary: Creates an external repository
+        description: |
+          Creates an external repository
+        x-amazon-apigateway-integration:
+          $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+        operationId: postExternalRepositories
+        security:
+          - token_auth: [ ]
+        tags:
+          - Repository Service
+        requestBody:
+          description: Payload
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryRequest'
+        responses:
+          '200':
+            description: Successfully created external repository
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/postRepositoryResponse'
+          '4XX':
+            $ref: '#/components/responses/Unauthorized'
+          '5XX':
+            $ref: '#/components/responses/Error'
 
+  /repositories/{id}:
+      put:
+          summary: updates an external repository
+          description: |
+            Updates an external repository
+          x-amazon-apigateway-integration:
+            $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+          operationId: putExternalRepositories
+          security:
+            - token_auth: [ ]
+          tags:
+            - Repository Service
+          requestBody:
+            description: Payload
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/repositoryRequest'
+          responses:
+          '200':
+            description: Successfully updates external repository
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/putRepositoryResponse'
+          '4XX':
+            $ref: '#/components/responses/Unauthorized'
+          '5XX':
+            $ref: '#/components/responses/Error'
 
   /webhooks/github:
     post:
