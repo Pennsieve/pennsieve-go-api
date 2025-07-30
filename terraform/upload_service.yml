@@ -1071,6 +1071,8 @@ components:
           type: boolean
         tags:
           type: array
+          items:
+            type: string
         sync:
           type: object
           properties:
@@ -3790,17 +3792,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/repositoryRequest'
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: string
+            description: The id of the repository to update
         responses:
-        '200':
-          description: Successfully updates external repository
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/putRepositoryResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
+          '200':
+            description: Successfully updates external repository
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/putRepositoryResponse'
+          '4XX':
+            $ref: '#/components/responses/Unauthorized'
+          '5XX':
+            $ref: '#/components/responses/Error'
 
   /webhooks/github:
     post:
