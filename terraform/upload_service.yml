@@ -1961,7 +1961,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /metadata/models:
+  /metadata_legacy/models:
     get:
       summary: Get models for dataset
       description: |
@@ -2007,7 +2007,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /metadata/query:
+  /metadata_legacy/query:
     post:
       summary: Search metadata graph
       description: |
@@ -2086,7 +2086,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /metadata/package:
+  /metadata_legacy/package:
     get:
       summary: Get package metadata
       description: |
@@ -2139,7 +2139,7 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /metadata/query/autocomplete:
+  /metadata_legacy/query/autocomplete:
     post:
       summary: Autocomplete for search
       description: |
@@ -2217,7 +2217,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /metadata/records/relationships:
+  /metadata_legacy/records/relationships:
     post:
       summary: Create record relationships
       description: |
