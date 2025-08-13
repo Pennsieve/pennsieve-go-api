@@ -1523,8 +1523,10 @@ components:
           type: integer
         publishing_to_discover:
           type: boolean
-        PublishingToAppstore:
+        publishing_to_appstore:
           type: boolean
+        user_id:
+          type: integer
 
     postRepositoryResponse:
       type: object
