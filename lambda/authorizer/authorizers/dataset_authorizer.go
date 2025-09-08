@@ -29,7 +29,7 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 	orgInt := claimsManager.GetActiveOrg(ctx, currentUser)
 
 	// Get Workspace Claim
-	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
+	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser.Id, orgInt)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
 	}
@@ -49,7 +49,7 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 
 	if authorizerMode == "LEGACY" {
 		// Get Publisher's Claim
-		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
+		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser.Id)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
 				currentUser.Id, orgInt, err)
