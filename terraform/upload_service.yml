@@ -987,42 +987,67 @@ components:
           type: string
           description: a unique string identifying the App Store registration
     workflowRequest:
-          type: object
-          properties:
-            uuid:
-              type: string
-              description: the identifier of the workflow
-            name:
-              type: string
-              description: the name of the workflow
-            description:
-              type: string
-              description: a description of the workflow
-            processors:
-              type: array
-              description: the processors to run in the workflow
-              items:
-                type: object
-                properties:
-                  sourceUrl:
-                    type: string
-                  dependsOn:
-                    type: array
-                    description: the processors that this processor depends on
-                    items:
-                      type: object
-                      properties:
-                        sourceUrl:
-                          type: string
-            createdBy:
-              type: string
-              description: a description of the workflow
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: the identifier of the workflow
+        name:
+          type: string
+          description: the name of the workflow
+        description:
+          type: string
+          description: a description of the workflow
+        processors:
+          type: array
+          description: the processors to run in the workflow
+          items:
+            type: object
+            properties:
+              sourceUrl:
+                type: string
+              dependsOn:
+                type: array
+                description: the processors that this processor depends on
+                items:
+                  type: object
+                  properties:
+                    sourceUrl:
+                      type: string
+        createdBy:
+          type: string
+          description: a description of the workflow
     workflowResponse:
       type: object
       properties:
-        integrationId:
+        uuid:
           type: string
-          description: the UUID of the integration execution
+          description: the identifier of the workflow
+        name:
+          type: string
+          description: the name of the workflow
+        description:
+          type: string
+          description: a description of the workflow
+        processors:
+          type: array
+          description: the processors to run in the workflow
+          items:
+            type: object
+            properties:
+              sourceUrl:
+                type: string
+              dependsOn:
+                type: array
+                description: the processors that this processor depends on
+                items:
+                  type: object
+                  properties:
+                    sourceUrl:
+                      type: string
+        createdBy:
+          type: string
+          description: a description of the workflow
     workflowInstanceStatusRequest:
       type: object
       properties:
@@ -2881,6 +2906,69 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+    get:
+      summary: Get workflows
+      description: |
+        Get a list of workflows
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflows
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - Integration Service
+      responses:
+        '200':
+          description: The requested workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+/workflows/{id}:
+  get:
+    summary: Get workflow by uuid
+    description: |
+      Gets workflow by uuid
+    x-amazon-apigateway-integration:
+      $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+    operationId: getWorkflow
+    security:
+      - token_auth: [ ]
+    tags:
+      - Integration Service
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          minimum: 1
+        description: The uuid of the workflow.
+    responses:
+      '200':
+        description: The requested workflow
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowResponse'
+      '4XX':
+        $ref: '#/components/responses/Unauthorized'
+      '5XX':
+        $ref: '#/components/responses/Error'
 
   /imaging/microct/{package_id}/session:
     post:
