@@ -334,6 +334,9 @@ components:
           description: the packageIds
           items:
             type: string
+        workflowId:
+          type: string
+          description: the identifier of the application
     integrationResponse:
       type: object
       properties:
@@ -984,49 +987,36 @@ components:
           type: string
           description: a unique string identifying the App Store registration
     workflowRequest:
-      type: object
-      properties:
-        computeNode:
           type: object
-          description: the compute node
           properties:
             uuid:
               type: string
-              description: the uuid of the compute node
-            computeNodeGatewayUrl:
+              description: the identifier of the workflow
+            name:
               type: string
-              description: the URL of the compute node
-        datasetId:
-          type: string
-          description: the identifier of the application
-        packageIds:
-          type: array
-          description: the packageIds
-          items:
-            type: string
-        workflow:
-          type: array
-          description: the applications to run in the workflow
-          items:
-            type: object
-            properties:
-              uuid:
-                type: string
-              applicationId:
-                type: string
-              applicationType:
-                type: string
-              params:
+              description: the name of the workflow
+            description:
+              type: string
+              description: a description of the workflow
+            processors:
+              type: array
+              description: the processors to run in the workflow
+              items:
                 type: object
-                description: application specific params
-              commandArguments:
-                type: array
-                description: command arguments to pass to the application
-                items:
-                  type: string
-        params:
-          type: object
-          description: integration params
+                properties:
+                  sourceUrl:
+                    type: string
+                  dependsOn:
+                    type: array
+                    description: the processors that this processor depends on
+                    items:
+                      type: object
+                      properties:
+                        sourceUrl:
+                          type: string
+            createdBy:
+              type: string
+              description: a description of the workflow
     workflowResponse:
       type: object
       properties:
