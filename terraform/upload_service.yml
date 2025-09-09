@@ -2883,7 +2883,7 @@ paths:
         Creates a workflow using the supplied payload
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
-      operationId: createWorflow
+      operationId: createWorkflow
       security:
         - token_auth: [ ]
       tags:
