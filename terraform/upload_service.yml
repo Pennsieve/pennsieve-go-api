@@ -2878,12 +2878,12 @@ paths:
 
   /workflows:
     post:
-      summary: Initiate workflow
+      summary: Create workflow
       description: |
-        Calls endpoint of compute node with supplied payload
+        Creates a workflow using the supplied payload
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
-      operationId: startWorflow
+      operationId: createWorflow
       security:
         - token_auth: [ ]
       tags:
