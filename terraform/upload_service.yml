@@ -1102,6 +1102,20 @@ components:
             contributors:
               type: boolean
 
+    triggerPublishRepository:
+      type: object
+      properties:
+        requested_by:
+          type: string
+        url:
+          type: string
+        label:
+          type: string
+        publishing_to_discover:
+          type: boolean
+        publishing_to_appstore:
+          type: boolean
+
     publishRepositoryRequest:
       type: object
       properties:
@@ -1524,8 +1538,10 @@ components:
           type: integer
         publishing_to_discover:
           type: boolean
-        PublishingToAppstore:
+        publishing_to_appstore:
           type: boolean
+        user_id:
+          type: integer
 
     postRepositoryResponse:
       type: object
@@ -3913,6 +3929,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/githubWebhookEventAccepted'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/publish:
+    post:
+      summary: Trigger publish to Discover or AppStore
+      description: |
+        Triggers a publish to Discover or AppStore for a repository.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: publishRepository
+      security:
+        - token_auth: [ ]
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/triggerPublishRepository'
+      responses:
+        '200':
+          description: Received and accepted trigger publish event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/triggerPublishRepository'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
