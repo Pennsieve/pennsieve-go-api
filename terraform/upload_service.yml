@@ -334,6 +334,9 @@ components:
           description: the packageIds
           items:
             type: string
+        workflowId:
+          type: string
+          description: the identifier of the application
     integrationResponse:
       type: object
       properties:
@@ -986,53 +989,65 @@ components:
     workflowRequest:
       type: object
       properties:
-        computeNode:
-          type: object
-          description: the compute node
-          properties:
-            uuid:
-              type: string
-              description: the uuid of the compute node
-            computeNodeGatewayUrl:
-              type: string
-              description: the URL of the compute node
-        datasetId:
+        uuid:
           type: string
-          description: the identifier of the application
-        packageIds:
+          description: the identifier of the workflow
+        name:
+          type: string
+          description: the name of the workflow
+        description:
+          type: string
+          description: a description of the workflow
+        processors:
           type: array
-          description: the packageIds
-          items:
-            type: string
-        workflow:
-          type: array
-          description: the applications to run in the workflow
+          description: the processors to run in the workflow
           items:
             type: object
             properties:
-              uuid:
+              sourceUrl:
                 type: string
-              applicationId:
-                type: string
-              applicationType:
-                type: string
-              params:
-                type: object
-                description: application specific params
-              commandArguments:
+              dependsOn:
                 type: array
-                description: command arguments to pass to the application
+                description: the processors that this processor depends on
                 items:
-                  type: string
-        params:
-          type: object
-          description: integration params
+                  type: object
+                  properties:
+                    sourceUrl:
+                      type: string
+        createdBy:
+          type: string
+          description: a description of the workflow
     workflowResponse:
       type: object
       properties:
-        integrationId:
+        uuid:
           type: string
-          description: the UUID of the integration execution
+          description: the identifier of the workflow
+        name:
+          type: string
+          description: the name of the workflow
+        description:
+          type: string
+          description: a description of the workflow
+        processors:
+          type: array
+          description: the processors to run in the workflow
+          items:
+            type: object
+            properties:
+              sourceUrl:
+                type: string
+              dependsOn:
+                type: array
+                description: the processors that this processor depends on
+                items:
+                  type: object
+                  properties:
+                    sourceUrl:
+                      type: string
+        createdBy:
+          type: string
+          description: a description of the workflow
     workflowInstanceStatusRequest:
       type: object
       properties:
@@ -2879,12 +2894,12 @@ paths:
 
   /workflows:
     post:
-      summary: Initiate workflow
+      summary: Create workflow
       description: |
-        Calls endpoint of compute node with supplied payload
+        Creates a workflow using the supplied payload
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
-      operationId: startWorflow
+      operationId: createWorkflow
       security:
         - token_auth: [ ]
       tags:
@@ -2899,6 +2914,69 @@ paths:
       responses:
         '200':
           description: The result of starting the workflow process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get workflows
+      description: |
+        Get a list of workflows
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflows
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - Integration Service
+      responses:
+        '200':
+          description: The requested workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows/{id}:
+    get:
+      summary: Get workflow by uuid
+      description: |
+        Gets workflow by uuid
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow.
+      responses:
+        '200':
+          description: The requested workflow
           content:
             application/json:
               schema:
