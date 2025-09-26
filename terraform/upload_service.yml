@@ -334,7 +334,7 @@ components:
           description: the packageIds
           items:
             type: string
-        workflowId:
+        workflowUuid:
           type: string
           description: the identifier of the application
     integrationResponse:
@@ -2977,6 +2977,42 @@ paths:
       responses:
         '200':
           description: The requested workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Update the workflow properties
+      description: |
+        Update the isActive property of a workflow
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: updateWorkflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the workflow
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowRequest'
+      responses:
+        '200':
+          description: Successfully updated workflow properties
           content:
             application/json:
               schema:
