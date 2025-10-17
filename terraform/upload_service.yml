@@ -3971,6 +3971,7 @@ paths:
           $ref: '#/components/responses/Error'
 
   /repositories/publish:
+    x-internal: true
     post:
       summary: Trigger publish to Discover or AppStore
       description: |
