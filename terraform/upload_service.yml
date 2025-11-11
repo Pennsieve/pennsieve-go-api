@@ -3407,8 +3407,32 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+    get:
+      summary: Get applications from the App Store
+      description: |
+        Get a list of App Store applications
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getAppStoreApplications
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      responses:
+        '200':
+          description: The requested AppStore applications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/applicationsGetResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
 
-  
+
   /repositories:
     get:
       summary: Get all Repositories that the authenticated user has access to
