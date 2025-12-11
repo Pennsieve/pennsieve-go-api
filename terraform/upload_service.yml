@@ -484,6 +484,16 @@ components:
           description: the pre-signed S3 URL
       required:
         - url
+    appendFilesToManifestRequest:
+      type: object
+      description: request to append files to an existing import manifest
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/importFile"
+      required:
+        - files
 
     rehydrationRequest:
       type: object
@@ -2706,6 +2716,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/importPresignUploadResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /import/{import_id}/files:
+    post:
+      summary: Append files to import manifest
+      description: |
+        Appends files to an existing import manifest and increments the total files count.
+        The manifest must be in the initialized state.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
+      operationId: appendFilesToManifest
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Import Service
+      parameters:
+        - in: path
+          name: import_id
+          schema:
+            type: string
+          required: true
+          description: The import manifest ID
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where the files will be imported
+      requestBody:
+        description: Files to append to the manifest
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/appendFilesToManifestRequest'
+      responses:
+        '201':
+          description: Successfully appended files to the import manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/importManifestResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
