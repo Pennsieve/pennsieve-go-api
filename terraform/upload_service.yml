@@ -42,13 +42,6 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
-    datasets-service:
-      type: aws_proxy
-      uri: ${datasets_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
     imaging-service:
       type: aws_proxy
       uri: ${imaging_service_lambda_arn}
@@ -1958,119 +1951,6 @@ paths:
                   message:
                     type: string
                     description: Message indicating action.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /datasets/trashcan:
-    get:
-      summary: List trashcan contents for a dataset by folder
-      description: |
-        Returns a list of deleted items from a dataset folder
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
-      operationId: getTrashcan
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Datasets Service|Trashcan
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: dataset node id
-        - in: query
-          name: root_node_id
-          schema:
-            type: string
-          required: false
-          description: folder node id limits returned trashcan items to that folder
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 0
-            maximum: 100
-            default: 10
-          required: false
-          description: the maximum number of trashcan items to return
-        - in: query
-          name: offset
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          required: false
-          description: offset used for pagination of results
-      responses:
-        '200':
-          description: The contents of the dataset's trashcan.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-                  totalCount:
-                    type: integer
-                  packages:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        node_id:
-                          type: string
-                        type:
-                          type: string
-                        state:
-                          type: string
-                  messages:
-                    type: array
-                    items:
-                      type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /datasets/manifest:
-    get:
-      summary: Presigned url to manifest of dataset
-      description: |
-        Returns a presigned URL to a file containing the current manifest of an unpublished dataset.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
-      operationId: getManifest
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Datasets Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: dataset node id
-      responses:
-        '200':
-          description: The contents of the dataset's trashcan.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  url:
-                    type: string
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
