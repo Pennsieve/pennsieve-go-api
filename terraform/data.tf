@@ -95,18 +95,6 @@ data "terraform_remote_state" "upload_service_v2" {
   }
 }
 
-# Import Model-Service-Serverless
-data "terraform_remote_state" "model_service" {
-  backend = "s3"
-
-  config = {
-    bucket  = "${var.aws_account}-terraform-state"
-    key     = "aws/${data.aws_region.current_region.name}/${var.vpc_name}/${var.environment_name}/model-service-serverless/terraform.tfstate"
-    region  = "us-east-1"
-    profile = var.aws_account
-  }
-}
-
 # Import Datasets Service
 data "terraform_remote_state" "datasets_service" {
   backend = "s3"

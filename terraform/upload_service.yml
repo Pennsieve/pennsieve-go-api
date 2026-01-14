@@ -42,27 +42,6 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
-    model-service:
-      type: aws_proxy
-      uri: ${model_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
-    datasets-service:
-      type: aws_proxy
-      uri: ${datasets_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
-    packages-service:
-      type: aws_proxy
-      uri: ${packages_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
     imaging-service:
       type: aws_proxy
       uri: ${imaging_service_lambda_arn}
@@ -294,32 +273,6 @@ components:
           targetName:
             type: string
             description: Name of the uploaded file as it should appear on the platform. This includes the extension of the file.
-    restoreRequest:
-      type: object
-      properties:
-        nodeIds:
-          type: array
-          items:
-            type: string
-          description: the node ids of the items to restore
-    restoreResponse:
-      type: object
-      properties:
-        success:
-          type: array
-          items:
-            type: string
-          description: the node ids for which restore has started
-        failures:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              error:
-                type: string
-          description: any restore failures grouped by node id
     integrationRequest:
       type: object
       properties:
@@ -334,6 +287,9 @@ components:
           description: the packageIds
           items:
             type: string
+        workflowUuid:
+          type: string
+          description: the identifier of the application
     integrationResponse:
       type: object
       properties:
@@ -521,6 +477,16 @@ components:
           description: the pre-signed S3 URL
       required:
         - url
+    appendFilesToManifestRequest:
+      type: object
+      description: request to append files to an existing import manifest
+      properties:
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/importFile"
+      required:
+        - files
 
     rehydrationRequest:
       type: object
@@ -986,53 +952,65 @@ components:
     workflowRequest:
       type: object
       properties:
-        computeNode:
-          type: object
-          description: the compute node
-          properties:
-            uuid:
-              type: string
-              description: the uuid of the compute node
-            computeNodeGatewayUrl:
-              type: string
-              description: the URL of the compute node
-        datasetId:
+        uuid:
           type: string
-          description: the identifier of the application
-        packageIds:
+          description: the identifier of the workflow
+        name:
+          type: string
+          description: the name of the workflow
+        description:
+          type: string
+          description: a description of the workflow
+        processors:
           type: array
-          description: the packageIds
-          items:
-            type: string
-        workflow:
-          type: array
-          description: the applications to run in the workflow
+          description: the processors to run in the workflow
           items:
             type: object
             properties:
-              uuid:
+              sourceUrl:
                 type: string
-              applicationId:
-                type: string
-              applicationType:
-                type: string
-              params:
-                type: object
-                description: application specific params
-              commandArguments:
+              dependsOn:
                 type: array
-                description: command arguments to pass to the application
+                description: the processors that this processor depends on
                 items:
-                  type: string
-        params:
-          type: object
-          description: integration params
+                  type: object
+                  properties:
+                    sourceUrl:
+                      type: string
+        createdBy:
+          type: string
+          description: a description of the workflow
     workflowResponse:
       type: object
       properties:
-        integrationId:
+        uuid:
           type: string
-          description: the UUID of the integration execution
+          description: the identifier of the workflow
+        name:
+          type: string
+          description: the name of the workflow
+        description:
+          type: string
+          description: a description of the workflow
+        processors:
+          type: array
+          description: the processors to run in the workflow
+          items:
+            type: object
+            properties:
+              sourceUrl:
+                type: string
+              dependsOn:
+                type: array
+                description: the processors that this processor depends on
+                items:
+                  type: object
+                  properties:
+                    sourceUrl:
+                      type: string
+        createdBy:
+          type: string
+          description: a description of the workflow
     workflowInstanceStatusRequest:
       type: object
       properties:
@@ -1055,56 +1033,7 @@ components:
         type:
           type: string
           description: the purpose of tracking (publishing or appstore)
-    externalRepository:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: the id number of the external repository
-        origin:
-          type: string
-          description: the name of the origin (e.g., GitHub)
-        url:
-          type: string
-          description: the URL of the external repository
-        type:
-          type: string
-          description: the purpose of tracking (publishing or appstore)
-        status:
-          type: string
-          description: the tracking status (enabled, disabled, suspended)
-        organization_id:
-          type: integer
-          description: the Pennsieve Workspace organization id
-        user_id:
-          type: integer
-          description: the Pennsieve User id
-        dataset_id:
-          type: integer
-          description: the id of the dataset in the Pennsieve Workspace for publishing repos
-        application_id:
-          type: string
-          description: the UUID of the Application in the AppStore
-        created_at:
-          type: string
-          description: the date and time when the external repo was created
-        updated_at:
-          type: string
-          description: the date and time when the external repo was updated
-    externalReposResponse:
-      type: object
-      properties:
-        page:
-          type: integer
-        size:
-          type: integer
-        count:
-          type: integer
-        repos:
-          type: array
-          items:
-            $ref: "#/components/schemas/externalRepository"
-
+    
     updateRepositoryRequest:
       type: object
       properties:
@@ -1120,6 +1049,8 @@ components:
           type: boolean
         tags:
           type: array
+          items:
+            type: string
         sync:
           type: object
           properties:
@@ -1133,6 +1064,20 @@ components:
               type: boolean
             contributors:
               type: boolean
+
+    triggerPublishRepository:
+      type: object
+      properties:
+        requested_by:
+          type: string
+        url:
+          type: string
+        label:
+          type: string
+        publishing_to_discover:
+          type: boolean
+        publishing_to_appstore:
+          type: boolean
 
     publishRepositoryRequest:
       type: object
@@ -1521,8 +1466,6 @@ components:
     repository:
       type: object
       properties:
-        origin:
-          type: string
         name:
           type: string
         full_name:
@@ -1531,21 +1474,11 @@ components:
           type: string
         url:
           type: string
-        tracking:
+        publishing_to_discover:
           type: boolean
-        type:
-          type: string
-        details:
-          type: object
-          properties:
-            organization_id:
-              type: integer
-            user_id:
-              type: integer
-            dataset_id:
-              type: integer
-            application_id:
-              type: string
+        publishing_to_appstore:
+          type: boolean          
+
 
     repositoriesResponse:
       type: object
@@ -1560,6 +1493,48 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/repository"
+
+    repositoryRequest:
+      type: object
+      properties:
+        repository_id:
+          type: integer
+        publishing_to_discover:
+          type: boolean
+        publishing_to_appstore:
+          type: boolean
+        user_id:
+          type: integer
+
+    postRepositoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        repository_id:
+          type: integer
+        publishing_to_discover:
+          type: boolean
+        PublishingToAppstore:
+          type: boolean
+        created_at:
+          type: string
+          description: the date and time when the external repository was created
+
+    putRepositoryResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        repository_id:
+          type: integer
+        publishing_to_discover:
+          type: boolean
+        PublishingToAppstore:
+          type: boolean
+        updated_at:
+          type: string
+          description: the date and time when the external repository was updated
     
     ServiceInfoResponse:
       type: object
@@ -1980,501 +1955,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-  /metadata/models:
-    get:
-      summary: Get models for dataset
-      description: |
-        This method returns a list of models that are defined in a dataset.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
-      operationId: graphGetModels
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Metadata Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset where file will be uploaded.
-      responses:
-        '200':
-          description: The returned models.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  description: Response for getModels endpoint.
-                  properties:
-                    Count:
-                      description: Number of added files to the manifest.
-                      type: integer
-                    CreatedAt:
-                      description: Array of uploadIds that were not added to manifest.
-                      type: string
-                    CreatedBy:
-                      description: Array of uploadIds that were not added to manifest.
-                      type: string
-                    Description:
-                      description: Array of uploadIds that were not added to manifest.
-                      type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /metadata/query:
-    post:
-      summary: Search metadata graph
-      description: |
-        Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
-      operationId: queryGraph
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Metadata Service|Search
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset for which we want to retrieve datasets.
-      requestBody:
-        description: Query Filters
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Request body for metadata querying.
-              properties:
-                model:
-                  type: string
-                  description: Requested type of returned objects.
-                datasets:
-                  type: array
-                  description: Array of dataset node ids to search over.
-                  items:
-                    type: string
-                filters:
-                  type: array
-                  description: Array of filters for the query.
-                  items:
-                    type: object
-                    description: Filter object for query.
-                    properties:
-                      model:
-                        type: string
-                        description: The name of the model.
-                      property:
-                        type: string
-                        description: The name of a property in the model.
-                      operator:
-                        type: string
-                        enum:
-                          - IS
-                          - IS NOT
-                          - EQUALS
-                          - NOT EQUALS
-                          - LESS THAN
-                          - LESS THAN EQUALS
-                          - GREATER THAN
-                          - GREATER THAN EQUALS
-                          - STARTS WITH
-                          - CONTAINS
-                      value:
-                        type: string
-                        description: The value of the predicate
-                order_by:
-                  type: string
-                  description: Name of property that should be used to order the results.
-      responses:
-        '200':
-          description: The returned results.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/addFilesResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /metadata/package:
-    get:
-      summary: Get package metadata
-      description: |
-        This method returns all metadata records associated with the package.
-        
-        It includes the record that associated with the package, and all metadata records that are hierarchically parents of the associated record.
-        For example, consider three models (Patient, Visit, Sample) where Patient has a relationship to Visit and Visit has a relationship to Sample. If a file is associated with a Sample record, this methods returns the sample, visit and patient metadata. 
-        
-        Note that the direction of the relationship is important and only relationships "upstream" are returned. This includes records that have a property that points to another record.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
-      operationId: graphGetPackageMetadata
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Metadata Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset which contains the package.
-        - in: query
-          name: package_id
-          schema:
-            type: string
-          required: true
-          description: The requested package node id.
-      responses:
-        '200':
-          description: The returned records.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  description: Response for  endpoint.
-                  properties:
-                    id:
-                      description: Id of the metadata record.
-                      type: string
-                    model:
-                      description: Name of the metadata record model.
-                      type: string
-                    props:
-                      type: object
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /metadata/query/autocomplete:
-    post:
-      summary: Autocomplete for search
-      description: |
-        This endpoint returns a list of values that will return in valid query responses that include a minimum of 1 search result.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
-      operationId: autoComplete
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Metadata Service|Search
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset for which we want to retrieve datasets.
-      requestBody:
-        description: Query Filters
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Request body for metadata querying.
-              properties:
-                model:
-                  type: string
-                  description: Model for autocomplete
-                property:
-                  type: string
-                  description: Property for autocomplete
-                text:
-                  type: string
-                  description: Value input for autocomplete.
-                filters:
-                  type: array
-                  description: Array of filters for the query
-                  items:
-                    type: object
-                    description: Filter object for query.
-                    properties:
-                      model:
-                        type: string
-                        description: The name of the model.
-                      property:
-                        type: string
-                        description: The name of a property in the model.
-                      operator:
-                        type: string
-                        enum:
-                          - IS
-                          - IS NOT
-                          - EQUALS
-                          - NOT EQUALS
-                          - LESS THAN
-                          - LESS THAN EQUALS
-                          - GREATER THAN
-                          - GREATER THAN EQUALS
-                          - STARTS WITH
-                          - CONTAINS
-                      value:
-                        type: string
-                        description: The value of the predicate
-      responses:
-        '200':
-          description: The returned results.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/autocompleteResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /metadata/records/relationships:
-    post:
-      summary: Create record relationships
-      description: |
-        Allows the user to create relationships in bulk between existing records for a specific dataset.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/model-service'
-      operationId: batchCreateRelationships
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Metadata Service|Records
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset associated with the metadata that is edited
-      requestBody:
-        description: definition of the relationship and records to be created.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: Request body for metadata querying.
-              properties:
-                relationship:
-                  type: object
-                  properties:
-                    from_model:
-                      type: string
-                      description: Model slug for the originating model
-                    relationship_name:
-                      type: string
-                      description: Relationship slug; direction is automatically inferred
-                    to_model:
-                      type: string
-                      description: Model slug for the targeted model
-                records:
-                  type: object
-                  properties:
-                    from:
-                      type: array
-                      items:
-                        type: string
-                        description: List of object IDs of records of type from_model
-                    to:
-                      type: array
-                      items:
-                        type: string
-                        description: List of object IDs of records of type to_model
-      responses:
-        '200':
-          description: The returned results.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                    from:
-                      type: string
-                    to:
-                      type: string
-                    type:
-                      type: string
-                    model_relationship_id:
-                      type: string
-                    name:
-                      type: string
-                    one_to_many:
-                      type: boolean
-                    created_at:
-                      type: string
-                    updated_at:
-                      type: string
-                    created_by:
-                      type: string
-                    updated_by:
-                      type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /datasets/trashcan:
-    get:
-      summary: List trashcan contents for a dataset by folder
-      description: |
-        Returns a list of deleted items from a dataset folder
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
-      operationId: getTrashcan
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Datasets Service|Trashcan
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: dataset node id
-        - in: query
-          name: root_node_id
-          schema:
-            type: string
-          required: false
-          description: folder node id limits returned trashcan items to that folder
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 0
-            maximum: 100
-            default: 10
-          required: false
-          description: the maximum number of trashcan items to return
-        - in: query
-          name: offset
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          required: false
-          description: offset used for pagination of results
-      responses:
-        '200':
-          description: The contents of the dataset's trashcan.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  limit:
-                    type: integer
-                  offset:
-                    type: integer
-                  totalCount:
-                    type: integer
-                  packages:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: integer
-                        name:
-                          type: string
-                        node_id:
-                          type: string
-                        type:
-                          type: string
-                        state:
-                          type: string
-                  messages:
-                    type: array
-                    items:
-                      type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /datasets/manifest:
-    get:
-      summary: Presigned url to manifest of dataset
-      description: |
-        Returns a presigned URL to a file containing the current manifest of an unpublished dataset.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/datasets-service'
-      operationId: getManifest
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Datasets Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: dataset node id
-      responses:
-        '200':
-          description: The contents of the dataset's trashcan.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  url:
-                    type: string
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /packages/restore:
-    post:
-      summary: Restore deleted items
-      description: |
-        Starts restore process for the given deleted items
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/packages-service'
-      operationId: restoreItems
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Packages Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: dataset node id
-      requestBody:
-        description: node ids of the items to restore
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/restoreRequest'
-      responses:
-        '200':
-          description: The result of starting the restore process.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/restoreResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
 
   /integrations:
     post:
@@ -2882,12 +2362,12 @@ paths:
 
   /workflows:
     post:
-      summary: Initiate workflow
+      summary: Create workflow
       description: |
-        Calls endpoint of compute node with supplied payload
+        Creates a workflow using the supplied payload
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
-      operationId: startWorflow
+      operationId: createWorkflow
       security:
         - token_auth: [ ]
       tags:
@@ -2902,6 +2382,105 @@ paths:
       responses:
         '200':
           description: The result of starting the workflow process.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    get:
+      summary: Get workflows
+      description: |
+        Get a list of workflows
+      parameters:
+        - in: query
+          name: organization_id
+          schema:
+            type: string
+          required: true
+          description: The organization ID.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflows
+      security:
+        - token_workspace_auth: [ ]
+      tags:
+        - Integration Service
+      responses:
+        '200':
+          description: The requested workflows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /workflows/{id}:
+    get:
+      summary: Get workflow by uuid
+      description: |
+        Gets workflow by uuid
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: getWorkflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minimum: 1
+          description: The uuid of the workflow.
+      responses:
+        '200':
+          description: The requested workflow
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/workflowResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Update the workflow properties
+      description: |
+        Update the isActive property of a workflow
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/integration-service'
+      operationId: updateWorkflow
+      security:
+        - token_auth: [ ]
+      tags:
+        - Integration Service
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The uuid of the workflow
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflowRequest'
+      responses:
+        '200':
+          description: Successfully updated workflow properties
           content:
             application/json:
               schema:
@@ -3017,6 +2596,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/importPresignUploadResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+  /import/{import_id}/files:
+    post:
+      summary: Append files to import manifest
+      description: |
+        Appends files to an existing import manifest and increments the total files count.
+        The manifest must be in the initialized state.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
+      operationId: appendFilesToManifest
+      security:
+        - token_dataset_auth: [ ]
+      tags:
+        - Import Service
+      parameters:
+        - in: path
+          name: import_id
+          schema:
+            type: string
+          required: true
+          description: The import manifest ID
+        - in: query
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+          description: The dataset where the files will be imported
+      requestBody:
+        description: Files to append to the manifest
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/appendFilesToManifestRequest'
+      responses:
+        '201':
+          description: Successfully appended files to the import manifest.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/importManifestResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
@@ -3718,130 +3341,31 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-
-  /repository/enable:
-    post:
-      summary: Enable tracking of an external repository
+    get:
+      summary: Get applications from the App Store
       description: |
-        Begins tracking of an external repository for publishing or the AppStore.
+        Get a list of App Store applications
       x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: postEnableTrackingExternalRepo
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getAppStoreApplications
       security:
-        - token_workspace_auth: [ ]
+        - token_auth: [ ]
       tags:
-        - GitHub Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/trackRepositoryRequest'
-      responses:
-        '201':
-          description: Successfully enabled tracking of the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repository/disable:
-    post:
-      summary: Disable tracking of an external repository
-      description: |
-        Stops tracking of an external repository for publishing or the AppStore.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: postDisableTrackingExternalRepo
-      security:
-        - token_workspace_auth: [ ]
-      tags:
-        - GitHub Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/trackRepositoryRequest'
-      responses:
-        '201':
-          description: Successfully disabled tracking of the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repository/external:
-    put:
-      summary: Update the attributes of an external repository
-      description: |
-        Updates the External Repository and the attached Dataset
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: updateExternalRepo
-      security:
-        - token_workspace_auth: [ ]
-      tags:
-        - Repository Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/updateRepositoryRequest'
+        - App Deploy Service
       responses:
         '200':
-          description: Successfully updated the external repository.
+          description: The requested AppStore applications
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/externalRepository'
+                type: array
+                items:
+                  $ref: '#/components/schemas/applicationsGetResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /repository/publish:
-    post:
-      summary: request publishing of an external repository
-      description: |
-        Requests that an external repository be published.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      security:
-        - token_workspace_auth: [ ]
-      operationId: publishRepository
-      tags:
-        - Repository Service
-      requestBody:
-        description: Payload
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/publishRepositoryRequest'
-      responses:
-        '201':
-          description: Successfully published the external repository.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/externalRepository'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
 
   /repositories:
     get:
@@ -3871,7 +3395,7 @@ paths:
             default: 25
           required: false
           description: the number of items to return on each page
-      operationId: getMyRepositories
+      operationId: getRepositories
       tags:
         - Repository Service
       responses:
@@ -3885,90 +3409,73 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
-
-  /repositories/github:
-    get:
-      summary: Get GitHub Repositories
+    post:
+      summary: Creates an external repository
       description: |
-        List repositories for the authenticated GitHub user
+        Creates an external repository
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: postExternalRepositories
       security:
         - token_auth: [ ]
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          required: false
-          description: the page number to return
-        - in: query
-          name: size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 25
-          required: false
-          description: the number of items to return on each page
-      operationId: getGitHubRepositories
-      tags:
-        - GitHub Service
-      responses:
-        '200':
-          description: List of GitHub repositories.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/githubReposResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /repositories/external:
-    get:
-      summary: Get External Repositories
-      description: |
-        List registered external repositories for the authenticated user
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      security:
-        - token_auth: [ ]
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          required: false
-          description: the page number to return
-        - in: query
-          name: size
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 25
-          required: false
-          description: the number of items to return on each page
-      operationId: getExternalRepositories
       tags:
         - Repository Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/repositoryRequest'
       responses:
         '200':
-          description: List of GitHub repositories.
+          description: Successfully created external repository
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/externalReposResponse'
+                $ref: '#/components/schemas/postRepositoryResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
+
+  /repositories/{id}:
+      put:
+        summary: updates an external repository
+        description: |
+          Updates an external repository
+        x-amazon-apigateway-integration:
+          $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+        operationId: putExternalRepositories
+        security:
+          - token_auth: [ ]
+        tags:
+          - Repository Service
+        requestBody:
+          description: Payload
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryRequest'
+        parameters:
+          - in: path
+            name: id
+            required: true
+            schema:
+              type: string
+            description: The id of the repository to update
+        responses:
+          '200':
+            description: Successfully updates external repository
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/putRepositoryResponse'
+          '4XX':
+            $ref: '#/components/responses/Unauthorized'
+          '5XX':
+            $ref: '#/components/responses/Error'
 
   /webhooks/github:
     post:
@@ -3994,6 +3501,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/githubWebhookEventAccepted'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/publish:
+    x-internal: true
+    post:
+      summary: Trigger publish to Discover or AppStore
+      description: |
+        Triggers a publish to Discover or AppStore for a repository.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: publishRepository
+      security:
+        - token_auth: [ ]
+      tags:
+        - GitHub Service
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/triggerPublishRepository'
+      responses:
+        '200':
+          description: Received and accepted trigger publish event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/triggerPublishRepository'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
