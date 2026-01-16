@@ -980,6 +980,12 @@ components:
         createdBy:
           type: string
           description: a description of the workflow
+    putWorkflowRequest:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+          description: whether the workflow is active
     workflowResponse:
       type: object
       properties:
@@ -2477,7 +2483,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflowRequest'
+              $ref: '#/components/schemas/putWorkflowRequest'
       responses:
         '200':
           description: Successfully updated workflow properties
