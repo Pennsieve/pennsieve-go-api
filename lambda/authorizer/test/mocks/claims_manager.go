@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/dydb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/dataset"
@@ -38,8 +39,8 @@ var MockUserClaim = user.Claim{
 	IsSuperAdmin: true,
 }
 
-func (m *MockClaimManager) GetUserClaim(context.Context, *pgdbModels.User) user.Claim {
-	return MockUserClaim
+func (m *MockClaimManager) GetUserClaim(context.Context, *pgdbModels.User) *user.Claim {
+	return &MockUserClaim
 }
 
 var MockDatasetClaim = dataset.Claim{Role: role.Manager}
@@ -50,23 +51,22 @@ func (m *MockClaimManager) GetDatasetClaim(context.Context, *pgdbModels.User, st
 
 var MockOrgClaim = organization.Claim{}
 
-func (m *MockClaimManager) GetOrgClaim(context.Context, *pgdbModels.User, int64) (*organization.Claim, error) {
+func (m *MockClaimManager) GetOrgClaim(context.Context, int64, int64) (*organization.Claim, error) {
 	return &MockOrgClaim, nil
 }
 
 var MockTeamClaims = []teamUser.Claim{{IntId: 1, Name: "someTeam1"}}
 
-func (m *MockClaimManager) GetOrgClaimByNodeId(_ context.Context, _ *pgdbModels.User, _ string) (*organization.Claim, error) {
+func (m *MockClaimManager) GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error) {
 	return nil, fmt.Errorf("mock method not implemented")
 }
 
-func (m *MockClaimManager) GetTeamClaims(context.Context, *pgdbModels.User) ([]teamUser.Claim, error) {
+func (m *MockClaimManager) GetTeamClaims(context.Context, int64) ([]teamUser.Claim, error) {
 	return MockTeamClaims, nil
 }
 
-func (m *MockClaimManager) GetDatasetID(context.Context, string) (*string, error) {
-	s := "someDatasetID"
-	return &s, nil
+func (m *MockClaimManager) GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error) {
+	return nil, fmt.Errorf("mock method not implemented")
 }
 
 func (m *MockClaimManager) GetTokenWorkspace() (manager.TokenWorkspace, bool) {

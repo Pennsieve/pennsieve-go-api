@@ -134,9 +134,9 @@ func testUserWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 
 	// User claim
 	assert.Contains(t, claims, coreAuthorizer.LabelUserClaim)
-	var userClaim user.Claim
+	var userClaim *user.Claim
 	require.IsType(t, userClaim, claims[coreAuthorizer.LabelUserClaim])
-	userClaim = claims[coreAuthorizer.LabelUserClaim].(user.Claim)
+	userClaim = claims[coreAuthorizer.LabelUserClaim].(*user.Claim)
 	assert.Equal(t, testUser.user.Id, userClaim.Id)
 	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
 	assert.False(t, userClaim.IsSuperAdmin)
@@ -193,9 +193,9 @@ func testAPIKeyWithDeleteInWorkspace(t *testing.T, pgDB *sql.DB) {
 
 	// User claim
 	assert.Contains(t, claims, coreAuthorizer.LabelUserClaim)
-	var userClaim user.Claim
+	var userClaim *user.Claim
 	require.IsType(t, userClaim, claims[coreAuthorizer.LabelUserClaim])
-	userClaim = claims[coreAuthorizer.LabelUserClaim].(user.Claim)
+	userClaim = claims[coreAuthorizer.LabelUserClaim].(*user.Claim)
 	assert.Equal(t, testUser.user.Id, userClaim.Id)
 	assert.Equal(t, testUser.user.NodeId, userClaim.NodeId)
 	assert.False(t, userClaim.IsSuperAdmin)

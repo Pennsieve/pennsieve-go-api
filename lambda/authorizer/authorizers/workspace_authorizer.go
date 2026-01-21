@@ -32,7 +32,7 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	}
 
 	// Get Workspace Claim
-	orgClaim, err := claimsManager.GetOrgClaimByNodeId(ctx, currentUser, w.WorkspaceID)
+	orgClaim, err := claimsManager.GetOrgClaimByNodeId(ctx, currentUser.Id, w.WorkspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
 	}
@@ -41,7 +41,7 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	}
 
 	// Get Publisher's Claim
-	teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
+	teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser.Id)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %s: %w",
 			currentUser.Id, w.WorkspaceID, err)
