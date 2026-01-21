@@ -22,8 +22,8 @@ externalDocs:
   description: Find more info here
   url: https://docs.pennsieve.io
 tags:
-  - name: Upload Service
-    description: Management of upload manifests.
+  - name: Pennsieve API2
+    description: Pennsieve API2 endpoints that are not managed in their own repo.
     externalDocs:
       url: https://docs.pennsieve.io/reference
 components:
@@ -980,6 +980,12 @@ components:
         createdBy:
           type: string
           description: a description of the workflow
+    putWorkflowRequest:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+          description: whether the workflow is active
     workflowResponse:
       type: object
       properties:
@@ -1592,6 +1598,7 @@ components:
 paths:
   /manifest:
     get:
+      x-internal: true
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestList
@@ -1645,6 +1652,7 @@ paths:
       summary: Synchronize manifest
       description: |
         Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
+      x-internal: true
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: syncManifest
@@ -1679,6 +1687,7 @@ paths:
           $ref: '#/components/responses/Error'
   /manifest/files:
     get:
+      x-internal: true
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestFiles
@@ -1761,6 +1770,7 @@ paths:
           $ref: '#/components/responses/Error'
   /manifest/status:
     get:
+      x-internal: true
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: verifyFileStatus
@@ -1833,6 +1843,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
   /manifest/archive:
+    x-internal: true
     post:
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
@@ -1881,6 +1892,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
     get:
+      x-internal: true
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
       operationId: getManifestArchiveURL
@@ -1919,6 +1931,7 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
     delete:
+      x-internal: true
       summary: Delete an upload manifest
       description: |
         This method will permanently delete an upload manifest. \
@@ -2477,7 +2490,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflowRequest'
+              $ref: '#/components/schemas/putWorkflowRequest'
       responses:
         '200':
           description: Successfully updated workflow properties
