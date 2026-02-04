@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	coreAuthorizer "github.com/pennsieve/pennsieve-go-core/pkg/authorizer"
+	"github.com/pennsieve/pennsieve-go-core/pkg/models/pgdb"
 
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-core/pkg/models/role"
@@ -26,22 +27,30 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 		return nil, fmt.Errorf("unable to get current user: %w", err)
 	}
 
-	// Get Active Org
-	orgInt := claimsManager.GetActiveOrg(ctx, currentUser)
+	// Get Manifest
+	manifest, err := claimsManager.GetManifest(ctx, m.ManifestID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting manifest %s: %w", m.ManifestID, err)
+	}
+	manifestOrgId := manifest.OrganizationId
+	if tokenWorkspace, hasTokenWorkspace := claimsManager.GetTokenWorkspace(); hasTokenWorkspace && tokenWorkspace.Id != manifestOrgId {
+		return nil, fmt.Errorf("manifest workspace id %d does not match API token workspace id %d",
+			manifestOrgId,
+			tokenWorkspace.Id)
+	}
+	datasetID := manifest.DatasetNodeId
 
 	// Get Workspace Claim
-	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser, orgInt)
+	orgClaim, err := claimsManager.GetOrgClaim(ctx, currentUser.Id, manifestOrgId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Organization Role: %w", err)
 	}
-
-	// Get datasetID
-	datasetID, err := claimsManager.GetDatasetID(ctx, m.ManifestID)
-	if err != nil {
-		return nil, fmt.Errorf("datasetId could not be retrieved: %w", err)
+	if orgClaim.Role == pgdb.NoPermission {
+		return nil, errors.New("user has no access to workspace")
 	}
+
 	// Get Dataset Claim
-	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, *datasetID, orgInt)
+	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, datasetID, manifestOrgId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Dataset Role: %w", err)
 	}
@@ -55,10 +64,10 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 
 	if authorizerMode == "LEGACY" {
 		// Get Publisher's Claim
-		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser)
+		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser.Id)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
-				currentUser.Id, orgInt, err)
+				currentUser.Id, manifestOrgId, err)
 		}
 
 		return map[string]interface{}{
