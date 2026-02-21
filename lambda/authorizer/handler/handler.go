@@ -65,10 +65,12 @@ func init() {
 	}
 
 	// Add tokenKeySet keys to keySet, so we can decode from both user and token pool
-	tokenKeys := tokenKeySet.Keys(context.Background())
-	for tokenKeys.Next(context.Background()) {
-		if err := keySet.AddKey(tokenKeys.Pair().Value.(jwk.Key)); err != nil {
-			log.Error("Unable to add token pool keys to user pool keys", err)
+	if keySet != nil && tokenKeySet != nil {
+		tokenKeys := tokenKeySet.Keys(context.Background())
+		for tokenKeys.Next(context.Background()) {
+			if err := keySet.AddKey(tokenKeys.Pair().Value.(jwk.Key)); err != nil {
+				log.Error("Unable to add token pool keys to user pool keys", err)
+			}
 		}
 	}
 

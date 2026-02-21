@@ -4,6 +4,7 @@ LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
 WORKING_DIR   ?= "$(shell pwd)"
 PACKAGE_NAME  ?= "api-v2-authorizer-${IMAGE_TAG}.zip"
+DIRECT_AUTHORIZER_PACKAGE_NAME ?= "api-v2-direct-authorizer-${IMAGE_TAG}.zip"
 
 .DEFAULT: help
 
@@ -52,6 +53,15 @@ package:
   		env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
 		cd $(WORKING_DIR)/lambda/bin/authorizer/ ; \
 			zip -r $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) .
+	@echo ""
+	@echo "******************************************"
+	@echo "*   Building Direct Authorizer lambda    *"
+	@echo "******************************************"
+	@echo ""
+	cd $(WORKING_DIR)/lambda/authorizer; \
+  		env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/direct-authorizer/bootstrap ./cmd/direct-authorizer; \
+		cd $(WORKING_DIR)/lambda/bin/direct-authorizer/ ; \
+			zip -r $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) .
 
 publish:
 	@make package
@@ -62,3 +72,10 @@ publish:
 	@echo ""
 	aws s3 cp $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) s3://$(LAMBDA_BUCKET)/pennsieve-go-api/
 	rm -rf $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME)
+	@echo ""
+	@echo "********************************************"
+	@echo "*   Publishing Direct Authorizer lambda    *"
+	@echo "********************************************"
+	@echo ""
+	aws s3 cp $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) s3://$(LAMBDA_BUCKET)/pennsieve-go-api/
+	rm -rf $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME)
