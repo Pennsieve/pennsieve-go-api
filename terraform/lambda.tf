@@ -30,6 +30,7 @@ resource "aws_lambda_function" "authorizer_lambda" {
       MANIFEST_TABLE     = data.terraform_remote_state.upload_service_v2.outputs.manifest_table_name,
       LOG_LEVEL          = "INFO"
       AUTHORIZER_MODE    = "LEGACY"
+      CALLBACK_VALIDATOR_WORKFLOW_SERVICE = data.terraform_remote_state.workflow_service.outputs.callback_validator_lambda_arn,
     }
   }
 }

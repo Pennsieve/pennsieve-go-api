@@ -122,6 +122,15 @@ data "aws_iam_policy_document" "authorizer_lambda_iam_policy_document" {
     resources = ["*"]
   }
 
-
+  statement {
+    sid    = "InvokeCallbackValidatorLambdas"
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      data.terraform_remote_state.workflow_service.outputs.callback_validator_lambda_arn,
+    ]
+  }
 
 }
