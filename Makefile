@@ -50,7 +50,7 @@ package:
 	@echo "**********************************"
 	@echo ""
 	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
+  		env GOOS=linux GOARCH=arm64 GOTOOLCHAIN=auto go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
 		cd $(WORKING_DIR)/lambda/bin/authorizer/ ; \
 			zip -r $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) .
 	@echo ""
@@ -59,7 +59,7 @@ package:
 	@echo "******************************************"
 	@echo ""
 	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/direct-authorizer/bootstrap ./cmd/direct-authorizer; \
+  		env GOOS=linux GOARCH=arm64 GOTOOLCHAIN=auto go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/direct-authorizer/bootstrap ./cmd/direct-authorizer; \
 		cd $(WORKING_DIR)/lambda/bin/direct-authorizer/ ; \
 			zip -r $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) .
 
