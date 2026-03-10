@@ -49,7 +49,7 @@ package:
 	@echo "*   Building Authorizer lambda   *"
 	@echo "**********************************"
 	@echo ""
-	docker run --rm -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
+	docker run --rm -u $$(id -u):$$(id -g) -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
 		sh -c "apk add --no-cache zip && \
 			GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o /build/lambda/bin/authorizer/bootstrap && \
 			cd /build/lambda/bin/authorizer/ && \
@@ -59,7 +59,7 @@ package:
 	@echo "*   Building Direct Authorizer lambda    *"
 	@echo "******************************************"
 	@echo ""
-	docker run --rm -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
+	docker run --rm -u $$(id -u):$$(id -g) -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
 		sh -c "apk add --no-cache zip && \
 			GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o /build/lambda/bin/direct-authorizer/bootstrap ./cmd/direct-authorizer && \
 			cd /build/lambda/bin/direct-authorizer/ && \
