@@ -35,7 +35,7 @@ docker-clean:
 
 # Remove dynamodb database
 clean: docker-clean
-	rm -rf $(WORKING_DIR)/lambda/bin
+	docker run --rm -v $(WORKING_DIR):/build alpine sh -c "rm -rf /build/lambda/bin"
 
 tidy:
 	cd $(WORKING_DIR)/lambda/authorizer && go mod tidy
