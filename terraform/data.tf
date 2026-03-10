@@ -214,3 +214,15 @@ data "terraform_remote_state" "drs_service" {
     profile = var.aws_account
   }
 }
+
+# Import Workflow Service
+data "terraform_remote_state" "workflow_service" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.aws_account}-terraform-state"
+    key     = "aws/${data.aws_region.current_region.name}/${var.vpc_name}/${var.environment_name}/workflow-service/terraform.tfstate"
+    region  = "us-east-1"
+    profile = var.aws_account
+  }
+}

@@ -32,7 +32,7 @@ ansiColor('xterm') {
             string(name: 'TERRAFORM_ACTION', value: 'apply')
           ]
         }
-      } else { // if not main, just run package
+      } else {
         stage("Build") {
           try {
             sh "IMAGE_TAG=${imageTag} make package"

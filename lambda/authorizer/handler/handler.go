@@ -89,6 +89,11 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		"IdentitySource": event.IdentitySource,
 		"Headers":        event.Headers}).Info("request parameters")
 
+	// Check for Callback authorization scheme before JWT processing
+	if helpers.IsCallbackAuth(event.Headers["authorization"]) {
+		return handleCallbackAuth(ctx, event)
+	}
+
 	jwtB64, err := helpers.GetJWT(event.Headers["authorization"])
 	if err != nil {
 		logger.Error(err)
