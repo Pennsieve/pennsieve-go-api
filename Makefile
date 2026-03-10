@@ -49,19 +49,21 @@ package:
 	@echo "*   Building Authorizer lambda   *"
 	@echo "**********************************"
 	@echo ""
-	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=arm64 GOTOOLCHAIN=auto go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/authorizer/bootstrap; \
-		cd $(WORKING_DIR)/lambda/bin/authorizer/ ; \
-			zip -r $(WORKING_DIR)/lambda/bin/authorizer/$(PACKAGE_NAME) .
+	docker run --rm -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
+		sh -c "apk add --no-cache zip && \
+			GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o /build/lambda/bin/authorizer/bootstrap && \
+			cd /build/lambda/bin/authorizer/ && \
+			zip -r /build/lambda/bin/authorizer/$(PACKAGE_NAME) ."
 	@echo ""
 	@echo "******************************************"
 	@echo "*   Building Direct Authorizer lambda    *"
 	@echo "******************************************"
 	@echo ""
-	cd $(WORKING_DIR)/lambda/authorizer; \
-  		env GOOS=linux GOARCH=arm64 GOTOOLCHAIN=auto go build -tags lambda.norpc -o $(WORKING_DIR)/lambda/bin/direct-authorizer/bootstrap ./cmd/direct-authorizer; \
-		cd $(WORKING_DIR)/lambda/bin/direct-authorizer/ ; \
-			zip -r $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) .
+	docker run --rm -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
+		sh -c "apk add --no-cache zip && \
+			GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o /build/lambda/bin/direct-authorizer/bootstrap ./cmd/direct-authorizer && \
+			cd /build/lambda/bin/direct-authorizer/ && \
+			zip -r /build/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) ."
 
 publish:
 	@make package
