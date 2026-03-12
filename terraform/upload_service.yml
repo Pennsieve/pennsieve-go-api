@@ -842,6 +842,69 @@ components:
         message:
           type: string
           description: additional information about the authorization result
+    appPermissionsResponse:
+      type: object
+      properties:
+        visibility:
+          type: string
+          description: the visibility of the application (public or private)
+        ownerId:
+          type: string
+          description: the node ID of the application owner
+        access:
+          type: array
+          description: the list of access entries for the application
+          items:
+            $ref: '#/components/schemas/appAccessResponse'
+    appAccessResponse:
+      type: object
+      properties:
+        entityId:
+          type: string
+          description: the composite entity identifier
+        appId:
+          type: string
+          description: the composite app identifier
+        entityType:
+          type: string
+          description: the type of entity (user, team, workspace)
+        entityRawId:
+          type: string
+          description: the raw entity identifier
+        appUuid:
+          type: string
+          description: the application UUID
+        accessType:
+          type: string
+          description: the type of access (owner, shared)
+        organizationId:
+          type: string
+          description: the organization ID
+        grantedAt:
+          type: string
+          description: the timestamp when access was granted
+        grantedBy:
+          type: string
+          description: the user who granted access
+    setVisibilityRequest:
+      type: object
+      properties:
+        visibility:
+          type: string
+          description: the visibility setting (public or private)
+      required:
+        - visibility
+    grantAccessRequest:
+      type: object
+      properties:
+        entityId:
+          type: string
+          description: the entity ID to grant access to
+        organizationId:
+          type: string
+          description: the organization ID
+      required:
+        - entityId
     workflowRequest:
       type: object
       properties:
@@ -2530,6 +2593,211 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/authorizeImageResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/store/{id}/permissions:
+    get:
+      summary: Get permissions for an App Store application
+      description: |
+        Returns the visibility, owner, and access list for an App Store application
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: getAppPermissions
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: the App Store application UUID
+      responses:
+        '200':
+          description: The permissions for the application
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/appPermissionsResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+    put:
+      summary: Set visibility for an App Store application
+      description: |
+        Updates the visibility (public or private) for an App Store application. Only the app owner can update visibility.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: putAppVisibility
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: the App Store application UUID
+      requestBody:
+        description: Visibility setting
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/setVisibilityRequest'
+      responses:
+        '200':
+          description: Successfully updated visibility
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/store/{id}/permissions/users:
+    post:
+      summary: Grant a user access to an App Store application
+      description: |
+        Grants a specific user access to an App Store application. Only the app owner can grant access.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postAppGrantUser
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: the App Store application UUID
+      requestBody:
+        description: User access grant payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/grantAccessRequest'
+      responses:
+        '201':
+          description: Successfully granted user access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/appAccessResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/store/{id}/permissions/users/{userId}:
+    delete:
+      summary: Revoke a user's access to an App Store application
+      description: |
+        Revokes a specific user's access to an App Store application. Only the app owner can revoke access.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: deleteAppRevokeUser
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: the App Store application UUID
+        - in: path
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: the user ID to revoke access for
+      responses:
+        '204':
+          description: Successfully revoked user access
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/store/{id}/permissions/teams:
+    post:
+      summary: Grant a team access to an App Store application
+      description: |
+        Grants a specific team access to an App Store application. Only the app owner can grant access.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: postAppGrantTeam
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: the App Store application UUID
+      requestBody:
+        description: Team access grant payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/grantAccessRequest'
+      responses:
+        '201':
+          description: Successfully granted team access
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/appAccessResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /applications/store/{id}/permissions/teams/{teamId}:
+    delete:
+      summary: Revoke a team's access to an App Store application
+      description: |
+        Revokes a specific team's access to an App Store application. Only the app owner can revoke access.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/app-deploy-service'
+      operationId: deleteAppRevokeTeam
+      security:
+        - token_auth: [ ]
+      tags:
+        - App Deploy Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: the App Store application UUID
+        - in: path
+          name: teamId
+          schema:
+            type: string
+          required: true
+          description: the team ID to revoke access for
+      responses:
+        '204':
+          description: Successfully revoked team access
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
