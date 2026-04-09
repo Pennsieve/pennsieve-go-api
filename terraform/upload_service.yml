@@ -49,13 +49,6 @@ components:
       passthroughBehavior: when_no_match
       contentHandling: CONVERT_TO_TEXT
       payloadFormatVersion: 2.0
-    import-service:
-      type: aws_proxy
-      uri: ${import_service_lambda_arn}
-      httpMethod: POST
-      passthroughBehavior: when_no_match
-      contentHandling: CONVERT_TO_TEXT
-      payloadFormatVersion: 2.0
     rehydration-service:
       type: aws_proxy
       uri: ${rehydration_service_lambda_arn}
@@ -281,87 +274,6 @@ components:
         - expiration
         - bucket
         - prefix
-
-    importFile:
-      type: object
-      description: import file metadata for upload tracking and import processing
-      properties:
-        uploadKey:
-          type: string
-          description: (unique) S3 key where the file will be uploaded to under the manifest key
-        filePath:
-          type: string
-          description: relative file path and full file name (including extension)
-      required:
-        - uploadKey
-        - filePath
-    createImportManifestRequest:
-      type: object
-      description: request to instantiate an import manifest
-      properties:
-        integrationId:
-          type: string
-          format: uuid
-          description: (optional) the UUID of the integration task associated with the import
-        packageId:
-          type: string
-          description: (optional) Pennsieve package the import should apply to
-        importType:
-          type: string
-          enum:
-            - timeseries
-        files:
-          type: array
-          items:
-            $ref: "#/components/schemas/importFile"
-      required:
-        - files
-        - importType
-    importManifestResponse:
-      type: object
-      description: import manifest response object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: the ID of the import manifest
-        integrationId:
-          type: string
-          format: uuid
-          description: (optional) the integration task associated with the import
-        datasetId:
-          type: string
-          description: Pennsieve dataset the import applies to
-        packageId:
-          type: string
-          description: (optional) Pennsieve package the import applies to
-        importType:
-          type: string
-      required:
-        - id
-        - datasetId
-        - files
-        - importType
-    importPresignUploadResponse:
-      type: object
-      description: a pre-signed S3 URL
-      properties:
-        url:
-          type: string
-          description: the pre-signed S3 URL
-      required:
-        - url
-    appendFilesToManifestRequest:
-      type: object
-      description: request to append files to an existing import manifest
-      properties:
-        files:
-          type: array
-          items:
-            $ref: "#/components/schemas/importFile"
-      required:
-        - files
-
     rehydrationRequest:
       type: object
       properties:
@@ -1203,379 +1115,6 @@ components:
           description: "The integer representing the HTTP status code (e.g. 200, 404)."
 
 paths:
-  /manifest:
-    get:
-      x-internal: true
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: getManifestList
-      summary: List manifests for dataset
-      description: |
-        Returns a list of manifests that are defined for a dataset.
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset for which we want to retrieve datasets.
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Upload Service
-      responses:
-        '200':
-          description: A list of manifests.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      description: UUID of the manifest.
-                    dataset:
-                      type: string
-                      description: UUID of the dataset where files will be uploaded to.
-                    organization:
-                      type: string
-                      description: Name of the organization where the dataset is located.
-                    status:
-                      type: string
-                      description: Status of the manifest.
-                    created:
-                      type: string
-                      description: Date when the manifest was created.
-                    updated:
-                      type: string
-                      description: Date when the manifest was last updated.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-    post:
-      summary: Synchronize manifest
-      description: |
-        Method to create a new manifest on the server, or to synchronize local updates to the server for existing manifests.
-      x-internal: true
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: syncManifest
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Upload Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset where file will be uploaded.
-      requestBody:
-        description: Create a new upload manifest with files
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/manifestCreateRequest'
-      responses:
-        '200':
-          description: The created manifest.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/addFilesResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /manifest/files:
-    get:
-      x-internal: true
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: getManifestFiles
-      summary: Get files for manifest
-      security:
-        - token_manifest_auth: [ ]
-      tags:
-        - Upload Service
-      description: |
-        Returns a paginated list of files that are associated with an upload manifest. \
-      parameters:
-        - in: query
-          name: manifest_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The UUID of the Upload Manifest.
-        - in: query
-          name: continuation_token
-          schema:
-            type: string
-          required: false
-          description: The UploadID of the last returned item in the previous page.
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 100
-            maximum: 1000
-          description: The number of returned files per page.
-        - in: query
-          name: status
-          schema:
-            type: string
-            enum:
-              - Initiated
-              - Synced
-              - Imported
-              - Finalized
-              - Verified
-              - Failed
-              - Removed
-              - Unknown
-              - null
-          required: false
-          description: Filter by upload status.
-      responses:
-        '200':
-          description: The requested files for a manifest.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Successfull created new manifest.
-                properties:
-                  id:
-                    type: string
-                    description: UUID of the manifest.
-                  dataset:
-                    type: string
-                    description: UUID of the dataset where files will be uploaded to.
-                  organization:
-                    type: string
-                    description: Name of the organization where the dataset is located.
-                  status:
-                    type: string
-                    description: Status of the manifest.
-                  created:
-                    type: string
-                    description: Date when the manifest was created.
-                  updated:
-                    type: string
-                    description: Date when the manifest was last updated.
-                  files:
-                    $ref: '#/components/schemas/manifestFiles'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /manifest/status:
-    get:
-      x-internal: true
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: verifyFileStatus
-      summary: Verify status for manifest files
-      security:
-        - token_manifest_auth: [ ]
-      tags:
-        - Upload Service
-      description: |
-        Returns a list of files that have the requested status on the server for the given manifest.\
-        \
-        You can use this endpoint to check import progress of files during or after uploading a manifest.
-      parameters:
-        - in: query
-          name: manifest_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: The UUID of the Upload Manifest.
-        - in: query
-          name: continuation_token
-          schema:
-            type: string
-          required: false
-          description: The UploadID of the last returned item in the previous page.
-        - in: query
-          name: status
-          schema:
-            type: string
-            enum:
-              - Synced
-              - Imported
-              - Finalized
-              - Verified
-              - Failed
-          required: true
-          description: Filter by upload status.
-        - in: query
-          name: verify
-          required: false
-          schema:
-            type: boolean
-          description: Update status to verified for returned files. If checked, this will always check for Finalized status.
-      responses:
-        '200':
-          description: The requested files for a manifest.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Successfull returned list of files with requested status.
-                properties:
-                  id:
-                    type: string
-                    description: UUID of the manifest.
-                  status:
-                    type: string
-                    description: The current status of the returned files.
-                  files:
-                    type: array
-                    description: List of upload ids for files with requested status.
-                    items:
-                      type: string
-                  continuation_token:
-                    type: string
-                    description: ID of the last returned item.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /manifest/archive:
-    x-internal: true
-    post:
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: archiveManifest
-      summary: Archive manifest to disk
-      security:
-        - token_manifest_auth: [ ]
-      tags:
-        - Upload Service
-      description: |
-        Archives a manifest by storing the manifest as a CSV file on disk.\
-        \
-        Manifests can be manually archived, and are archived automatically a month after creation.
-      parameters:
-        - in: query
-          name: manifest_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: UUID of the manifest to be archived.
-        - in: query
-          name: remove
-          required: true
-          schema:
-            type: boolean
-            default: false
-          description: true if files should be removed from manifest table
-      responses:
-        '200':
-          description: Successfully submitted archive task.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Successfull submitted archive task.
-                properties:
-                  manifest_id:
-                    type: string
-                    description: UUID of the manifest.
-                  message:
-                    type: string
-                    description: Message indicating action.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-    get:
-      x-internal: true
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: getManifestArchiveURL
-      summary: Get Presigned URL to Manifest archive
-      security:
-        - token_manifest_auth: [ ]
-      tags:
-        - Upload Service
-      description: |
-        Returns a pre-signed URL to fetch the Manifest Archive CVS file.
-      parameters:
-        - in: query
-          name: manifest_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: UUID of the manifest archive to be returned.
-      responses:
-        '200':
-          description: Successfully submitted archive task.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Successfull submitted archive task.
-                properties:
-                  url:
-                    type: string
-                    description: Presigned url to fetch the manifest archive.
-                  message:
-                    type: string
-                    description: Message indicating action.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-    delete:
-      x-internal: true
-      summary: Delete an upload manifest
-      description: |
-        This method will permanently delete an upload manifest. \
-        \
-        The manifest needs to be in 'archived' state before delete is allowed.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/manifest-service'
-      operationId: deleteManifestArchive
-      security:
-        - token_manifest_auth: [ ]
-      tags:
-        - Upload Service
-      parameters:
-        - in: query
-          name: manifest_id
-          required: true
-          schema:
-            type: string
-            minimum: 1
-          description: UUID of the manifest to be deleted.
-      responses:
-        '200':
-          description: Successfully deleted the Dataset Proposal.
-          content:
-            application/json:
-              schema:
-                type: object
-                description: Successfull submitted archive task.
-                properties:
-                  message:
-                    type: string
-                    description: Message indicating action.
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
   /imaging/microct/{package_id}/session:
     post:
       summary: generates temporary access to MicroCT imaging assets
@@ -1608,124 +1147,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/microctTemporarySessionResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-
-  /import:
-    post:
-      summary: Create import manifest
-      description: |
-        Calls endpoint on import-service to create an import manifest
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
-      operationId: createImportManifest
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Import Service
-      parameters:
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset where the files will be imported
-      requestBody:
-        description: Import Manifest
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/createImportManifestRequest'
-      responses:
-        '201':
-          description: Created import manifest.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/importManifestResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /import/{import_id}/upload/{upload_key}/presign:
-    get:
-      summary: generate upload pre-signed URL
-      description: |
-        Generates an S3 pre-signed URL for uploading an import file to S3
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
-      operationId: importPresignUpload
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Import Service
-      parameters:
-        - in: path
-          name: import_id
-          schema:
-            type: string
-          required: true
-          description: The import manifest ID
-        - in: path
-          name: upload_key
-          schema:
-            type: string
-          required: true
-          description: The upload key associated with the file being uploaded
-      responses:
-        '200':
-          description: the generated pre-signed URL for upload to S3
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/importPresignUploadResponse'
-        '4XX':
-          $ref: '#/components/responses/Unauthorized'
-        '5XX':
-          $ref: '#/components/responses/Error'
-  /import/{import_id}/files:
-    post:
-      summary: Append files to import manifest
-      description: |
-        Appends files to an existing import manifest and increments the total files count.
-        The manifest must be in the initialized state.
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/import-service'
-      operationId: appendFilesToManifest
-      security:
-        - token_dataset_auth: [ ]
-      tags:
-        - Import Service
-      parameters:
-        - in: path
-          name: import_id
-          schema:
-            type: string
-          required: true
-          description: The import manifest ID
-        - in: query
-          name: dataset_id
-          schema:
-            type: string
-          required: true
-          description: The dataset where the files will be imported
-      requestBody:
-        description: Files to append to the manifest
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/appendFilesToManifestRequest'
-      responses:
-        '201':
-          description: Successfully appended files to the import manifest.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/importManifestResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
@@ -2004,256 +1425,256 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /ga4gh/drs/v1/objects/{object_id}:
-    get:
-      operationId: getUserById
-      summary: "Get info about a DrsObject"
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
-      description: |
-        Returns object metadata, and a list of access methods that can be used to fetch object bytes.
-        If the `expand` query parameter is set to `true` and the object_id refers to a bundle, the entire set of objects in the bundle is expanded and included in the result.
-      tags:
-        - DRS Service
-      parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "DrsObject identifier"
-        - name: expand
-          in: query
-          required: false
-          schema:
-            type: boolean
-          description: |
-            If false and the object_id refers to a bundle, then the ContentsObject array contains only those objects directly contained in the bundle. 
-            If true and the object_id refers to a bundle, then the entire set of objects in the bundle is expanded. 
-            Recursion continues through the entire sub-tree of the bundle.
-      responses:
-        '200':
-          description: "Successful response containing the DrsObject information"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/drsObjectResponse'
-        '404':
-          description: "DrsObject not found"
-        '401':
-          description: "Unauthorized"
-      security: [ ]
-
-    post:
-      operationId: postUserById
-      summary: "Get info about a DrsObject through POST'ing a Passport"
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
-      description: |
-        Returns object metadata, and a list of access methods that can be used to fetch object bytes.
-        Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
-      tags:
-        - DRS Service
-      parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "DrsObject identifier"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/getDrsObjectWithPassportRequest'
-      responses:
-        '200':
-          description: "Successful response containing the DrsObject information"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/getDrsObjectWithPassportResponse'
-        '404':
-          description: "DrsObject not found"
-        '401':
-          description: "Unauthorized"
-      security:
-        - PassportAuth: [ ]
-
-  /ga4gh/drs/v1/objects:
-    post:
-      operationId: getUserObject
-      summary: "Get info about multiple DrsObjects with an optional Passport(s)"
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
-      description: |
-        Returns an array of object metadata, and a list of access methods that can be used to fetch objects' bytes.
-        Currently this is limited to use passports (one or more) or a single bearer token, so make sure your bulk request is for objects that all use the same passports/token.
-      tags:
-        - DRS Service
-      parameters:
-        - name: expand
-          in: query
-          required: false
-          schema:
-            type: boolean
-          description: |
-            If false and the object_id refers to a bundle, then the ContentsObject array contains only those objects directly contained in the bundle.
-            If true and the object_id refers to a bundle, then the entire set of objects in the bundle is expanded.
-            Recursion continues through the entire sub-tree of the bundle. If the object_id refers to a blob, then the query parameter is ignored.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/multipleDrsObjectsRequest'
-      responses:
-        '200':
-          description: "Successful response containing the DrsObjects information"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/multipleDrsObjectsResponse'
-        '404':
-          description: "DrsObject(s) not found"
-        '401':
-          description: "Unauthorized"
-      security:
-        - PassportAuth: [ ]
-
-
-  /ga4gh/drs/v1/objects/{object_id}/access/{access_id}:
-    get:
-      operationId: getUserbyAccessId
-      summary: "Get a URL for fetching bytes"
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
-      description: |
-        Returns a URL that can be used to fetch the bytes of a DrsObject. 
-        This method only needs to be called when using an AccessMethod that contains an access_id 
-        (e.g., for servers that use signed URLs for fetching object bytes).
-      tags:
-        - DRS Service
-      parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "DrsObject identifier"
-        - name: access_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "An access_id from the access_methods list of a DrsObject"
-      responses:
-        '200':
-          description: "The AccessURL was found successfully"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/fetchUrlResponse'
-        '404':
-          description: "Access URL not found"
-        '401':
-          description: "Unauthorized"
-      security: [ ]
-
-    post:
-      operationId: postUserbyAccessId
-      summary: "Get a URL for fetching bytes through POST'ing a Passport"
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
-      description: |
-        Returns a URL that can be used to fetch the bytes of a DrsObject. 
-        This method only needs to be called when using an AccessMethod that contains an access_id 
-        (e.g., for servers that use signed URLs for fetching object bytes). 
-        Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
-      tags:
-        - DRS Service
-      parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "DrsObject identifier"
-        - name: access_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: "An access_id from the access_methods list of a DrsObject"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/fetchUrlWithPassportRequest'
-      responses:
-        '200':
-          description: "The AccessURL was found successfully"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/fetchUrlResponse'
-        '404':
-          description: "Access URL not found"
-        '401':
-          description: "Unauthorized"
-      security:
-        - PassportAuth: [ ]
-  /ga4gh/drs/v1/objects/access:
-    post:
-      operationId: postAllObjects
-      x-amazon-apigateway-integration:
-        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
-      summary: "Get URLs for fetching bytes from multiple objects with an optional Passport(s)"
-      description: |
-        Returns an array of URL objects that can be used to fetch the bytes of multiple DrsObjects. 
-        This method only needs to be called when using an AccessMethod that contains an access_id 
-        (e.g., for servers that use signed URLs for fetching object bytes). 
-        Currently this is limited to use passports (one or more) or a single bearer token, 
-        so make sure your bulk request is for objects that all use the same passports/token.
-      tags:
-        - DRS Service
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/bulkFetchUrlsRequest'
-      responses:
-        '200':
-          description: "Successful response containing the AccessURLs"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/bulkFetchUrlsResponse'
-        '404':
-          description: "Access URLs not found"
-        '401':
-          description: "Unauthorized"
-      security:
-        - PassportAuth: [ ]
-
-  /ga4gh/drs/v1/service-info:
-    get:
-      summary: "Retrieve information about this service"
-      description: |
-        Returns information about the DRS service based on GA4GH Service Info specification.
-      responses:
-        '200':
-          description: A JSON object with details about the DRS service.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ServiceInfoResponse'
-        '500':
-          description: "Internal server error. Something went wrong on the server side."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InternalServerError'
+#  /ga4gh/drs/v1/objects/{object_id}:
+#    get:
+#      operationId: getUserById
+#      summary: "Get info about a DrsObject"
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
+#      description: |
+#        Returns object metadata, and a list of access methods that can be used to fetch object bytes.
+#        If the `expand` query parameter is set to `true` and the object_id refers to a bundle, the entire set of objects in the bundle is expanded and included in the result.
+#      tags:
+#        - DRS Service
+#      parameters:
+#        - name: object_id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#          description: "DrsObject identifier"
+#        - name: expand
+#          in: query
+#          required: false
+#          schema:
+#            type: boolean
+#          description: |
+#            If false and the object_id refers to a bundle, then the ContentsObject array contains only those objects directly contained in the bundle.
+#            If true and the object_id refers to a bundle, then the entire set of objects in the bundle is expanded.
+#            Recursion continues through the entire sub-tree of the bundle.
+#      responses:
+#        '200':
+#          description: "Successful response containing the DrsObject information"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/drsObjectResponse'
+#        '404':
+#          description: "DrsObject not found"
+#        '401':
+#          description: "Unauthorized"
+#      security: [ ]
+#
+#    post:
+#      operationId: postUserById
+#      summary: "Get info about a DrsObject through POST'ing a Passport"
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
+#      description: |
+#        Returns object metadata, and a list of access methods that can be used to fetch object bytes.
+#        Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
+#      tags:
+#        - DRS Service
+#      parameters:
+#        - name: object_id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#          description: "DrsObject identifier"
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/getDrsObjectWithPassportRequest'
+#      responses:
+#        '200':
+#          description: "Successful response containing the DrsObject information"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/getDrsObjectWithPassportResponse'
+#        '404':
+#          description: "DrsObject not found"
+#        '401':
+#          description: "Unauthorized"
+#      security:
+#        - PassportAuth: [ ]
+#
+#  /ga4gh/drs/v1/objects:
+#    post:
+#      operationId: getUserObject
+#      summary: "Get info about multiple DrsObjects with an optional Passport(s)"
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
+#      description: |
+#        Returns an array of object metadata, and a list of access methods that can be used to fetch objects' bytes.
+#        Currently this is limited to use passports (one or more) or a single bearer token, so make sure your bulk request is for objects that all use the same passports/token.
+#      tags:
+#        - DRS Service
+#      parameters:
+#        - name: expand
+#          in: query
+#          required: false
+#          schema:
+#            type: boolean
+#          description: |
+#            If false and the object_id refers to a bundle, then the ContentsObject array contains only those objects directly contained in the bundle.
+#            If true and the object_id refers to a bundle, then the entire set of objects in the bundle is expanded.
+#            Recursion continues through the entire sub-tree of the bundle. If the object_id refers to a blob, then the query parameter is ignored.
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/multipleDrsObjectsRequest'
+#      responses:
+#        '200':
+#          description: "Successful response containing the DrsObjects information"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/multipleDrsObjectsResponse'
+#        '404':
+#          description: "DrsObject(s) not found"
+#        '401':
+#          description: "Unauthorized"
+#      security:
+#        - PassportAuth: [ ]
+#
+#
+#  /ga4gh/drs/v1/objects/{object_id}/access/{access_id}:
+#    get:
+#      operationId: getUserbyAccessId
+#      summary: "Get a URL for fetching bytes"
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
+#      description: |
+#        Returns a URL that can be used to fetch the bytes of a DrsObject.
+#        This method only needs to be called when using an AccessMethod that contains an access_id
+#        (e.g., for servers that use signed URLs for fetching object bytes).
+#      tags:
+#        - DRS Service
+#      parameters:
+#        - name: object_id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#          description: "DrsObject identifier"
+#        - name: access_id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#          description: "An access_id from the access_methods list of a DrsObject"
+#      responses:
+#        '200':
+#          description: "The AccessURL was found successfully"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/fetchUrlResponse'
+#        '404':
+#          description: "Access URL not found"
+#        '401':
+#          description: "Unauthorized"
+#      security: [ ]
+#
+#    post:
+#      operationId: postUserbyAccessId
+#      summary: "Get a URL for fetching bytes through POST'ing a Passport"
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
+#      description: |
+#        Returns a URL that can be used to fetch the bytes of a DrsObject.
+#        This method only needs to be called when using an AccessMethod that contains an access_id
+#        (e.g., for servers that use signed URLs for fetching object bytes).
+#        Method is a POST to accommodate a JWT GA4GH Passport sent in the formData in order to authorize access.
+#      tags:
+#        - DRS Service
+#      parameters:
+#        - name: object_id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#          description: "DrsObject identifier"
+#        - name: access_id
+#          in: path
+#          required: true
+#          schema:
+#            type: string
+#          description: "An access_id from the access_methods list of a DrsObject"
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/fetchUrlWithPassportRequest'
+#      responses:
+#        '200':
+#          description: "The AccessURL was found successfully"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/fetchUrlResponse'
+#        '404':
+#          description: "Access URL not found"
+#        '401':
+#          description: "Unauthorized"
+#      security:
+#        - PassportAuth: [ ]
+#  /ga4gh/drs/v1/objects/access:
+#    post:
+#      operationId: postAllObjects
+#      x-amazon-apigateway-integration:
+#        $ref: '#/components/x-amazon-apigateway-integrations/drs-service'
+#      summary: "Get URLs for fetching bytes from multiple objects with an optional Passport(s)"
+#      description: |
+#        Returns an array of URL objects that can be used to fetch the bytes of multiple DrsObjects.
+#        This method only needs to be called when using an AccessMethod that contains an access_id
+#        (e.g., for servers that use signed URLs for fetching object bytes).
+#        Currently this is limited to use passports (one or more) or a single bearer token,
+#        so make sure your bulk request is for objects that all use the same passports/token.
+#      tags:
+#        - DRS Service
+#      requestBody:
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/bulkFetchUrlsRequest'
+#      responses:
+#        '200':
+#          description: "Successful response containing the AccessURLs"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/bulkFetchUrlsResponse'
+#        '404':
+#          description: "Access URLs not found"
+#        '401':
+#          description: "Unauthorized"
+#      security:
+#        - PassportAuth: [ ]
+#
+#  /ga4gh/drs/v1/service-info:
+#    get:
+#      summary: "Retrieve information about this service"
+#      description: |
+#        Returns information about the DRS service based on GA4GH Service Info specification.
+#      responses:
+#        '200':
+#          description: A JSON object with details about the DRS service.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/ServiceInfoResponse'
+#        '500':
+#          description: "Internal server error. Something went wrong on the server side."
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/InternalServerError'
