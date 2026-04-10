@@ -14,7 +14,11 @@ jobs:
           find: "Unused"
           replace: "Authorization"
           include: "terraform/upload_service.yml"
+      - name: Strip internal endpoints
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq 'del(.paths[][] | select(.x-internal == true)) | del(.paths[] | select(length == 0))' terraform/upload_service.yml > terraform/upload_service_public.yml
       - name: Run `openapi` command 🚀
         uses: readmeio/rdme@v8
         with:
-          rdme: openapi terraform/upload_service.yml --key=${{ secrets.README_OAS_KEY }} --id=66c5fa89dbe4120025445fd9
+          rdme: openapi terraform/upload_service_public.yml --key=${{ secrets.README_OAS_KEY }} --id=66c5fa89dbe4120025445fd9
