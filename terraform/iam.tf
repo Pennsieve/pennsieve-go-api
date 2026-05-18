@@ -27,6 +27,12 @@ resource "aws_iam_role_policy" "invocation_policy" {
   name = "default"
   role = aws_iam_role.invocation_role.id
 
+  // Grants the API Gateway invocation role permission to call BOTH the HTTP
+  // authorizer (used by REST + HTTP V2 APIs) and the WebSocket authorizer
+  // (used by API Gateway V2 WebSocket APIs). The two Lambdas are separate
+  // because WebSocket REQUEST authorizers only support payload format 1.0
+  // while HTTP V2 authorizers use format 2.0 — see
+  // lambda/authorizer/handler/websocket_handler.go for the long-form note.
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -34,7 +40,10 @@ resource "aws_iam_role_policy" "invocation_policy" {
     {
       "Action": "lambda:InvokeFunction",
       "Effect": "Allow",
-      "Resource": "${aws_lambda_function.authorizer_lambda.arn}"
+      "Resource": [
+        "${aws_lambda_function.authorizer_lambda.arn}",
+        "${aws_lambda_function.websocket_authorizer_lambda.arn}"
+      ]
     }
   ]
 }

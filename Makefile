@@ -4,7 +4,8 @@ LAMBDA_BUCKET ?= "pennsieve-cc-lambda-functions-use1"
 SERVICE_NAME  ?= "pennsieve-go-api"
 WORKING_DIR   ?= "$(shell pwd)"
 PACKAGE_NAME  ?= "api-v2-authorizer-${IMAGE_TAG}.zip"
-DIRECT_AUTHORIZER_PACKAGE_NAME ?= "api-v2-direct-authorizer-${IMAGE_TAG}.zip"
+DIRECT_AUTHORIZER_PACKAGE_NAME    ?= "api-v2-direct-authorizer-${IMAGE_TAG}.zip"
+WEBSOCKET_AUTHORIZER_PACKAGE_NAME ?= "api-v2-websocket-authorizer-${IMAGE_TAG}.zip"
 
 .DEFAULT: help
 
@@ -66,6 +67,17 @@ package:
 			cd /build/lambda/bin/direct-authorizer/ && \
 			zip -r /build/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) . && \
 			chown -R $$(id -u):$$(id -g) /build/lambda/bin/direct-authorizer/"
+	@echo ""
+	@echo "*********************************************"
+	@echo "*   Building WebSocket Authorizer lambda    *"
+	@echo "*********************************************"
+	@echo ""
+	docker run --rm -v $(WORKING_DIR):/build -w /build/lambda/authorizer golang:1.24-alpine \
+		sh -c "apk add --no-cache zip && \
+			GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o /build/lambda/bin/websocket-authorizer/bootstrap ./cmd/websocket-authorizer && \
+			cd /build/lambda/bin/websocket-authorizer/ && \
+			zip -r /build/lambda/bin/websocket-authorizer/$(WEBSOCKET_AUTHORIZER_PACKAGE_NAME) . && \
+			chown -R $$(id -u):$$(id -g) /build/lambda/bin/websocket-authorizer/"
 
 publish:
 	@make package
@@ -83,3 +95,10 @@ publish:
 	@echo ""
 	aws s3 cp $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME) s3://$(LAMBDA_BUCKET)/pennsieve-go-api/
 	rm -rf $(WORKING_DIR)/lambda/bin/direct-authorizer/$(DIRECT_AUTHORIZER_PACKAGE_NAME)
+	@echo ""
+	@echo "***********************************************"
+	@echo "*   Publishing WebSocket Authorizer lambda    *"
+	@echo "***********************************************"
+	@echo ""
+	aws s3 cp $(WORKING_DIR)/lambda/bin/websocket-authorizer/$(WEBSOCKET_AUTHORIZER_PACKAGE_NAME) s3://$(LAMBDA_BUCKET)/pennsieve-go-api/
+	rm -rf $(WORKING_DIR)/lambda/bin/websocket-authorizer/$(WEBSOCKET_AUTHORIZER_PACKAGE_NAME)

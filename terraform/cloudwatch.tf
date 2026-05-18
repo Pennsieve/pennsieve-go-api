@@ -22,3 +22,8 @@ resource "aws_cloudwatch_log_group" "direct_authorizer_lambda_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.direct_authorizer_lambda.function_name}"
   retention_in_days = 30
 }
+
+resource "aws_cloudwatch_log_group" "websocket_authorizer_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.websocket_authorizer_lambda.function_name}"
+  retention_in_days = 30
+}
