@@ -95,3 +95,62 @@ resource "aws_lambda_permission" "allow_same_account_invoke_direct_authorizer" {
   function_name = aws_lambda_function.direct_authorizer_lambda.function_name
   principal     = data.aws_caller_identity.current.account_id
 }
+
+## Lambda function for WebSocket API Gateway REQUEST authorizers
+##
+## Separate from authorizer_lambda because API Gateway WebSocket REQUEST
+## authorizers only support payload format 1.0 (REST-style event shape),
+## while the HTTP authorizer above is hard-coded to payload format 2.0.
+## AWS does not provide a toggle to make WebSocket emit V2 payload —
+## confirmed via the AWS docs and aws-cdk #14858.
+##
+## Reuses the same IAM role, same image S3 layout, same VPC + env vars as
+## the existing authorizers; differs only in the handler entrypoint
+## (cmd/websocket-authorizer/main.go).
+resource "aws_lambda_function" "websocket_authorizer_lambda" {
+  description   = "WebSocket REQUEST authorizer for the Pennsieve API v2."
+  function_name = "${var.environment_name}-${var.service_name}-websocket-authorizer-lambda-${data.terraform_remote_state.region.outputs.aws_region_shortname}"
+  handler       = "bootstrap"
+  runtime       = "provided.al2023"
+  architectures = ["arm64"]
+  role          = aws_iam_role.authorizer_lambda_role.arn
+  timeout       = 30 # WS authorizer is in the handshake critical path; fail fast
+  memory_size   = 128
+  s3_bucket     = var.lambda_bucket
+  s3_key        = "${var.service_name}/api-v2-websocket-authorizer-${var.image_tag}.zip"
+  publish       = false
+
+  vpc_config {
+    subnet_ids         = tolist(data.terraform_remote_state.vpc.outputs.private_subnet_ids)
+    security_group_ids = [data.terraform_remote_state.platform_infrastructure.outputs.upload_v2_security_group_id]
+  }
+
+  environment {
+    variables = {
+      ENV                = var.environment_name
+      PENNSIEVE_DOMAIN   = data.terraform_remote_state.account.outputs.domain_name,
+      REGION             = var.aws_region
+      USER_POOL          = data.terraform_remote_state.authentication_service.outputs.user_pool_2_id,
+      USER_CLIENT        = data.terraform_remote_state.authentication_service.outputs.user_pool_2_client_id,
+      TOKEN_POOL         = data.terraform_remote_state.authentication_service.outputs.token_pool_id,
+      TOKEN_CLIENT       = data.terraform_remote_state.authentication_service.outputs.token_pool_client_id,
+      RDS_PROXY_ENDPOINT = data.terraform_remote_state.pennsieve_postgres.outputs.rds_proxy_endpoint,
+      MANIFEST_TABLE     = data.terraform_remote_state.upload_service_v2.outputs.manifest_table_name,
+      LOG_LEVEL          = "INFO"
+      AUTHORIZER_MODE    = "LEGACY"
+
+      // Optional cross-service compute-node access check. When the
+      // WebSocket handshake URL carries `?computeNodeId=...`, the
+      // authorizer invokes this Lambda (owned by account-service) to
+      // verify the user has access to that compute node. IAM grant for
+      // this invocation lives in iam.tf — see the
+      // `authorizer_invoke_check_access` policy.
+      //
+      // This is the first runtime call from pennsieve-go-api outward into
+      // account-service. The dependency direction is intentional — see
+      // the package doc at the top of handler/websocket_handler.go for
+      // the architectural rationale.
+      CHECK_ACCESS_LAMBDA_NAME = data.terraform_remote_state.account_service.outputs.check_access_lambda_name
+    }
+  }
+}

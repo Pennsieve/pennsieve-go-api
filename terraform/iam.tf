@@ -27,6 +27,12 @@ resource "aws_iam_role_policy" "invocation_policy" {
   name = "default"
   role = aws_iam_role.invocation_role.id
 
+  // Grants the API Gateway invocation role permission to call BOTH the HTTP
+  // authorizer (used by REST + HTTP V2 APIs) and the WebSocket authorizer
+  // (used by API Gateway V2 WebSocket APIs). The two Lambdas are separate
+  // because WebSocket REQUEST authorizers only support payload format 1.0
+  // while HTTP V2 authorizers use format 2.0 — see
+  // lambda/authorizer/handler/websocket_handler.go for the long-form note.
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -34,7 +40,10 @@ resource "aws_iam_role_policy" "invocation_policy" {
     {
       "Action": "lambda:InvokeFunction",
       "Effect": "Allow",
-      "Resource": "${aws_lambda_function.authorizer_lambda.arn}"
+      "Resource": [
+        "${aws_lambda_function.authorizer_lambda.arn}",
+        "${aws_lambda_function.websocket_authorizer_lambda.arn}"
+      ]
     }
   ]
 }
@@ -130,6 +139,27 @@ data "aws_iam_policy_document" "authorizer_lambda_iam_policy_document" {
     ]
     resources = [
       data.terraform_remote_state.workflow_service.outputs.callback_validator_lambda_arn,
+    ]
+  }
+
+  // Authorizer Lambdas (specifically the websocket-authorizer) need to
+  // invoke account-service's check-access Lambda when the WebSocket
+  // handshake URL carries `?computeNodeId=...`. This is the first runtime
+  // call from pennsieve-go-api outward into account-service — see the
+  // package doc at the top of lambda/authorizer/handler/websocket_handler.go
+  // and the matching env-var wiring in lambda.tf for the architectural
+  // rationale.
+  //
+  // Resource is scoped to the specific check-access Lambda ARN; the
+  // authorizer cannot invoke arbitrary functions in account-service.
+  statement {
+    sid    = "AuthorizerInvokeCheckAccess"
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      data.terraform_remote_state.account_service.outputs.check_access_lambda_arn,
     ]
   }
 
