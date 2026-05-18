@@ -138,6 +138,19 @@ resource "aws_lambda_function" "websocket_authorizer_lambda" {
       MANIFEST_TABLE     = data.terraform_remote_state.upload_service_v2.outputs.manifest_table_name,
       LOG_LEVEL          = "INFO"
       AUTHORIZER_MODE    = "LEGACY"
+
+      // Optional cross-service compute-node access check. When the
+      // WebSocket handshake URL carries `?computeNodeId=...`, the
+      // authorizer invokes this Lambda (owned by account-service) to
+      // verify the user has access to that compute node. IAM grant for
+      // this invocation lives in iam.tf — see the
+      // `authorizer_invoke_check_access` policy.
+      //
+      // This is the first runtime call from pennsieve-go-api outward into
+      // account-service. The dependency direction is intentional — see
+      // the package doc at the top of handler/websocket_handler.go for
+      // the architectural rationale.
+      CHECK_ACCESS_LAMBDA_NAME = data.terraform_remote_state.account_service.outputs.check_access_lambda_name
     }
   }
 }

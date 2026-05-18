@@ -142,4 +142,25 @@ data "aws_iam_policy_document" "authorizer_lambda_iam_policy_document" {
     ]
   }
 
+  // Authorizer Lambdas (specifically the websocket-authorizer) need to
+  // invoke account-service's check-access Lambda when the WebSocket
+  // handshake URL carries `?computeNodeId=...`. This is the first runtime
+  // call from pennsieve-go-api outward into account-service — see the
+  // package doc at the top of lambda/authorizer/handler/websocket_handler.go
+  // and the matching env-var wiring in lambda.tf for the architectural
+  // rationale.
+  //
+  // Resource is scoped to the specific check-access Lambda ARN; the
+  // authorizer cannot invoke arbitrary functions in account-service.
+  statement {
+    sid    = "AuthorizerInvokeCheckAccess"
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = [
+      data.terraform_remote_state.account_service.outputs.check_access_lambda_arn,
+    ]
+  }
+
 }

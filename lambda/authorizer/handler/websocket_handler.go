@@ -53,16 +53,23 @@ import (
 //  4. If `datasetId` is present in the query string, runs the same dataset role
 //     check the HTTP `DatasetAuthorizer` runs. Refuses with role.None.
 //
-//  5. Returns a V1-shaped IAM policy + flattened context. Context fields are
+//  5. If `computeNodeId` is present in the query string (and we have a resolved
+//     org node ID from the claims), invokes account-service's check-access
+//     Lambda. Refuses if hasAccess=false. This is the one cross-service call
+//     the authorizer makes — see the package doc + Terraform IAM grant for the
+//     rationale. The check is opt-in via identity source; services that don't
+//     care about compute-node access simply omit `computeNodeId` from the
+//     handshake URL.
+//
+//  6. Returns a V1-shaped IAM policy + flattened context. Context fields are
 //     scalars only (V1 limitation — no nested objects); we serialize the
 //     user/org/dataset claims as JSON strings so consumers can unmarshal if
 //     they want the full shape, plus break out `userNodeId` / `orgNodeId` /
-//     `datasetRole` as direct scalar fields for convenience.
+//     `datasetRole` / `computeNodeAccess` as direct scalar fields for
+//     convenience.
 //
 // What this authorizer does NOT do:
 //
-//   - Compute-node access (chat-specific concept; the chat service still calls
-//     account-service's check-access Lambda for that after the handshake).
 //   - Per-route authorization. The IAM policy resource ARN uses a wildcard so
 //     all routes on this WebSocket connection get one auth decision; that
 //     matches how WebSocket REQUEST authorizers work — they only fire at
@@ -70,9 +77,14 @@ import (
 //
 // Required query-string parameters:
 //
-//	token     — Cognito access token
-//	datasetId — Pennsieve dataset node ID (N:dataset:<uuid>)
-//	orgId     — Pennsieve organization node ID (N:organization:<uuid>)
+//	token         — Cognito access token (always required)
+//	datasetId     — Pennsieve dataset node ID, format N:dataset:<uuid> (optional;
+//	                presence triggers dataset role check)
+//	orgId         — Pennsieve organization node ID, format N:organization:<uuid>
+//	                (optional; required if computeNodeId is set, since
+//	                check-access is org-scoped)
+//	computeNodeId — Plain UUID of a Pennsieve compute node (optional; presence
+//	                triggers cross-service call to account-service check-access)
 //
 // Missing/invalid parameters produce a Deny policy with a `errorReason` context
 // field so callers can log the cause without exposing it to the WebSocket
@@ -137,15 +149,49 @@ func WebSocketHandler(ctx context.Context, event events.APIGatewayCustomAuthoriz
 		return denyResponse(event.MethodArn, fmt.Sprintf("claims_failed: %s", err.Error())), nil
 	}
 
-	return allowResponse(event.MethodArn, claims), nil
+	// Optional cross-service compute-node access check. Only runs when the
+	// caller actually has a compute node concept (chat-service does;
+	// hypothetical future notification/telemetry services may not). The
+	// `accessType` ("owner" / "shared" / "workspace" / "team") gets flattened
+	// into the response context for consumers who want to display it.
+	var computeNodeAccessType string
+	if nodeUUID := event.QueryStringParameters["computeNodeId"]; nodeUUID != "" {
+		userNodeID := extractPrincipalID(claims)
+		orgNodeID := extractOrgNodeID(claims)
+		if orgNodeID == "" {
+			logger.Warn("rejecting — computeNodeId provided without an org claim")
+			return denyResponse(event.MethodArn, "compute_node_check_missing_org"), nil
+		}
+		accessType, err := checkComputeNodeAccess(ctx, cfg, userNodeID, nodeUUID, orgNodeID)
+		if err != nil {
+			logger.WithError(err).Error("compute-node access check failed")
+			// Fail closed on transport errors — if we can't confirm access, refuse.
+			return denyResponse(event.MethodArn, fmt.Sprintf("compute_node_check_failed: %s", err.Error())), nil
+		}
+		if accessType == "" {
+			logger.WithFields(log.Fields{"user": userNodeID, "node": nodeUUID, "org": orgNodeID}).
+				Warn("rejecting — compute-node access denied")
+			return denyResponse(event.MethodArn, "compute_node_access_denied"), nil
+		}
+		computeNodeAccessType = accessType
+	}
+
+	return allowResponseWithComputeNode(event.MethodArn, claims, computeNodeAccessType), nil
 }
 
-// allowResponse builds an Allow IAM policy authorizing the caller for ALL
-// routes on this WebSocket API (the policy resource uses a wildcard at the
-// route key). WebSocket REQUEST authorizers fire only on $connect, and the
-// resulting connection inherits the policy for its lifetime — there is no
-// re-evaluation on subsequent message frames.
-func allowResponse(methodArn string, claims map[string]interface{}) events.APIGatewayCustomAuthorizerResponse {
+// allowResponseWithComputeNode builds an Allow IAM policy authorizing the
+// caller for ALL routes on this WebSocket API (wildcard route key), with an
+// optional `computeNodeAccess` field added to the response context when the
+// caller ran a compute-node access check.
+//
+// WebSocket REQUEST authorizers fire only on $connect, and the resulting
+// connection inherits the policy for its lifetime — there is no re-evaluation
+// on subsequent message frames.
+func allowResponseWithComputeNode(methodArn string, claims map[string]interface{}, computeNodeAccessType string) events.APIGatewayCustomAuthorizerResponse {
+	ctx := flattenContext(claims)
+	if computeNodeAccessType != "" {
+		ctx["computeNodeAccess"] = computeNodeAccessType
+	}
 	return events.APIGatewayCustomAuthorizerResponse{
 		PrincipalID: extractPrincipalID(claims),
 		PolicyDocument: events.APIGatewayCustomAuthorizerPolicy{
@@ -156,7 +202,7 @@ func allowResponse(methodArn string, claims map[string]interface{}) events.APIGa
 				Resource: []string{wildcardArn(methodArn)},
 			}},
 		},
-		Context: flattenContext(claims),
+		Context: ctx,
 	}
 }
 
@@ -242,6 +288,19 @@ func extractPrincipalID(claims map[string]interface{}) string {
 		}
 	}
 	return "unknown"
+}
+
+// extractOrgNodeID returns the organization node ID from the resolved claims,
+// or empty string if no org claim was generated (UserAuthorizer path doesn't
+// produce one in non-LEGACY mode). The compute-node access check requires this
+// because account-service's check-access Lambda is org-scoped.
+func extractOrgNodeID(claims map[string]interface{}) string {
+	if v, ok := claims[coreAuthorizer.LabelOrganizationClaim]; ok {
+		if oc, ok := v.(*organization.Claim); ok && oc != nil {
+			return oc.NodeId
+		}
+	}
+	return ""
 }
 
 // wildcardArn converts a route-specific methodArn (ending in `/$connect`)
