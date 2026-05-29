@@ -1053,7 +1053,29 @@ components:
         updated_at:
           type: string
           description: the date and time when the external repository was updated
-    
+
+    gitHubInstallations:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatar_url:
+          type: string
+        config_url:
+          type: string
+
+    getGitHubInstallationsResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+        installations:
+          type: array
+          items:
+            $ref: "#/components/schemas/gitHubInstallations"
+
     ServiceInfoResponse:
       type: object
       properties:
@@ -1694,6 +1716,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/postRepositoryResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /github/installations:
+    get:
+      summary: Get the Pennsieve GitHub App installations the user has access to
+      description: |
+        This operation will inquire with GitHub using the user's access token to obtain
+        the list of Pennsieve GitHub App installations the user has access to.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: getGitHubAppInstallations
+      security:
+        - token_auth: [ ]
+      responses:
+        '200':
+          description: Successfully retrieved the list of Pennsieve GitHub App installations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/getGitHubInstallationsResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
