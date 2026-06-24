@@ -995,8 +995,89 @@ components:
         publishing_to_discover:
           type: boolean
         publishing_to_appstore:
-          type: boolean          
+          type: boolean
 
+    repositoryDetailResponse:
+      type: object
+      description: A single Repository with all of its stored releases and publishing status.
+      properties:
+        id:
+          type: integer
+        repo_id:
+          type: integer
+        name:
+          type: string
+        full_name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        private:
+          type: boolean
+        publishing_to_discover:
+          type: boolean
+        publishing_to_appstore:
+          type: boolean
+        releases:
+          type: array
+          items:
+            $ref: "#/components/schemas/releaseDetail"
+
+    releaseDetail:
+      type: object
+      description: A stored release with its per-destination publishing status.
+      properties:
+        label:
+          type: string
+        marker:
+          type: string
+        release_status:
+          type: string
+        release_date:
+          type: string
+        release_url:
+          type: string
+        source:
+          type: string
+          description: how the release was recorded (webhook or api)
+        publishing:
+          $ref: "#/components/schemas/releasePublishing"
+
+    releasePublishing:
+      type: object
+      properties:
+        discover:
+          description: Discover publishing status; null when never published to Discover.
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/discoverPublication"
+        appstore:
+          $ref: "#/components/schemas/appStorePublication"
+
+    discoverPublication:
+      type: object
+      properties:
+        status:
+          type: string
+          description: created | in progress | completed | failed
+        publication_id:
+          type: integer
+        publication_version:
+          type: integer
+        doi:
+          type: string
+        publication_date:
+          type: string
+
+    appStorePublication:
+      type: object
+      properties:
+        status:
+          type: string
+          description: App Store publishing status; "unavailable" (managed by App-Deploy-Service).
+        detail:
+          type: string
 
     repositoriesResponse:
       type: object
@@ -1716,6 +1797,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/postRepositoryResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/{owner}/{repo}:
+    get:
+      summary: Get a single Repository with its releases and publishing status
+      description: |
+        Returns a single Repository, identified by its full name (owner/repo), along |
+        with all of its stored releases. Each release is annotated with its Pennsieve |
+        publishing status: Discover status comes from this service's records; App Store |
+        status is managed externally and is reported as unavailable. Reads only from the |
+        service's database and does not call GitHub.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
+      operationId: getRepository
+      tags:
+        - Repository Service
+      responses:
+        '200':
+          description: The Repository with its releases and publishing status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryDetailResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
