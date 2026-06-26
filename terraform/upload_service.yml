@@ -597,6 +597,27 @@ components:
         publishing_to_appstore:
           type: boolean
 
+    publishReleaseRequest:
+      type: object
+      description: Body for POST /repository/{owner}/{repo}/publish.
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          description: the release tag/label to publish
+        destinations:
+          type: array
+          description: |
+            Optional override of where to publish. When omitted, the repository's |
+            configured tracking determines the destinations. NOTE: currently |
+            accepted and validated but not yet enforced by the publisher.
+          items:
+            type: string
+            enum:
+              - discover
+              - appstore
+
     publishRepositoryRequest:
       type: object
       properties:
@@ -1895,33 +1916,45 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /repositories/publish:
+  /repository/{owner}/{repo}/publish:
     x-internal: true
     post:
-      summary: Trigger publish to Discover or AppStore
+      summary: Publish a specific release of a repository on demand
       description: |
-        Triggers a publish to Discover or AppStore for a repository.
+        Publishes a specific release (by tag/label) of a repository to Pennsieve |
+        Discover and/or the App Store. The repository is identified by its full name |
+        via the owner/repo path segments; the release label and an optional |
+        destinations override are supplied in the request body.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: publishRepository
+      operationId: publishRepositoryRelease
       security:
         - token_auth: [ ]
       tags:
-        - GitHub Service
+        - Repository Service
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
       requestBody:
         description: Payload
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/triggerPublishRepository'
+              $ref: '#/components/schemas/publishReleaseRequest'
       responses:
-        '200':
-          description: Received and accepted trigger publish event.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/triggerPublishRepository'
+        '202':
+          description: Release accepted; publishing has been triggered.
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
