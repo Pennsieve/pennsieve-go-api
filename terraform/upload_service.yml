@@ -1013,6 +1013,14 @@ components:
           type: string
         url:
           type: string
+        private:
+          type: boolean
+        visibility:
+          type: string
+          description: repository visibility, derived from `private`
+          enum:
+            - public
+            - private
         publishing_to_discover:
           type: boolean
         publishing_to_appstore:
@@ -1036,6 +1044,12 @@ components:
           type: string
         private:
           type: boolean
+        visibility:
+          type: string
+          description: repository visibility, derived from `private`
+          enum:
+            - public
+            - private
         publishing_to_discover:
           type: boolean
         publishing_to_appstore:
