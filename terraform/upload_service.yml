@@ -597,6 +597,27 @@ components:
         publishing_to_appstore:
           type: boolean
 
+    publishReleaseRequest:
+      type: object
+      description: Body for POST /repository/{owner}/{repo}/publish.
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          description: the release tag/label to publish
+        destinations:
+          type: array
+          description: |
+            Optional override of where to publish. When omitted, the repository's |
+            configured tracking determines the destinations. NOTE: currently |
+            accepted and validated but not yet enforced by the publisher.
+          items:
+            type: string
+            enum:
+              - discover
+              - appstore
+
     publishRepositoryRequest:
       type: object
       properties:
@@ -984,6 +1005,13 @@ components:
     repository:
       type: object
       properties:
+        id:
+          type: integer
+        repo_id:
+          type: integer
+        user_id:
+          type: integer
+          description: the requesting user's id (present on the list response)
         name:
           type: string
         full_name:
@@ -992,21 +1020,138 @@ components:
           type: string
         url:
           type: string
+        type:
+          type: string
+        private:
+          type: boolean
+        visibility:
+          type: string
+          description: repository visibility, derived from `private`
+          enum:
+            - public
+            - private
         publishing_to_discover:
           type: boolean
         publishing_to_appstore:
-          type: boolean          
+          type: boolean
+        latest_release:
+          type: object
+          description: the repository's most recent release; omitted when there is none
+          properties:
+            label:
+              type: string
+            marker:
+              type: string
+            release_status:
+              type: string
+            release_date:
+              type: string
+            release_url:
+              type: string
 
+    repositoryDetailResponse:
+      type: object
+      description: A single Repository with all of its stored releases and publishing status.
+      properties:
+        id:
+          type: integer
+        repo_id:
+          type: integer
+        name:
+          type: string
+        full_name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+        private:
+          type: boolean
+        visibility:
+          type: string
+          description: repository visibility, derived from `private`
+          enum:
+            - public
+            - private
+        publishing_to_discover:
+          type: boolean
+        publishing_to_appstore:
+          type: boolean
+        releases:
+          type: array
+          items:
+            $ref: "#/components/schemas/releaseDetail"
+
+    releaseDetail:
+      type: object
+      description: A stored release with its per-destination publishing status.
+      properties:
+        label:
+          type: string
+        marker:
+          type: string
+        release_status:
+          type: string
+        release_date:
+          type: string
+        release_url:
+          type: string
+        source:
+          type: string
+          description: how the release was recorded (webhook or api)
+        publishing:
+          $ref: "#/components/schemas/releasePublishing"
+
+    releasePublishing:
+      type: object
+      properties:
+        discover:
+          description: Discover publishing status; null when never published to Discover.
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/discoverPublication"
+        appstore:
+          $ref: "#/components/schemas/appStorePublication"
+
+    discoverPublication:
+      type: object
+      properties:
+        status:
+          type: string
+          description: created | in progress | completed | failed
+        publication_id:
+          type: integer
+        publication_version:
+          type: integer
+        doi:
+          type: string
+        publication_date:
+          type: string
+
+    appStorePublication:
+      type: object
+      properties:
+        status:
+          type: string
+          description: App Store publishing status; "unavailable" (managed by App-Deploy-Service).
+        detail:
+          type: string
 
     repositoriesResponse:
       type: object
       properties:
         page:
           type: integer
+          description: the page number returned (1-based)
         size:
           type: integer
+          description: the page size (max items per page)
         count:
           type: integer
+          description: the number of repositories in this page
+        total:
+          type: integer
+          description: the total number of repositories across all pages
         repos:
           type: array
           items:
@@ -1014,30 +1159,37 @@ components:
 
     repositoryRequest:
       type: object
+      description: Body for POST /repositories — enable publishing tracking for a repository.
+      required:
+        - url
       properties:
-        repository_id:
-          type: integer
-        publishing_to_discover:
+        url:
+          type: string
+          description: the repository's GitHub URL
+        publish_to_discover:
           type: boolean
-        publishing_to_appstore:
+          description: whether to enable publishing to Pennsieve Discover
+        publish_to_appstore:
           type: boolean
-        user_id:
-          type: integer
+          description: whether to enable publishing to the App Store
 
     postRepositoryResponse:
       type: object
       properties:
-        id:
-          type: integer
-        repository_id:
-          type: integer
-        publishing_to_discover:
+        url:
+          type: string
+        publish_to_discover:
           type: boolean
-        PublishingToAppstore:
+        publish_to_appstore:
           type: boolean
+        user_id:
+          type: integer
         created_at:
           type: string
           description: the date and time when the external repository was created
+        updated_at:
+          type: string
+          description: the date and time when the external repository was last updated
 
     putRepositoryResponse:
       type: object
@@ -1582,7 +1734,7 @@ paths:
       tags:
         - Account Service
       responses:
-        '201':
+        '200':
           description: GitHub profile information.
           content:
             application/json:
@@ -1604,7 +1756,7 @@ paths:
       tags:
         - Account Service
       responses:
-        '201':
+        '200':
           description: Success message.
           content:
             application/json:
@@ -1638,7 +1790,7 @@ paths:
             schema:
               $ref: '#/components/schemas/githubPostRegisterRequest'
       responses:
-        '201':
+        '200':
           description: Successfully installed and authorized the Pennsieve GitHub App.
           content:
             application/json:
@@ -1677,6 +1829,12 @@ paths:
             default: 25
           required: false
           description: the number of items to return on each page
+        - in: query
+          name: name
+          schema:
+            type: string
+          required: false
+          description: optional case-insensitive filter on repository full name
       operationId: getRepositories
       tags:
         - Repository Service
@@ -1716,6 +1874,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/postRepositoryResponse'
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/{owner}/{repo}:
+    get:
+      summary: Get a single Repository with its releases and publishing status
+      description: |
+        Returns a single Repository, identified by its full name (owner/repo), along |
+        with all of its stored releases. Each release is annotated with its Pennsieve |
+        publishing status: Discover status comes from this service's records; App Store |
+        status is managed externally and is reported as unavailable. Reads only from the |
+        service's database and does not call GitHub.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      security:
+        - token_auth: [ ]
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
+      operationId: getRepository
+      tags:
+        - Repository Service
+      responses:
+        '200':
+          description: The Repository with its releases and publishing status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryDetailResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
@@ -1762,44 +1961,129 @@ paths:
             schema:
               $ref: '#/components/schemas/githubWebhookEvent'
       responses:
-        '200':
-          description: Received and accepted GitHub webhook event.
+        '202':
+          description: |
+            Event accepted for processing. The body is a short status string |
+            (e.g. "event accepted").
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/githubWebhookEventAccepted'
+                type: string
+        '200':
+          description: |
+            Event received but not acted upon (e.g. an unhandled event type or an |
+            intentionally ignored event). The body is a short status string.
+          content:
+            text/plain:
+              schema:
+                type: string
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
           $ref: '#/components/responses/Error'
 
-  /repositories/publish:
+  /repository/{owner}/{repo}/publish:
     x-internal: true
     post:
-      summary: Trigger publish to Discover or AppStore
+      summary: Publish a specific release of a repository on demand
       description: |
-        Triggers a publish to Discover or AppStore for a repository.
+        Publishes a specific release (by tag/label) of a repository to Pennsieve |
+        Discover and/or the App Store. The repository is identified by its full name |
+        via the owner/repo path segments; the release label and an optional |
+        destinations override are supplied in the request body.
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
-      operationId: publishRepository
+      operationId: publishRepositoryRelease
       security:
         - token_auth: [ ]
       tags:
-        - GitHub Service
+        - Repository Service
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
       requestBody:
         description: Payload
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/triggerPublishRepository'
+              $ref: '#/components/schemas/publishReleaseRequest'
       responses:
-        '200':
-          description: Received and accepted trigger publish event.
+        '202':
+          description: Release accepted; publishing has been triggered.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/triggerPublishRepository'
+                type: object
+                description: the publishing event that was signaled
+                properties:
+                  requested_by:
+                    type: string
+                    description: the id of the user who requested the publish
+                  url:
+                    type: string
+                    description: the repository URL
+                  label:
+                    type: string
+                    description: the release tag/label being published
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repositories/publications/{id}/status:
+    x-internal: true
+    put:
+      summary: Force a publication's status (super-admin recovery)
+      description: |
+        Super-admin-only operator recovery: force a publication's status to unwedge a |
+        publication left stuck (e.g. by a timed-out or panicked publishing Lambda). |
+        Only `failed` (makes it retryable) and `created` (requests a full re-publish) are |
+        accepted targets; `completed` is rejected so an operator cannot fake a successful |
+        publish. Intentionally gated on super-admin only, with no per-repository check.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: forcePublicationStatus
+      security:
+        - token_auth: [ ]
+      tags:
+        - Repository Service
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: the publication id
+      requestBody:
+        description: Payload
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  description: the target status
+                  enum:
+                    - failed
+                    - created
+      responses:
+        '200':
+          description: The updated publication.
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
