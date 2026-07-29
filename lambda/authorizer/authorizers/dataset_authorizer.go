@@ -35,8 +35,8 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 			// Genuine map miss: the dataset doesn't exist. Clean, cacheable deny.
 			return nil, fmt.Errorf("no organization found for dataset %s: %w", d.DatasetId, err)
 		}
-		// DB/connection failure resolving the map: ambiguous, must not be cached as a deny.
-		return nil, NewAmbiguousError(fmt.Errorf("unable to resolve organization for dataset %s: %w", d.DatasetId, err))
+		// DB/connection failure resolving the map: indeterminate, must not be cached as a deny.
+		return nil, NewIndeterminateError(fmt.Errorf("unable to resolve organization for dataset %s: %w", d.DatasetId, err))
 	}
 
 	// Token-pool (API-key) tokens are already scoped to a single org. An API key scoped to one
@@ -59,13 +59,13 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 			// than a NoPermission claim when there's no organization_user row for the user.
 			return nil, fmt.Errorf("user has no access to organization %d: %w", orgInt, err)
 		}
-		return nil, NewAmbiguousError(fmt.Errorf("unable to get Organization Role: %w", err))
+		return nil, NewIndeterminateError(fmt.Errorf("unable to get Organization Role: %w", err))
 	}
 
 	// Get Dataset Claim
 	datasetClaim, err := claimsManager.GetDatasetClaim(ctx, currentUser, d.DatasetId, orgInt)
 	if err != nil {
-		return nil, NewAmbiguousError(fmt.Errorf("unable to get Dataset Role: %w", err))
+		return nil, NewIndeterminateError(fmt.Errorf("unable to get Dataset Role: %w", err))
 	}
 	// If user has no role on provided dataset --> return
 	if datasetClaim.Role == role.None {
@@ -79,7 +79,7 @@ func (d *DatasetAuthorizer) GenerateClaims(ctx context.Context, claimsManager ma
 		// Get Publisher's Claim
 		teamClaims, err := claimsManager.GetTeamClaimsForOrg(ctx, currentUser.Id, orgInt)
 		if err != nil {
-			return nil, NewAmbiguousError(fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
+			return nil, NewIndeterminateError(fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
 				currentUser.Id, orgInt, err))
 		}
 

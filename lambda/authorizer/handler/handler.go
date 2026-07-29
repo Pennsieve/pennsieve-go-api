@@ -155,7 +155,7 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {
 		logger.Error(err)
-		if isAmbiguous(err) {
+		if isIndeterminate(err) {
 			// DB failure, timeout, or other unexpected lookup error: not an authoritative
 			// decision, so return the error (uncached HTTP 500) instead of a cacheable deny.
 			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
@@ -174,11 +174,11 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	}, nil
 }
 
-// isAmbiguous reports whether err represents a DB failure, timeout, or other unexpected lookup
-// error (as opposed to an authoritative access decision) and so must not be cached as a deny.
-func isAmbiguous(err error) bool {
-	var ambiguous *authorizers.AmbiguousError
-	return errors.As(err, &ambiguous)
+// isIndeterminate reports whether err represents a DB failure, timeout, or other unexpected
+// lookup error (as opposed to an authoritative access decision) and so must not be cached as a deny.
+func isIndeterminate(err error) bool {
+	var indeterminate *authorizers.IndeterminateError
+	return errors.As(err, &indeterminate)
 }
 
 // validateCognitoJWT parses and validates the provided JWT from Cognito.

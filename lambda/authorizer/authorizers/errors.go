@@ -1,22 +1,22 @@
 package authorizers
 
-// AmbiguousError marks an error that must not be treated as a cacheable deny by the API
-// Gateway authorizer response. It signals a DB failure, timeout, or other unexpected lookup
-// error — as opposed to an authoritative access decision (a genuine deny) — so the caller can
-// propagate it as an uncached HTTP 500 instead of letting API Gateway cache a 403 for its TTL.
-type AmbiguousError struct {
+// IndeterminateError marks an error for which no authorization decision could be reached — a DB
+// failure, timeout, or other unexpected lookup error — as opposed to an authoritative access
+// decision (a genuine deny). The caller can propagate it as an uncached HTTP 500 instead of
+// letting API Gateway cache a 403 for its TTL.
+type IndeterminateError struct {
 	err error
 }
 
-// NewAmbiguousError wraps err to mark it as ambiguous (not an authoritative deny).
-func NewAmbiguousError(err error) *AmbiguousError {
-	return &AmbiguousError{err: err}
+// NewIndeterminateError wraps err to mark it as indeterminate (not an authoritative deny).
+func NewIndeterminateError(err error) *IndeterminateError {
+	return &IndeterminateError{err: err}
 }
 
-func (e *AmbiguousError) Error() string {
+func (e *IndeterminateError) Error() string {
 	return e.err.Error()
 }
 
-func (e *AmbiguousError) Unwrap() error {
+func (e *IndeterminateError) Unwrap() error {
 	return e.err
 }

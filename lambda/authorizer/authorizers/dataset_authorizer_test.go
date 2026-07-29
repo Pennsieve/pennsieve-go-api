@@ -168,9 +168,9 @@ func testDatasetGenerateClaimsNoDatasetPermission(t *testing.T, managerParams *m
 	authorizer := authorizers.NewDatasetAuthorizer(datasetNodeId)
 	_, err := authorizer.GenerateClaims(context.Background(), claimsManager, "")
 
-	// Checking results: a clean, authoritative (cacheable) deny, not ambiguous.
+	// Checking results: a clean, authoritative (cacheable) deny, not indeterminate.
 	assert.ErrorContains(t, err, "user has no access to dataset")
-	assertNotAmbiguous(t, err)
+	assertNotIndeterminate(t, err)
 }
 
 // TestDatasetOrgDoesNotMatchPreferredOrg is the regression test for the bug this ticket fixes:
@@ -239,12 +239,12 @@ func TestDatasetOrgDoesNotMatchTokenOrg(t *testing.T) {
 	assert.Nil(t, claims)
 	assert.ErrorContains(t, err,
 		fmt.Sprintf("token workspace %d does not match organization %d", tokenWorkspace.Id, datasetOrgId))
-	assertNotAmbiguous(t, err)
+	assertNotIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
 // TestDatasetOrganizationMapMiss: the dataset genuinely doesn't exist in the dataset_organization
-// map. This must be a clean, cacheable deny, not an ambiguous failure.
+// map. This must be a clean, cacheable deny, not an indeterminate failure.
 func TestDatasetOrganizationMapMiss(t *testing.T) {
 	managerParams := mocks.NewClaimsManagerParams(t)
 	currentUser := test.NewUser(101, 1001)
@@ -259,12 +259,12 @@ func TestDatasetOrganizationMapMiss(t *testing.T) {
 
 	assert.Nil(t, claims)
 	require.Error(t, err)
-	assertNotAmbiguous(t, err)
+	assertNotIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
 // TestDatasetOrganizationLookupDBError: a DB/connection failure resolving the dataset's org from
-// the map is ambiguous — it must not be cached as a deny.
+// the map is indeterminate — it must not be cached as a deny.
 func TestDatasetOrganizationLookupDBError(t *testing.T) {
 	managerParams := mocks.NewClaimsManagerParams(t)
 	currentUser := test.NewUser(101, 1001)
@@ -279,11 +279,11 @@ func TestDatasetOrganizationLookupDBError(t *testing.T) {
 
 	assert.Nil(t, claims)
 	require.Error(t, err)
-	assertAmbiguous(t, err)
+	assertIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
-// TestDatasetOrgClaimDBError: a DB failure fetching the org role is also ambiguous.
+// TestDatasetOrgClaimDBError: a DB failure fetching the org role is also indeterminate.
 func TestDatasetOrgClaimDBError(t *testing.T) {
 	managerParams := mocks.NewClaimsManagerParams(t)
 	currentUser := test.NewUser(101, 1001)
@@ -300,14 +300,14 @@ func TestDatasetOrgClaimDBError(t *testing.T) {
 
 	assert.Nil(t, claims)
 	require.Error(t, err)
-	assertAmbiguous(t, err)
+	assertIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
 // TestDatasetUserNotOrgMember: GetOrganizationClaim's inner join returns
 // OrganizationUserNotFoundError (not a NoPermission claim) when the user has no
 // organization_user row for the resolved org. This must be a clean, cacheable deny,
-// not ambiguous — the user genuinely isn't a member of that org.
+// not indeterminate — the user genuinely isn't a member of that org.
 func TestDatasetUserNotOrgMember(t *testing.T) {
 	managerParams := mocks.NewClaimsManagerParams(t)
 	currentUser := test.NewUser(101, 1001)
@@ -324,11 +324,11 @@ func TestDatasetUserNotOrgMember(t *testing.T) {
 
 	assert.Nil(t, claims)
 	require.Error(t, err)
-	assertNotAmbiguous(t, err)
+	assertNotIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
-// TestDatasetClaimDBError: a DB failure fetching the dataset role is also ambiguous.
+// TestDatasetClaimDBError: a DB failure fetching the dataset role is also indeterminate.
 func TestDatasetClaimDBError(t *testing.T) {
 	managerParams := mocks.NewClaimsManagerParams(t)
 	currentUser := test.NewUser(101, 1001)
@@ -353,11 +353,11 @@ func TestDatasetClaimDBError(t *testing.T) {
 
 	assert.Nil(t, claims)
 	require.Error(t, err)
-	assertAmbiguous(t, err)
+	assertIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
-// TestDatasetTeamClaimsForOrgDBError: a DB failure fetching (LEGACY mode) team claims is also ambiguous.
+// TestDatasetTeamClaimsForOrgDBError: a DB failure fetching (LEGACY mode) team claims is also indeterminate.
 func TestDatasetTeamClaimsForOrgDBError(t *testing.T) {
 	managerParams := mocks.NewClaimsManagerParams(t)
 	currentUser := test.NewUser(101, 1001)
@@ -388,18 +388,18 @@ func TestDatasetTeamClaimsForOrgDBError(t *testing.T) {
 
 	assert.Nil(t, claims)
 	require.Error(t, err)
-	assertAmbiguous(t, err)
+	assertIndeterminate(t, err)
 	managerParams.AssertMockExpectations(t)
 }
 
-func assertAmbiguous(t *testing.T, err error) {
+func assertIndeterminate(t *testing.T, err error) {
 	t.Helper()
-	var ambiguous *authorizers.AmbiguousError
-	assert.True(t, errors.As(err, &ambiguous), "expected an ambiguous error (uncached 500), got: %v", err)
+	var indeterminate *authorizers.IndeterminateError
+	assert.True(t, errors.As(err, &indeterminate), "expected an indeterminate error (uncached 500), got: %v", err)
 }
 
-func assertNotAmbiguous(t *testing.T, err error) {
+func assertNotIndeterminate(t *testing.T, err error) {
 	t.Helper()
-	var ambiguous *authorizers.AmbiguousError
-	assert.False(t, errors.As(err, &ambiguous), "expected an authoritative deny (not ambiguous), got: %v", err)
+	var indeterminate *authorizers.IndeterminateError
+	assert.False(t, errors.As(err, &indeterminate), "expected an authoritative deny (not indeterminate), got: %v", err)
 }
