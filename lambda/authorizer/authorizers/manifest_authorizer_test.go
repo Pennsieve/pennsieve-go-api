@@ -148,7 +148,7 @@ func testGenerateClaimsLegacy(t *testing.T, managerParams *mocks.ClaimsManagerPa
 	managerParams.MockPennsievePg.OnGetOrganizationClaim(currentUser.Id, expectedOrgId).Return(orgClaim, nil)
 	managerParams.MockPennsieveDy.OnGetManifestById(managerParams.ManifestTableName, manifestId).Return(manifest, nil)
 	managerParams.MockPennsievePg.OnGetDatasetClaim(currentUser, datasetNodeId, expectedOrgId).Return(datasetClaim, nil)
-	managerParams.MockPennsievePg.OnGetTeamClaims(currentUser.Id).Return(teamClaims, nil)
+	managerParams.MockPennsievePg.OnGetTeamClaimsForOrg(currentUser.Id, expectedOrgId).Return(teamClaims, nil)
 
 	// Test
 	authorizer := authorizers.NewManifestAuthorizer(manifestId)

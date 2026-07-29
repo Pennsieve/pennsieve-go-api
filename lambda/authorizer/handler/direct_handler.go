@@ -118,7 +118,7 @@ func DirectHandler(ctx context.Context, request DirectAuthorizeRequest) (DirectA
 		}
 		claims[coreAuthorizer.LabelOrganizationClaim] = orgClaim
 
-		teamClaims, err := postgresDB.GetTeamClaims(ctx, currentUser.Id)
+		teamClaims, err := postgresDB.GetTeamClaimsForOrg(ctx, currentUser.Id, orgClaim.IntId)
 		if err != nil {
 			logger.WithError(err).Error("unable to get team claims")
 			return DirectAuthorizeResponse{

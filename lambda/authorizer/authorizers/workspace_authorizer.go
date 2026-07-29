@@ -41,7 +41,7 @@ func (w *WorkspaceAuthorizer) GenerateClaims(ctx context.Context, claimsManager 
 	}
 
 	// Get Publisher's Claim
-	teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser.Id)
+	teamClaims, err := claimsManager.GetTeamClaimsForOrg(ctx, currentUser.Id, orgClaim.IntId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %s: %w",
 			currentUser.Id, w.WorkspaceID, err)
