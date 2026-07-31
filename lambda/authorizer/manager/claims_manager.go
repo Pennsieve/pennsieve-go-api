@@ -20,7 +20,12 @@ type IdentityManager interface {
 	GetDatasetClaim(ctx context.Context, user *pgdbModels.User, datasetId string, orgId int64) (*dataset.Claim, error)
 	GetOrgClaim(ctx context.Context, userId int64, orgId int64) (*organization.Claim, error)
 	GetOrgClaimByNodeId(ctx context.Context, userId int64, orgNodeId string) (*organization.Claim, error)
+	// GetTeamClaims is deprecated: it scopes to the user's preferred_org_id. Use GetTeamClaimsForOrg instead.
 	GetTeamClaims(ctx context.Context, userId int64) ([]teamUser.Claim, error)
+	// GetTeamClaimsForOrg returns the user's team claims within the given organization, resolved from the request.
+	GetTeamClaimsForOrg(ctx context.Context, userId int64, orgId int64) ([]teamUser.Claim, error)
+	// GetOrganizationIdForDataset resolves the organization id that owns the given dataset node id.
+	GetOrganizationIdForDataset(ctx context.Context, datasetId string) (int64, error)
 	GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error)
 	GetTokenWorkspace() (TokenWorkspace, bool)
 }
@@ -87,6 +92,19 @@ func (c *ClaimsManager) GetTeamClaims(ctx context.Context, userId int64) ([]team
 	}
 
 	return teamClaims, nil
+}
+
+func (c *ClaimsManager) GetTeamClaimsForOrg(ctx context.Context, userId int64, orgId int64) ([]teamUser.Claim, error) {
+	teamClaims, err := c.PostgresDB.GetTeamClaimsForOrg(ctx, userId, orgId)
+	if err != nil {
+		return nil, err
+	}
+
+	return teamClaims, nil
+}
+
+func (c *ClaimsManager) GetOrganizationIdForDataset(ctx context.Context, datasetId string) (int64, error) {
+	return c.PostgresDB.GetOrganizationIdForDataset(ctx, datasetId)
 }
 
 func (c *ClaimsManager) GetTokenWorkspace() (TokenWorkspace, bool) {

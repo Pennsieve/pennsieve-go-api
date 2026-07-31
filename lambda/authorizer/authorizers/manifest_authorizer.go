@@ -64,7 +64,7 @@ func (m *ManifestAuthorizer) GenerateClaims(ctx context.Context, claimsManager m
 
 	if authorizerMode == "LEGACY" {
 		// Get Publisher's Claim
-		teamClaims, err := claimsManager.GetTeamClaims(ctx, currentUser.Id)
+		teamClaims, err := claimsManager.GetTeamClaimsForOrg(ctx, currentUser.Id, manifestOrgId)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get Team Claims for user: %d organization: %d: %w",
 				currentUser.Id, manifestOrgId, err)

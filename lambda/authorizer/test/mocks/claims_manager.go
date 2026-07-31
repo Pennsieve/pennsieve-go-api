@@ -65,6 +65,14 @@ func (m *MockClaimManager) GetTeamClaims(context.Context, int64) ([]teamUser.Cla
 	return MockTeamClaims, nil
 }
 
+func (m *MockClaimManager) GetTeamClaimsForOrg(context.Context, int64, int64) ([]teamUser.Claim, error) {
+	return MockTeamClaims, nil
+}
+
+func (m *MockClaimManager) GetOrganizationIdForDataset(context.Context, string) (int64, error) {
+	return 1, nil
+}
+
 func (m *MockClaimManager) GetManifest(ctx context.Context, manifestId string) (*dydb.ManifestTable, error) {
 	return nil, fmt.Errorf("mock method not implemented")
 }

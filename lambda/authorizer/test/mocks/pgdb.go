@@ -42,6 +42,16 @@ func (m *MockPennsievePgAPI) GetTeamClaims(ctx context.Context, userId int64) ([
 	return args.Get(0).([]teamUser.Claim), args.Error(1)
 }
 
+func (m *MockPennsievePgAPI) GetTeamClaimsForOrg(ctx context.Context, userId int64, organizationId int64) ([]teamUser.Claim, error) {
+	args := m.Called(ctx, userId, organizationId)
+	return args.Get(0).([]teamUser.Claim), args.Error(1)
+}
+
+func (m *MockPennsievePgAPI) GetOrganizationIdForDataset(ctx context.Context, datasetNodeId string) (int64, error) {
+	args := m.Called(ctx, datasetNodeId)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func (m *MockPennsievePgAPI) GetUserByCognitoId(ctx context.Context, cognitoId string) (*pgdb.User, error) {
 	args := m.Called(ctx, cognitoId)
 	return args.Get(0).(*pgdb.User), args.Error(1)
@@ -68,6 +78,14 @@ func (m *MockPennsievePgAPI) OnGetOrganizationClaimByNodeId(userId int64, organi
 
 func (m *MockPennsievePgAPI) OnGetTeamClaims(userId int64) *mock.Call {
 	return m.On("GetTeamClaims", mock.Anything, userId)
+}
+
+func (m *MockPennsievePgAPI) OnGetTeamClaimsForOrg(userId int64, organizationId int64) *mock.Call {
+	return m.On("GetTeamClaimsForOrg", mock.Anything, userId, organizationId)
+}
+
+func (m *MockPennsievePgAPI) OnGetOrganizationIdForDataset(datasetNodeId string) *mock.Call {
+	return m.On("GetOrganizationIdForDataset", mock.Anything, datasetNodeId)
 }
 
 func (m *MockPennsievePgAPI) OnGetUserByCognitoId(cognitoId string) *mock.Call {

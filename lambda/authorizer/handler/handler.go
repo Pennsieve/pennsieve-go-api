@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
+	"github.com/pennsieve/pennsieve-go-api/authorizer/authorizers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/helpers"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/manager"
 	"github.com/pennsieve/pennsieve-go-api/authorizer/service"
@@ -154,6 +155,13 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 	claims, err := authorizer.GenerateClaims(ctx, claimsManager, authorizerMode)
 	if err != nil {
 		logger.Error(err)
+		if isIndeterminate(err) {
+			// DB failure, timeout, or other unexpected lookup error: not an authoritative
+			// decision, so return the error (uncached HTTP 500) instead of a cacheable deny.
+			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+				IsAuthorized: false,
+			}, err
+		}
 		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
 			IsAuthorized: false,
 			Context:      nil,
@@ -164,7 +172,13 @@ func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Req
 		IsAuthorized: true,
 		Context:      claims,
 	}, nil
+}
 
+// isIndeterminate reports whether err represents a DB failure, timeout, or other unexpected
+// lookup error (as opposed to an authoritative access decision) and so must not be cached as a deny.
+func isIndeterminate(err error) bool {
+	var indeterminate *authorizers.IndeterminateError
+	return errors.As(err, &indeterminate)
 }
 
 // validateCognitoJWT parses and validates the provided JWT from Cognito.
