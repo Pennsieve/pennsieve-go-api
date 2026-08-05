@@ -53,13 +53,6 @@ resource "aws_apigatewayv2_stage" "upload-service-gateway-stage" {
   }
 }
 
-resource "aws_apigatewayv2_integration" "int" {
-  api_id           = aws_apigatewayv2_api.upload-service-gateway.id
-  integration_type = "AWS_PROXY"
-  connection_type = "INTERNET"
-  integration_method = "POST"
-  integration_uri = data.terraform_remote_state.upload-service.outputs.service_lambda_invoke_arn
-}
 
 resource "aws_cloudwatch_log_group" "upload-service-log-group" {
   name =  "${var.environment_name}/${var.service_name}/serverless_api_gateway"
