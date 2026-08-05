@@ -117,20 +117,28 @@ func handleCallbackAuth(ctx context.Context, event events.APIGatewayV2CustomAuth
 	}
 	claims[coreAuthorizer.LabelOrganizationClaim] = orgClaim
 
-	datasetClaim, err := postgresDB.GetDatasetClaim(ctx, currentUser, validateResp.DatasetNodeID, orgClaim.IntId)
-	if err != nil {
-		logger.WithError(err).Error("unable to get dataset claim")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
-			IsAuthorized: false,
-		}, nil
+	// Some runs are dataset-less by design — e.g. an environment-build workflow
+	// (builder → persistent-layer, no data-source node) takes no input dataset, so
+	// the validator returns an empty datasetNodeId. Only resolve + require a dataset
+	// claim when the run actually has a dataset; otherwise authorize with the user +
+	// organization claims alone (the run-scoped callback token already binds the
+	// request to this run and its organization).
+	if validateResp.DatasetNodeID != "" {
+		datasetClaim, err := postgresDB.GetDatasetClaim(ctx, currentUser, validateResp.DatasetNodeID, orgClaim.IntId)
+		if err != nil {
+			logger.WithError(err).Error("unable to get dataset claim")
+			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+				IsAuthorized: false,
+			}, nil
+		}
+		if datasetClaim.Role == role.None {
+			logger.Warn("user has no access to dataset")
+			return events.APIGatewayV2CustomAuthorizerSimpleResponse{
+				IsAuthorized: false,
+			}, nil
+		}
+		claims[coreAuthorizer.LabelDatasetClaim] = datasetClaim
 	}
-	if datasetClaim.Role == role.None {
-		logger.Warn("user has no access to dataset")
-		return events.APIGatewayV2CustomAuthorizerSimpleResponse{
-			IsAuthorized: false,
-		}, nil
-	}
-	claims[coreAuthorizer.LabelDatasetClaim] = datasetClaim
 
 	logger.Info("callback token authorization successful")
 	return events.APIGatewayV2CustomAuthorizerSimpleResponse{
