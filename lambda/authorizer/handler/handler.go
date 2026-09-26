@@ -81,14 +81,16 @@ func init() {
 func Handler(ctx context.Context, event events.APIGatewayV2CustomAuthorizerV2Request) (events.APIGatewayV2CustomAuthorizerSimpleResponse, error) {
 	logger := log.WithFields(log.Fields{"Type": event.Type,
 		"pathParameters":          event.PathParameters,
-		"QueryStringParameters":   event.QueryStringParameters,
+		"QueryStringParameters":   redactToken(event.QueryStringParameters),
 		"rawPath":                 event.RawPath,
 		"requestContext.routeKey": event.RequestContext.RouteKey})
 
-	// This Info call may be demoted to Debug or removed entirely in future
+	// This Info call may be demoted to Debug or removed entirely in future.
+	// Credentials are redacted: the raw Authorization header (and the identity
+	// source copied from it) is a live bearer token.
 	logger.WithFields(log.Fields{
-		"IdentitySource": event.IdentitySource,
-		"Headers":        event.Headers}).Info("request parameters")
+		"IdentitySource": redactIdentitySource(event.IdentitySource, event.Headers["authorization"]),
+		"Headers":        redactHeaders(event.Headers)}).Info("request parameters")
 
 	// Check for Callback authorization scheme before JWT processing
 	if helpers.IsCallbackAuth(event.Headers["authorization"]) {
