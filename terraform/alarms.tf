@@ -22,5 +22,9 @@ module "service_alarms" {
       function_name   = aws_lambda_function.websocket_authorizer_lambda.function_name
       timeout_seconds = aws_lambda_function.websocket_authorizer_lambda.timeout
     }
+    events-authorizer = {
+      function_name   = aws_lambda_function.events_authorizer_lambda.function_name
+      timeout_seconds = aws_lambda_function.events_authorizer_lambda.timeout
+    }
   }
 }

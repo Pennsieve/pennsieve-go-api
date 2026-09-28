@@ -154,3 +154,49 @@ resource "aws_lambda_function" "websocket_authorizer_lambda" {
     }
   }
 }
+
+## Lambda authorizer for the AppSync Event API (live updates; replaces Pusher)
+##
+## Decides EVENT_CONNECT and EVENT_SUBSCRIBE per channel; publishing is IAM-only.
+## See lambda/authorizer/handler/events_handler.go and pennsieve-go-core
+## docs/realtime-appsync-design.md. The Event API and the
+## appsync.amazonaws.com invoke permission live with the API itself, so this
+## stack only creates the function.
+##
+## AppSync gives authorizers at most 10 seconds.
+resource "aws_lambda_function" "events_authorizer_lambda" {
+  description   = "AppSync Event API authorizer for Pennsieve live updates."
+  function_name = "${var.environment_name}-${var.service_name}-events-authorizer-lambda-${data.terraform_remote_state.region.outputs.aws_region_shortname}"
+  handler       = "bootstrap"
+  runtime       = "provided.al2023"
+  architectures = ["arm64"]
+  role          = aws_iam_role.authorizer_lambda_role.arn
+  timeout       = 10
+  memory_size   = 128
+  s3_bucket     = var.lambda_bucket
+  s3_key        = "${var.service_name}/api-v2-events-authorizer-${var.image_tag}.zip"
+  publish       = false
+
+  vpc_config {
+    subnet_ids         = tolist(data.terraform_remote_state.vpc.outputs.private_subnet_ids)
+    security_group_ids = [data.terraform_remote_state.platform_infrastructure.outputs.upload_v2_security_group_id]
+  }
+
+  environment {
+    variables = {
+      ENV                = var.environment_name
+      REGION             = var.aws_region
+      USER_POOL          = data.terraform_remote_state.authentication_service.outputs.user_pool_2_id,
+      USER_CLIENT        = data.terraform_remote_state.authentication_service.outputs.user_pool_2_client_id,
+      TOKEN_POOL         = data.terraform_remote_state.authentication_service.outputs.token_pool_id,
+      TOKEN_CLIENT       = data.terraform_remote_state.authentication_service.outputs.token_pool_client_id,
+      RDS_PROXY_ENDPOINT = data.terraform_remote_state.pennsieve_postgres.outputs.rds_proxy_endpoint,
+      LOG_LEVEL          = "INFO"
+
+      // app-deploy-service's check-app-access Lambda, for /applications/<appUuid>
+      // subscriptions. Until it's set (with a matching lambda:InvokeFunction
+      // grant in iam.tf), application subscriptions are denied.
+      CHECK_APP_ACCESS_LAMBDA_NAME = ""
+    }
+  }
+}

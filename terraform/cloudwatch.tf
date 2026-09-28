@@ -27,3 +27,8 @@ resource "aws_cloudwatch_log_group" "websocket_authorizer_lambda_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.websocket_authorizer_lambda.function_name}"
   retention_in_days = 30
 }
+
+resource "aws_cloudwatch_log_group" "events_authorizer_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.events_authorizer_lambda.function_name}"
+  retention_in_days = 30
+}
