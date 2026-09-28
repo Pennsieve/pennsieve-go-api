@@ -1,7 +1,7 @@
 # Pennsieve API Gateway Authorization
 
 **Document Owner:** Platform Engineering
-**Last Updated:** 2026-03-07
+**Last Updated:** 2026-09-28
 **Classification:** Internal / HIPAA Security Review
 **Applicable Regulations:** HIPAA Security Rule (45 CFR 164.312), NIST SP 800-63B
 
@@ -20,6 +20,8 @@ The authorizer supports three distinct authentication flows:
 | **Callback Token** | Workflow compute containers | Cryptographic bearer token | API Gateway HTTP request |
 
 All three flows produce the same standardized **Claims** output, ensuring downstream services are agnostic to the authentication method used.
+
+A separate authorizer decides who may receive **live updates** from the AppSync Event API (section 6). It returns an allow or deny, not claims.
 
 ---
 
@@ -294,7 +296,43 @@ No code changes to the authorizer are required to add a new service.
 
 ---
 
-## 6. Standardized Claims Output
+## 6. Event API Authorization (live updates)
+
+### 6.1 Description
+
+Live updates (upload progress, workflow run status, app build status) are delivered over the AppSync Event API. Backends publish with IAM (SigV4), so the Lambda authorizer only decides connections and subscriptions. The design is in `pennsieve-go-core` `docs/realtime-appsync-design.md`.
+
+### 6.2 Request Format
+
+AppSync invokes the authorizer with the client's token (the Cognito access token, with or without `Bearer `), the operation and, for subscriptions, the exact channel. Clients send the token in the WebSocket subprotocol header, so it never appears in a URL or access log.
+
+### 6.3 Rules
+
+| Operation | Channel | Allowed when |
+|-----------|---------|--------------|
+| `EVENT_CONNECT` | — | The token is a valid Pennsieve access token (either Cognito pool) |
+| `EVENT_SUBSCRIBE` | `/datasets/<datasetUuid>` | `DatasetAuthorizer` gives the caller a role on the dataset |
+| `EVENT_SUBSCRIBE` | `/runs/org-<orgUuid>/<runId>` or `/runs/org-<orgUuid>/*` | `WorkspaceAuthorizer`: the caller is a member of the workspace |
+| `EVENT_SUBSCRIBE` | `/runs/user-<userUuid>/<runId>` or `/runs/user-<userUuid>/*` | The caller is that user |
+| `EVENT_SUBSCRIBE` | `/applications/<appUuid>` | app-deploy-service's check-app-access Lambda allows it, given all of the caller's workspaces and teams |
+| `EVENT_PUBLISH` | any | Never (publishing is IAM-only) |
+
+Any other channel, including any other wildcard, is denied. API tokens scoped to a workspace stay within it: dataset and workspace checks reject other workspaces, and the app check only passes that workspace and its teams.
+
+### 6.4 Caching
+
+- **Allows** are cached by AppSync for up to 300 seconds per API, operation, channel and token, and never past the token's expiry. Losing access therefore stops new subscriptions within 5 minutes; an existing subscription lasts until its connection closes.
+- **Denials are not cached** (`ttlOverride = 0`), so newly granted access works immediately and a failed database lookup is retried.
+
+### 6.5 Security Properties
+
+- Fails closed: an invalid token, an unparseable channel, a database failure, or a failed or unconfigured app check all deny.
+- The token and request headers are never logged; logs carry the request ID, operation and channel.
+- Event payloads never reach the authorizer.
+
+---
+
+## 7. Standardized Claims Output
 
 All three authorization flows produce the same claims structure, which is passed to downstream services in the API Gateway request context:
 
@@ -332,15 +370,15 @@ Downstream services use `authorizer.ParseClaims()` from `pennsieve-go-core` to d
 
 ---
 
-## 7. Infrastructure and Network Security
+## 8. Infrastructure and Network Security
 
-### 7.1 Network Isolation
+### 8.1 Network Isolation
 
 - Both authorizer Lambdas run in **private VPC subnets** with no internet access
 - Database access is via **RDS Proxy** (connection pooling, IAM authentication)
 - Lambda-to-Lambda invocations use **AWS internal networking** (no public internet)
 
-### 7.2 Encryption
+### 8.2 Encryption
 
 | Data | At Rest | In Transit |
 |------|---------|------------|
@@ -349,7 +387,7 @@ Downstream services use `authorizer.ParseClaims()` from `pennsieve-go-core` to d
 | Callback token hashes | DynamoDB server-side encryption (AWS KMS) | TLS 1.2+ (DynamoDB API) |
 | API requests | N/A | TLS 1.2+ (API Gateway enforces HTTPS) |
 
-### 7.3 Logging and Monitoring
+### 8.3 Logging and Monitoring
 
 - All authorization decisions (allow/deny) are logged to **CloudWatch** in structured JSON format
 - Logs include: request path, route key, authorization type, service name (for callback), and outcome
@@ -359,13 +397,14 @@ Downstream services use `authorizer.ParseClaims()` from `pennsieve-go-core` to d
 
 ---
 
-## 8. Implementation Reference
+## 9. Implementation Reference
 
 | Component | Repository | Path |
 |-----------|-----------|------|
 | API Gateway authorizer (JWT + Callback) | `pennsieve-go-api` | `lambda/authorizer/handler/handler.go` |
 | Callback token handler | `pennsieve-go-api` | `lambda/authorizer/handler/callback.go` |
 | Direct authorizer | `pennsieve-go-api` | `lambda/authorizer/handler/direct_handler.go` |
+| Event API authorizer | `pennsieve-go-api` | `lambda/authorizer/handler/events_handler.go` |
 | Authorization header parsing | `pennsieve-go-api` | `lambda/authorizer/helpers/helpers.go` |
 | Authorizer strategy factory | `pennsieve-go-api` | `lambda/authorizer/factory/factory.go` |
 | Claims parsing (downstream) | `pennsieve-go-core` | `pkg/authorizer/claims.go` |

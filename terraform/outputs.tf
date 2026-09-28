@@ -39,3 +39,13 @@ output "websocket_authorizer_lambda_name" {
   value       = aws_lambda_function.websocket_authorizer_lambda.function_name
   description = "Name of the WebSocket authorizer Lambda function"
 }
+
+output "events_authorizer_lambda_arn" {
+  value       = aws_lambda_function.events_authorizer_lambda.arn
+  description = "ARN of the AppSync Event API Lambda authorizer"
+}
+
+output "events_authorizer_lambda_name" {
+  value       = aws_lambda_function.events_authorizer_lambda.function_name
+  description = "Name of the AppSync Event API Lambda authorizer"
+}
