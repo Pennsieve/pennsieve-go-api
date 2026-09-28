@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/pennsieve/pennsieve-go-core/pkg/realtime"
 )
 
-// Channel scheme of the AppSync Event API. It mirrors pennsieve-go-core
+// Channel scheme of the AppSync Event API, as published by pennsieve-go-core
 // pkg/realtime (docs/realtime-appsync-design.md there):
 //
 //	/datasets/<datasetUuid>
@@ -14,9 +16,9 @@ import (
 //	/runs/user-<userUuid>/<runUuid>  /runs/user-<userUuid>/*
 //	/applications/<appUuid>
 const (
-	namespaceDatasets     = "datasets"
-	namespaceRuns         = "runs"
-	namespaceApplications = "applications"
+	namespaceDatasets     = realtime.NamespaceDatasets
+	namespaceRuns         = realtime.NamespaceRuns
+	namespaceApplications = realtime.NamespaceApplications
 
 	runScopeOrg  = "org"
 	runScopeUser = "user"

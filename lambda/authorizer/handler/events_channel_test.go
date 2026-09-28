@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/pennsieve/pennsieve-go-core/pkg/realtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,6 +61,27 @@ func TestParseEventsChannelRejects(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := parseEventsChannel(c[0], c[1])
 			assert.Error(t, err)
+		})
+	}
+}
+
+// The channels go-core's publishers (and subscriber helpers) build must parse.
+func TestParseEventsChannelAcceptsRealtimeChannels(t *testing.T) {
+	cases := map[string]struct {
+		ch   realtime.Channel
+		want eventsChannel
+	}{
+		"dataset":   {realtime.Dataset("N:dataset:" + testUUID), eventsChannel{namespace: "datasets", id: testUUID}},
+		"org run":   {realtime.Run("N:organization:"+testUUID, "", testUUID2), eventsChannel{namespace: "runs", id: testUUID2, scopeKind: "org", scopeId: testUUID}},
+		"user run":  {realtime.Run("", "N:user:"+testUUID, testUUID2), eventsChannel{namespace: "runs", id: testUUID2, scopeKind: "user", scopeId: testUUID}},
+		"org scope": {realtime.RunScope("N:organization:"+testUUID, ""), eventsChannel{namespace: "runs", id: "*", scopeKind: "org", scopeId: testUUID}},
+		"app":       {realtime.Application(testUUID), eventsChannel{namespace: "applications", id: testUUID}},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			got, err := parseEventsChannel(c.ch.Namespace, c.ch.Path())
+			require.NoError(t, err)
+			assert.Equal(t, c.want, got)
 		})
 	}
 }
