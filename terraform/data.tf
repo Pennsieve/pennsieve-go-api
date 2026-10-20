@@ -202,3 +202,19 @@ data "terraform_remote_state" "workflow_service" {
     profile = var.aws_account
   }
 }
+
+# Import Auth Service — source of the shared authorizer (HTTP authorizer cutover).
+# The home gateway (gateway.tf) resolves its authorizer invoke URI + invocation role
+# from here instead of this repo's local authorizer_lambda. The local authorizer
+# lambda is intentionally left defined/exported (retired later in F2); reverting the
+# two gateway.tf references rolls this back with the old authorizer still running.
+data "terraform_remote_state" "auth_service" {
+  backend = "s3"
+
+  config = {
+    bucket  = "${var.aws_account}-terraform-state"
+    key     = "aws/${data.aws_region.current_region.name}/${var.vpc_name}/${var.environment_name}/auth-service/terraform.tfstate"
+    region  = "us-east-1"
+    profile = var.aws_account
+  }
+}
