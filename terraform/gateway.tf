@@ -22,8 +22,8 @@ resource "aws_apigatewayv2_api" "upload-service-gateway" {
     user_pool_endpoint = "https://${var.user_pool_endpoint}"
     token_pool_client_id = data.terraform_remote_state.authentication_service.outputs.token_pool_client_id,
     token_pool_endpoint = "https://${var.token_pool_endpoint}"
-    authorize_lambda_invoke_uri = aws_lambda_function.authorizer_lambda.invoke_arn
-    gateway_authorizer_role = aws_iam_role.invocation_role.arn
+    authorize_lambda_invoke_uri = data.terraform_remote_state.auth_service.outputs.authorizer_lambda_invoke_uri
+    gateway_authorizer_role = data.terraform_remote_state.auth_service.outputs.authorizer_invocation_role
     drs_service_lambda_arn = data.terraform_remote_state.drs_service.outputs.service_lambda_arn,
   })
 }
