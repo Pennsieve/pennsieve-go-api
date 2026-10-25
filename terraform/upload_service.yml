@@ -1077,6 +1077,9 @@ components:
           type: boolean
         publishing_to_appstore:
           type: boolean
+        viewer_can_push:
+          type: boolean
+          description: "Whether the signed-in user can push to the repository on GitHub (push, maintain or admin, asked of GitHub with their token). False when it can't be determined."
         releases:
           type: array
           items:
@@ -1217,6 +1220,25 @@ components:
           type: string
         config_url:
           type: string
+        target_type:
+          type: string
+          description: "Organization or User: who owns the installation."
+        permissions:
+          type: object
+          description: "The installation's current GitHub App permissions, e.g. {\"contents\": \"read\"}."
+          additionalProperties:
+            type: string
+        needs_review:
+          type: boolean
+          description: "True while the installation hasn't accepted a permission Pennsieve requires (contents and pull_requests write)."
+        missing_permissions:
+          type: array
+          description: "The required permissions it lacks, e.g. contents:write."
+          items:
+            type: string
+        review_url:
+          type: string
+          description: "GitHub's page for this installation, where its owner reviews and accepts updated permissions."
 
     getGitHubInstallationsResponse:
       type: object
