@@ -1077,6 +1077,9 @@ components:
           type: boolean
         publishing_to_appstore:
           type: boolean
+        viewer_can_push:
+          type: boolean
+          description: "Whether the signed-in user can push to the repository on GitHub (push, maintain or admin, asked of GitHub with their token). False when it can't be determined."
         releases:
           type: array
           items:
