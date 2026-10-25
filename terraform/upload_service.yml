@@ -2063,6 +2063,76 @@ paths:
         '5XX':
           $ref: '#/components/responses/Error'
 
+  /repository/{owner}/{repo}/app-yml:
+    x-internal: true
+    post:
+      summary: Open a pull request adding or updating the repository's app.yml
+      description: |
+        Opens a pull request on the repository's default branch that adds or |
+        updates app.yml with the given content, as the signed-in user (their |
+        linked GitHub account). Errors carry a code: github_not_linked (401), |
+        no_push_access (403), permissions_not_accepted (409, with reviewUrl), |
+        invalid_content (400), github_error (502).
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: openAppYmlPullRequest
+      security:
+        - token_auth: [ ]
+      tags:
+        - Repository Service
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
+      requestBody:
+        description: The app.yml to commit, and optional pull request text
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                  description: the app.yml text (a YAML mapping, at most 64 KB)
+                title:
+                  type: string
+                  description: pull request title (default "Add app.yml" or "Update app.yml")
+                body:
+                  type: string
+                  description: pull request body
+      responses:
+        '201':
+          description: The pull request was opened.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pullRequestUrl:
+                    type: string
+                  number:
+                    type: integer
+                  branch:
+                    type: string
+                  created:
+                    type: boolean
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
   /repositories/publications/{id}/status:
     x-internal: true
     put:
