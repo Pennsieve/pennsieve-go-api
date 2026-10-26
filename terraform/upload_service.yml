@@ -2135,6 +2135,60 @@ paths:
 
   /repository/{owner}/{repo}/release:
     x-internal: true
+    get:
+      summary: Where the branch stands against the latest release
+      description: |
+        The repository's latest release and how many commits the branch (the |
+        default branch, or ?target=) has since it, as the signed-in user. |
+        canRelease is false when there's nothing new to release.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: getRepositoryReleaseStatus
+      security:
+        - token_auth: [ ]
+      tags:
+        - Repository Service
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
+        - in: query
+          name: target
+          schema:
+            type: string
+          required: false
+          description: branch or commit to compare (default the repository's default branch)
+      responses:
+        '200':
+          description: The latest release and commits since it.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  latestTag:
+                    type: string
+                  latestUrl:
+                    type: string
+                  target:
+                    type: string
+                  commitsSince:
+                    type: integer
+                  canRelease:
+                    type: boolean
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
     post:
       summary: Publish a release of the repository, as the user
       description: |
@@ -2143,7 +2197,7 @@ paths:
         then updates the app store, as for a release made on GitHub. Without |
         notes, GitHub generates them from the merged pull requests. Errors carry |
         a code: invalid_tag (400), github_not_linked (401), no_push_access (403), |
-        tag_exists (409), permissions_not_accepted (409, with reviewUrl), |
+        tag_exists (409), nothing_to_release (409), permissions_not_accepted (409, with reviewUrl), |
         invalid_app_yml (422), github_error (502).
       x-amazon-apigateway-integration:
         $ref: '#/components/x-amazon-apigateway-integrations/github-service'
