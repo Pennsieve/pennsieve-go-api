@@ -1,6 +1,16 @@
 # pennsieve-go-api
 Golang API for the Pennsieve Platform
 
+> ⚠️ **The API-Gateway authorizers live in `auth-service` now — do NOT change authorizer code in this repo.**
+>
+> The Lambda authorizers (HTTP / direct / WebSocket / events) were consolidated into
+> [`Pennsieve/auth-service`](https://github.com/Pennsieve/auth-service) as part of the Auth Refactor
+> (Phase 0). The authorizer code and Terraform that remain here under `lambda/authorizer/` and
+> `terraform/` are pending decommission (workstream F2) and are kept only so the home gateway keeps
+> working until it is fully cut over. **Any authorizer change — new scheme, claim, events/AppSync auth,
+> bug fix — belongs in `auth-service`, not here.** Changes made here will be lost when these lambdas are
+> retired, and will diverge from the authorizer that actually serves traffic.
+
 ## API Gateway
 The Pennsieve-Go-API is a serverless api that is built around an AWS API Gateway.
 
@@ -38,4 +48,5 @@ __Deployment of an Artifact__
     
 Note: After terraforming the authorizer, you need to manually add the invoke role
 to the authorizer as this is currently not automatically picked up from the OAS 
-configuration for HTTP APIs.
+configuration for HTTP APIs. (⚠️ As noted at the top — the authorizers are being
+decommissioned in favor of `auth-service`; avoid new authorizer work here.)
