@@ -610,8 +610,8 @@ components:
           type: array
           description: |
             Optional override of where to publish. When omitted, the repository's |
-            configured tracking determines the destinations. NOTE: currently |
-            accepted and validated but not yet enforced by the publisher.
+            configured tracking determines the destinations. A listed destination |
+            the repository has not enabled is ignored.
           items:
             type: string
             enum:
@@ -1175,6 +1175,73 @@ components:
         publish_to_appstore:
           type: boolean
           description: whether to enable publishing to the App Store
+        access:
+          $ref: '#/components/schemas/appAccess'
+
+    appAccess:
+      type: object
+      description: |
+        App Store sharing for the application created from a repository: who can see |
+        it once its first release is built. Stored with the repository's publishing |
+        settings and applied by app-deploy-service when it creates the application; |
+        later releases leave the application's sharing alone. Omitting it on a later |
+        call keeps the stored value.
+      required:
+        - visibility
+      properties:
+        visibility:
+          type: string
+          enum:
+            - public
+            - private
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/accessEntity'
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/accessEntity'
+        workspaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/accessEntity'
+
+    accessEntity:
+      type: object
+      required:
+        - entityId
+      properties:
+        entityId:
+          type: string
+          description: the node id of the user, team or workspace
+        organizationId:
+          type: string
+          description: the workspace the entity belongs to (for a workspace grant, the workspace itself)
+
+    repositoryAccessResponse:
+      type: object
+      description: The outcome of POST /repository/{owner}/{repo}/access.
+      required:
+        - status
+        - owner
+      properties:
+        status:
+          type: string
+          enum:
+            - accessible
+            - added
+            - no_installation
+            - not_visible
+            - not_admin
+        message:
+          type: string
+        owner:
+          type: string
+        installation:
+          $ref: '#/components/schemas/gitHubInstallations'
+        repository:
+          $ref: '#/components/schemas/repository'
 
     postRepositoryResponse:
       type: object
@@ -2257,6 +2324,62 @@ paths:
                     type: string
                   target:
                     type: string
+        '4XX':
+          $ref: '#/components/responses/Unauthorized'
+        '5XX':
+          $ref: '#/components/responses/Error'
+
+  /repository/{owner}/{repo}/access:
+    post:
+      summary: Give the Pennsieve GitHub App access to a repository, as the user
+      description: |
+        Adds the repository to the user's Pennsieve GitHub App installation on the |
+        owner account, using the user's GitHub token, so the "add a repository" flow |
+        does not have to send the user to GitHub when GitHub lets us do it ourselves. |
+        GitHub requires the user to be an admin of the repository, and a user token |
+        can only see repositories that both the user and the installation can access, |
+        so a private repository outside the installation cannot be added this way. |
+        Every outcome carries a `status`; the 4xx outcomes also carry the installation |
+        so the client can link to its settings page on GitHub.
+      x-amazon-apigateway-integration:
+        $ref: '#/components/x-amazon-apigateway-integrations/github-service'
+      operationId: grantRepositoryAccess
+      security:
+        - token_auth: [ ]
+      tags:
+        - Repository Service
+      parameters:
+        - in: path
+          name: owner
+          schema:
+            type: string
+          required: true
+          description: the repository owner (the first segment of the GitHub full name)
+        - in: path
+          name: repo
+          schema:
+            type: string
+          required: true
+          description: the repository name (the second segment of the GitHub full name)
+      responses:
+        '200':
+          description: The installation has access to the repository (`accessible`), or it was just added (`added`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryAccessResponse'
+        '403':
+          description: The user is not an admin of the repository (`not_admin`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryAccessResponse'
+        '404':
+          description: No installation for the owner (`no_installation`), or the repository is not visible to the user's token (`not_visible`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/repositoryAccessResponse'
         '4XX':
           $ref: '#/components/responses/Unauthorized'
         '5XX':
